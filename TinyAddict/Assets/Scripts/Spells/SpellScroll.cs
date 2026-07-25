@@ -79,7 +79,11 @@ public class SpellScroll : NetworkBehaviour
             _pickupCollider.enabled = IsHeld == false;
 
         if (_wordText != null && _wordText.text != Word)
+        {
             _wordText.text = Word;
+            // Le mot prend la couleur du sort qu'il déclenche
+            _wordText.color = SpellWords.ColorOf(WordIndex);
+        }
 
         // Le mot flottant fait toujours face à la caméra
         if (_wordText != null && Camera.main != null)

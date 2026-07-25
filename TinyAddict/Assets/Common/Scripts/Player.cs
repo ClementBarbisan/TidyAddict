@@ -25,6 +25,7 @@ namespace Projectiles
         private PlayerInput _input;
         private Transform _cameraTransform;
         private ScrollCaster _scrollCaster;
+        private PlayerSpellEffects _spellEffects;
 
         // NetworkBehaviour INTERFACE
 
@@ -75,6 +76,7 @@ namespace Projectiles
             _kcc = GetComponent<SimpleKCC>();
             _input = GetComponent<PlayerInput>();
             _scrollCaster = GetComponent<ScrollCaster>();
+            _spellEffects = GetComponent<PlayerSpellEffects>();
             _kcc.SetGravity(-20f);
         }
 
@@ -109,6 +111,13 @@ namespace Projectiles
             // Direction horizontale
             Vector3 inputDirection = _kcc.TransformRotation * new Vector3(input.MoveDirection.x, 0f, input.MoveDirection.y);
             Vector3 moveVelocity = inputDirection * _moveSpeed;
+
+            // Effets de sort : ralentissement/buff de vitesse et poussée d'explosion
+            if (_spellEffects != null)
+            {
+                moveVelocity *= _spellEffects.SpeedMultiplier;
+                moveVelocity += _spellEffects.CurrentKnockback;
+            }
             float   jumpImpulse  = default;
             // Gestion du saut/gravité (vélocité verticale gérée manuellement)
             if (_kcc.IsGrounded)

@@ -17,6 +17,8 @@ public class ScrollCaster : NetworkBehaviour
     [SerializeField] private Transform _handAnchor;
     [SerializeField] private Transform _castOrigin;
     [SerializeField] private NetworkObject _spellBallPrefab;
+    [SerializeField] private NetworkObject _iceZonePrefab;
+    [SerializeField] private float _buffSeconds = 30f;
     [SerializeField] private float _minRecordSeconds = 0.3f;
     [SerializeField] private float _maxRecordSeconds = 6f;
     [SerializeField, Range(0f, 1f)]
@@ -193,12 +195,54 @@ public class ScrollCaster : NetworkBehaviour
             return;
 
         var scroll = HeldScroll;
+        int spellIndex = scroll.WordIndex;
         HeldScroll = null;
         Runner.Despawn(scroll.Object);
 
-        Vector3 direction = _castOrigin != null ? _castOrigin.forward : transform.forward;
-        Vector3 origin = (_castOrigin != null ? _castOrigin.position : transform.position + Vector3.up) + direction * 0.8f;
-        Runner.Spawn(_spellBallPrefab, origin, Quaternion.LookRotation(direction), Object.InputAuthority);
+        CastSpell(spellIndex);
+    }
+
+    // Exécuté côté serveur : chaque mot déclenche toujours le même sort
+    private void CastSpell(int spellIndex)
+    {
+        var effects = GetComponent<PlayerSpellEffects>();
+
+        switch (SpellWords.TypeOf(spellIndex))
+        {
+            case SpellType.Fire:
+            {
+                Vector3 direction = _castOrigin != null ? _castOrigin.forward : transform.forward;
+                Vector3 origin = (_castOrigin != null ? _castOrigin.position : transform.position + Vector3.up) + direction * 0.8f;
+                Runner.Spawn(_spellBallPrefab, origin, Quaternion.LookRotation(direction), Object.InputAuthority,
+                    (runner, spawnedObject) => spawnedObject.GetComponent<SpellBall>().SpellIndex = spellIndex);
+                break;
+            }
+            case SpellType.Ice:
+            {
+                if (_iceZonePrefab != null)
+                {
+                    var casterRef = Object.InputAuthority;
+                    Vector3 ground = new Vector3(transform.position.x, 0.02f, transform.position.z);
+                    Runner.Spawn(_iceZonePrefab, ground, Quaternion.identity, casterRef,
+                        (runner, spawnedObject) => spawnedObject.GetComponent<IceZone>().Caster = casterRef);
+                }
+                break;
+            }
+            case SpellType.SpeedBuff:
+                if (effects != null)
+                    effects.ApplySpeedBuff(_buffSeconds);
+                break;
+
+            case SpellType.ForceBuff:
+                if (effects != null)
+                    effects.ApplyForceBuff(_buffSeconds);
+                break;
+
+            case SpellType.Invisibility:
+                if (effects != null)
+                    effects.ApplyInvisibility(_buffSeconds);
+                break;
+        }
     }
 
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
@@ -240,9 +284,14 @@ public class ScrollCaster : NetworkBehaviour
 
         if (HeldScroll != null)
         {
+            // Couleur et description du sort : on sait ce qu'on lance avant de le dire
+            string hex = ColorUtility.ToHtmlStringRGB(SpellWords.ColorOf(HeldScroll.WordIndex));
+            string coloredWord = $"<color=#{hex}>{HeldScroll.Word.ToUpperInvariant()}</color>";
+            string description = SpellWords.DescriptionOf(HeldScroll.WordIndex);
+
             line = _isRecording
-                ? $"<color=red>●</color> Dites : <color=yellow>{HeldScroll.Word.ToUpperInvariant()}</color> (relâchez pour valider)"
-                : $"Parchemin : <color=yellow>{HeldScroll.Word.ToUpperInvariant()}</color> — maintenez clic gauche et dites le mot • G pour reposer";
+                ? $"<color=red>●</color> Dites : {coloredWord} (relâchez pour valider)\n<size=13>{description}</size>"
+                : $"Parchemin : {coloredWord} — <size=13>{description}</size>\nMaintenez clic gauche et dites le mot • G pour reposer";
         }
 
         if (Time.time < _feedbackUntil && string.IsNullOrEmpty(_feedback) == false)

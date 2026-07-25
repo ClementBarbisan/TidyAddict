@@ -190,7 +190,7 @@ namespace Fusion {
             }
             GUILayout.EndHorizontal();
 
-            if (GUILayout.Button(EnableHotkeys ? "Start Single Player (I)" : "Start Single Player", GUILayout.Height(height))) {
+            /*if (GUILayout.Button(EnableHotkeys ? "Start Single Player (I)" : "Start Single Player", GUILayout.Height(height))) {
               nds.StartSinglePlayer();
             }
 
@@ -225,9 +225,9 @@ namespace Fusion {
               } else {
                 nds.StartClient();
               }
-            }
+            }*/
 
-            if (GUILayout.Button(EnableHotkeys ? "Start Auto Host Or Client (A)" : "Start Auto Host Or Client", GUILayout.Height(height))) {
+            if (GUILayout.Button(EnableHotkeys ? "Start (A)" : "Start", GUILayout.Height(height))) {
               if (IsMultiplePeerMode) {
                 StartMultipleAutoClients(nds);
               } else {
