@@ -479,18 +479,28 @@ public static class SpellSystemSetup
 
     private static void CreateZoneVisual(string name, Vector3 position, Color color, string materialPath, Team team)
     {
+        var material = GetOrCreateTransparentMaterial(materialPath, color);
+
         var existingZone = GameObject.Find(name);
         if (existingZone != null)
         {
-            // Zone déjà créée par une version précédente : on s'assure qu'elle
-            // porte le marqueur qui pilote la zone de comptage
+            // Zone déjà créée : on s'assure qu'elle porte le marqueur et que le
+            // matériau translucide (recette corrigée) lui est bien câblé — le
+            // marqueur régénère/redimensionne lui-même la box mesh
             var existingMarker = existingZone.GetComponent<CollectionZoneMarker>();
             if (existingMarker == null)
             {
                 existingMarker = existingZone.AddComponent<CollectionZoneMarker>();
                 existingMarker.Team = team;
-                Debug.Log($"[SpellSystemSetup] CollectionZoneMarker ajouté sur {name}.");
             }
+
+            var markerSo = new SerializedObject(existingMarker);
+            markerSo.FindProperty("_visualMaterial").objectReferenceValue = material;
+            markerSo.ApplyModifiedPropertiesWithoutUndo();
+
+            var visual = existingZone.transform.Find("Visual");
+            if (visual != null)
+                visual.GetComponent<MeshRenderer>().sharedMaterial = material;
             return;
         }
 
@@ -499,18 +509,13 @@ public static class SpellSystemSetup
         var marker = root.AddComponent<CollectionZoneMarker>();
         marker.Team = team;
 
-        var disc = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        disc.name = "Visual";
-        disc.transform.SetParent(root.transform, false);
-        disc.transform.localPosition = new Vector3(0f, 0.02f, 0f);
-        // Même emprise au sol que la zone de comptage de GameState (8 x 8 m)
-        disc.transform.localScale = new Vector3(8f, 0.04f, 8f);
-        Object.DestroyImmediate(disc.GetComponent<Collider>());
-        disc.GetComponent<MeshRenderer>().sharedMaterial = GetOrCreateTransparentMaterial(materialPath, color);
+        var newMarkerSo = new SerializedObject(marker);
+        newMarkerSo.FindProperty("_visualMaterial").objectReferenceValue = material;
+        newMarkerSo.ApplyModifiedPropertiesWithoutUndo();
 
         var labelObject = new GameObject("Label");
         labelObject.transform.SetParent(root.transform, false);
-        labelObject.transform.localPosition = new Vector3(0f, 3f, 0f);
+        labelObject.transform.localPosition = new Vector3(0f, 4.6f, 0f);
 
         var label = labelObject.AddComponent<TextMesh>();
         var font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
@@ -532,22 +537,34 @@ public static class SpellSystemSetup
     private static Material GetOrCreateTransparentMaterial(string path, Color color)
     {
         var material = AssetDatabase.LoadAssetAtPath<Material>(path);
-        if (material != null)
-            return material;
+        bool isNew = material == null;
 
-        EnsureFolder("Assets/Materials");
+        if (isNew)
+        {
+            EnsureFolder("Assets/Materials");
+            material = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+        }
 
-        material = new Material(Shader.Find("Universal Render Pipeline/Lit")) { color = color };
-        // Recette URP pour la transparence alpha
+        // Recette URP complète pour la transparence alpha — réappliquée même sur
+        // un matériau existant (une recette incomplète rend le mesh invisible)
+        material.color = color;
         material.SetFloat("_Surface", 1f);
+        material.SetFloat("_Blend", 0f);
         material.SetOverrideTag("RenderType", "Transparent");
         material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
         material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
         material.SetInt("_ZWrite", 0);
+        material.DisableKeyword("_ALPHATEST_ON");
         material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+        material.SetShaderPassEnabled("DepthOnly", false);
+        material.SetShaderPassEnabled("SHADOWCASTER", false);
         material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
 
-        AssetDatabase.CreateAsset(material, path);
+        if (isNew)
+            AssetDatabase.CreateAsset(material, path);
+        else
+            EditorUtility.SetDirty(material);
+
         return material;
     }
 
