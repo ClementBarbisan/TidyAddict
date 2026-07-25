@@ -19,7 +19,7 @@ public class TriggerPlayerDetector : NetworkBehaviour
                 // Exemple d'action (à exécuter côté Serveur/Hôte de préférence)
                 if (HasStateAuthority)
                 {
-                    OnPlayerEnteredZone(player, networkObj.GetComponent<NetworkedColor>(), this.tag);
+                    OnPlayerEnteredZone(player, networkObj.GetComponent<NetworkedColor>(), tag);
                 }
             }
         }
@@ -29,11 +29,11 @@ public class TriggerPlayerDetector : NetworkBehaviour
     {
         if (tag == "Blue")
         {
-            color.ObjectColor = Color.blue;
+            color.RequestColorChange(Color.blue);
         }
         else if (tag == "Red")
         {
-            color.ObjectColor = Color.red;
+            color.RequestColorChange(Color.red);
         }
     }
 }
