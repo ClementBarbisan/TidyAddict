@@ -5,7 +5,8 @@ public class EffectPullPush : MonoBehaviour
     [SerializeField] private LineRenderer lineRenderer;
     [SerializeField] private Gradient pushColor, pullColor;
     [SerializeField] private Transform spawnSpellTransform;
-    [SerializeField] private AudioClip clipPull, clipPush; 
+    [SerializeField] private AudioClip clipPull, clipPush;
+    [SerializeField] private AudioSource source;
     
     public void ShowBeam(Vector3 end, bool push)
     {
@@ -13,6 +14,8 @@ public class EffectPullPush : MonoBehaviour
         lineRenderer.SetPosition(1, end);
         lineRenderer.colorGradient = push ? pushColor : pullColor;
         lineRenderer.enabled = true;
+        source.clip = push ? clipPull : clipPull;
+        source.Play();
         Invoke(nameof(ResetLineRenderer), .2f);
     }
 
