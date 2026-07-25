@@ -20,7 +20,7 @@ public class EffectPullPush : MonoBehaviour
         lineRenderer.SetPosition(1, end);
         _mat.color = push ? Color.green : Color.red;
         lineRenderer.enabled = true;
-        source.clip = push ? clipPull : clipPull;
+        source.clip = push ? clipPush : clipPull;
         source.Play();
         Invoke(nameof(ResetLineRenderer), .2f);
     }
