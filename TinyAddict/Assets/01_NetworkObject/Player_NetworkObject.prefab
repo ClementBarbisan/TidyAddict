@@ -614,6 +614,11 @@ SkinnedMeshRenderer:
   m_CorrespondingSourceObject: {fileID: 6832386725164037374, guid: 92443e606ce55c448ad35977fc371ebb, type: 3}
   m_PrefabInstance: {fileID: 130553545377169004}
   m_PrefabAsset: {fileID: 0}
+--- !u!137 &6961256025463793796 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 7013380856665249512, guid: 92443e606ce55c448ad35977fc371ebb, type: 3}
+  m_PrefabInstance: {fileID: 130553545377169004}
+  m_PrefabAsset: {fileID: 0}
 --- !u!137 &7246849863333297289 stripped
 SkinnedMeshRenderer:
   m_CorrespondingSourceObject: {fileID: 7304322152164885221, guid: 92443e606ce55c448ad35977fc371ebb, type: 3}
@@ -1086,4 +1091,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NetworkedColor
   _ObjectColor: {r: 0.6320754, g: 0.6320754, b: 0.6320754, a: 1}
-  _renderer: {fileID: 0}
+  _renderers:
+  - {fileID: 8151269083588270087}
+  - {fileID: 6961256025463793796}
