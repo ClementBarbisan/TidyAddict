@@ -681,9 +681,21 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2491037113522648614, guid: bebc380d595234047a851e4b53101eaf, type: 3}
+      propertyPath: OutputAudioMixerGroup
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 3170118265349794785, guid: bebc380d595234047a851e4b53101eaf, type: 3}
       propertyPath: m_RootOrder
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4171102355695004119, guid: bebc380d595234047a851e4b53101eaf, type: 3}
+      propertyPath: m_Name
+      value: SoundSources
+      objectReference: {fileID: 0}
+    - target: {fileID: 4171102355695004119, guid: bebc380d595234047a851e4b53101eaf, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4639397791414330085, guid: bebc380d595234047a851e4b53101eaf, type: 3}
       propertyPath: _gravity
@@ -801,6 +813,42 @@ PrefabInstance:
       propertyPath: 'NetworkGuid.RawGuidValue.Array.data[1]'
       value: -3727397033798851031
       objectReference: {fileID: 0}
+    - target: {fileID: 6333160310831806214, guid: bebc380d595234047a851e4b53101eaf, type: 3}
+      propertyPath: source
+      value: 
+      objectReference: {fileID: 3774911799631903214}
+    - target: {fileID: 6333160310831806214, guid: bebc380d595234047a851e4b53101eaf, type: 3}
+      propertyPath: clips.Array.size
+      value: 7
+      objectReference: {fileID: 0}
+    - target: {fileID: 6333160310831806214, guid: bebc380d595234047a851e4b53101eaf, type: 3}
+      propertyPath: 'clips.Array.data[0]'
+      value: 
+      objectReference: {fileID: 8300000, guid: 40fcd6a115895ba429a7f5daf9e5e1ec, type: 3}
+    - target: {fileID: 6333160310831806214, guid: bebc380d595234047a851e4b53101eaf, type: 3}
+      propertyPath: 'clips.Array.data[1]'
+      value: 
+      objectReference: {fileID: 8300000, guid: 3db6d91cf64a6f04f8b7f699f1691944, type: 3}
+    - target: {fileID: 6333160310831806214, guid: bebc380d595234047a851e4b53101eaf, type: 3}
+      propertyPath: 'clips.Array.data[2]'
+      value: 
+      objectReference: {fileID: 8300000, guid: 24fb9e1a641562f48a11a81b81b0e241, type: 3}
+    - target: {fileID: 6333160310831806214, guid: bebc380d595234047a851e4b53101eaf, type: 3}
+      propertyPath: 'clips.Array.data[3]'
+      value: 
+      objectReference: {fileID: 8300000, guid: 99d2c1a453454a248b0d2ec84d898682, type: 3}
+    - target: {fileID: 6333160310831806214, guid: bebc380d595234047a851e4b53101eaf, type: 3}
+      propertyPath: 'clips.Array.data[4]'
+      value: 
+      objectReference: {fileID: 8300000, guid: d03c79a8d3a107942afcfc800b81e2b1, type: 3}
+    - target: {fileID: 6333160310831806214, guid: bebc380d595234047a851e4b53101eaf, type: 3}
+      propertyPath: 'clips.Array.data[5]'
+      value: 
+      objectReference: {fileID: 8300000, guid: 40fcd6a115895ba429a7f5daf9e5e1ec, type: 3}
+    - target: {fileID: 6333160310831806214, guid: bebc380d595234047a851e4b53101eaf, type: 3}
+      propertyPath: 'clips.Array.data[6]'
+      value: 
+      objectReference: {fileID: 8300000, guid: 40fcd6a115895ba429a7f5daf9e5e1ec, type: 3}
     - target: {fileID: 7257134546093304133, guid: bebc380d595234047a851e4b53101eaf, type: 3}
       propertyPath: m_Name
       value: Player_NetworkObject
@@ -822,7 +870,12 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: 6729366823290502798, guid: bebc380d595234047a851e4b53101eaf, type: 3}
+    - {fileID: 103156402508323004, guid: bebc380d595234047a851e4b53101eaf, type: 3}
+    - {fileID: 1087781470539952315, guid: bebc380d595234047a851e4b53101eaf, type: 3}
+    - {fileID: 7073191830011011500, guid: bebc380d595234047a851e4b53101eaf, type: 3}
+    - {fileID: 7506615589450884436, guid: bebc380d595234047a851e4b53101eaf, type: 3}
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: 2403547491983486448, guid: bebc380d595234047a851e4b53101eaf, type: 3}
       insertIndex: -1
@@ -856,6 +909,11 @@ PrefabInstance:
 --- !u!4 &3710417707384006004 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2705768895462566588, guid: bebc380d595234047a851e4b53101eaf, type: 3}
+  m_PrefabInstance: {fileID: 1653629507265466312}
+  m_PrefabAsset: {fileID: 0}
+--- !u!82 &3774911799631903214 stripped
+AudioSource:
+  m_CorrespondingSourceObject: {fileID: 2491037113522648614, guid: bebc380d595234047a851e4b53101eaf, type: 3}
   m_PrefabInstance: {fileID: 1653629507265466312}
   m_PrefabAsset: {fileID: 0}
 --- !u!4 &4010951292466586168 stripped

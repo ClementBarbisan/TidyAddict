@@ -22,6 +22,8 @@ public class ScrollCaster : NetworkBehaviour
     [SerializeField] private float _stunSeconds = 10f;
     [SerializeField] private float _minRecordSeconds = 0.3f;
     [SerializeField] private float _maxRecordSeconds = 6f;
+    [SerializeField] private AudioSource source;
+    [SerializeField] private AudioClip[] clips;
     [SerializeField, Range(0f, 1f)]
     [Tooltip("Marge d'erreur tolérée entre le mot entendu et le mot attendu (0 = strict, 1 = tout accepté)")]
     private float _errorThreshold = 0.35f;
@@ -267,6 +269,7 @@ public class ScrollCaster : NetworkBehaviour
         {
             case SpellType.Fire:
             {
+                source.clip = clips[0];
                 Vector3 direction = _castOrigin != null ? _castOrigin.forward : transform.forward;
                 Vector3 origin = (_castOrigin != null ? _castOrigin.position : transform.position + Vector3.up) + direction * 0.8f;
                 Runner.Spawn(_spellBallPrefab, origin, Quaternion.LookRotation(direction), Object.InputAuthority,
@@ -277,6 +280,7 @@ public class ScrollCaster : NetworkBehaviour
             {
                 if (_iceZonePrefab != null)
                 {
+                    source.clip = clips[1];
                     var casterRef = Object.InputAuthority;
                     Vector3 ground = new Vector3(transform.position.x, 0.02f, transform.position.z);
                     Runner.Spawn(_iceZonePrefab, ground, Quaternion.identity, casterRef,
@@ -286,38 +290,56 @@ public class ScrollCaster : NetworkBehaviour
             }
             case SpellType.SpeedBuff:
                 if (effects != null)
+                {
+                    source.clip = clips[2];
                     effects.ApplySpeedBuff(_buffSeconds);
+                }
                 break;
 
             case SpellType.ForceBuff:
                 if (effects != null)
+                {
+                    source.clip = clips[3];
                     effects.ApplyForceBuff(_buffSeconds);
+                }
                 break;
 
             case SpellType.Invisibility:
                 if (effects != null)
+                {
+                    source.clip = clips[4];
                     effects.ApplyInvisibility(_buffSeconds);
+                }
                 break;
 
             case SpellType.Confusion:
             {
                 var target = FindTargetPlayer();
                 if (target != null)
+                {
+                    source.clip = clips[4];
                     target.ApplyConfusion(_buffSeconds);
+                }
                 break;
             }
             case SpellType.Shrink:
             {
                 var target = FindTargetPlayer();
                 if (target != null)
+                {
+                    source.clip = clips[5];
                     target.ApplyShrink(_buffSeconds);
+                }
                 break;
             }
             case SpellType.Stun:
             {
                 var target = FindTargetPlayer();
                 if (target != null)
+                {
+                    source.clip = clips[6];
                     target.ApplyStun(_stunSeconds);
+                }
                 break;
             }
         }
