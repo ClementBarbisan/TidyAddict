@@ -92,15 +92,16 @@ public class PlayerGrabbing : NetworkBehaviour
                 Vector3 appliedForce = direction * forcePower * forceMultiplier;
 
                 // Envoie l'ordre d'appliquer la force sur le Serveur
-                RPC_ApplyForce(nrb, appliedForce);
+                RPC_ApplyForce(nrb, appliedForce, _cam.position + _cam.forward * grabDistance, isPush);
                 effect.ShowBeam(_cam.position + _cam.forward * grabDistance, isPush);
+               
             }
         }
     }
 
     // Le RPC est envoyé de l'Input Authority (le client) vers la State Authority (le serveur)
     [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
-    private void RPC_ApplyForce(NetworkRigidbody targetNRB, Vector3 force)
+    private void RPC_ApplyForce(NetworkRigidbody targetNRB, Vector3 force, Vector3 hitPoint, bool isPush)
     {
         Debug.Log("Apply force.");
         if (targetNRB != null && targetNRB.PhysicsBody != null)
@@ -108,8 +109,15 @@ public class PlayerGrabbing : NetworkBehaviour
             // Le serveur applique la force sur le Rigidbody
             // NetworkRigidbody se chargera de synchroniser le mouvement chez TOUS les clients
             targetNRB.PhysicsBody.AddForce(force);
+            RPC_ShowBeamEffect(hitPoint, isPush);
             _canApplyForce = false;
-            
         }
+        
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RPC_ShowBeamEffect(Vector3 hitPoint, NetworkBool isPush)
+    {
+        effect.ShowBeam(hitPoint, isPush);
     }
 }

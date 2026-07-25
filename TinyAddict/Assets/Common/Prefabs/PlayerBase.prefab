@@ -968,8 +968,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ScrollCaster
   _handAnchor: {fileID: 2239454316225206753}
   _castOrigin: {fileID: 3170118265349794785}
-  _spellBallPrefab: {fileID: 3033438803795718193, guid: 8acc3df215c96554eb49d3a77b977b7d, type: 3}
-  _iceZonePrefab: {fileID: 4518166319585692027, guid: 564bf2b22fb1d724ba02801071d959de, type: 3}
+  _spellBallPrefab: {fileID: 3044970036757127736, guid: 8acc3df215c96554eb49d3a77b977b7d, type: 3}
+  _iceZonePrefab: {fileID: 1184266125318369186, guid: 564bf2b22fb1d724ba02801071d959de, type: 3}
   _buffSeconds: 30
   _minRecordSeconds: 0.3
   _maxRecordSeconds: 6
@@ -990,6 +990,9 @@ MonoBehaviour:
   _slowMultiplier: 0.45
   _speedBuffMultiplier: 1.6
   _forceBuffMultiplier: 2.5
+  _shrinkForceMultiplier: 0.3
+  _shrinkScale: 0.4
+  _shrinkVoicePitch: 1.6
 --- !u!1 &7506615589450884436
 GameObject:
   m_ObjectHideFlags: 0

@@ -416,7 +416,7 @@ GameObject:
   - component: {fileID: 340163736}
   - component: {fileID: 340163735}
   - component: {fileID: 340163738}
-  - component: {fileID: 340163737}
+  - component: {fileID: 340163739}
   m_Layer: 0
   m_Name: Prototype Runner
   m_TagString: Untagged
@@ -631,23 +631,6 @@ MonoBehaviour:
   useOnAudioFilterRead: 0
   useMicrophoneTypeFallback: 1
   recordWhenJoined: 1
---- !u!114 &340163737
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 340163728}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cabb58541615949daa7846ca724736b2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SpellScrollSpawner
-  _scrollPrefab: {fileID: 4768676171800364631, guid: 8c9809178b71a46b1988d94e3c14cfff, type: 3}
-  _scrollCount: 5
-  _areaCenter: {x: 0, y: 0.05, z: 0}
-  _areaSize: {x: 14, y: 14}
-  _respawnDelay: 3
 --- !u!114 &340163738
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -660,6 +643,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dbca72d48244c6f4d8d2701ea5c33c80, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::IncantationRecorder
+--- !u!114 &340163739
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 340163728}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b722511bb434b334a87c65e3f6447741, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SpellScrollSpawner
+  _scrollPrefab: {fileID: 7590129695145186433, guid: 29ab2a4eacf3b9845933bb3aad915ce9, type: 3}
+  _scrollCount: 5
+  _areaCenter: {x: 0, y: 0.05, z: 0}
+  _areaSize: {x: 14, y: 14}
+  _respawnDelay: 3
 --- !u!1 &410087039
 GameObject:
   m_ObjectHideFlags: 0
