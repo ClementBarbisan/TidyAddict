@@ -9,8 +9,8 @@ public class SpellBall : NetworkBehaviour
 {
     [SerializeField] private float _speed = 18f;
     [SerializeField] private float _lifeSeconds = 5f;
-    [SerializeField] private float _hitImpulse = 16f;
-    [SerializeField] private float _hitUpImpulse = 6f;
+    [SerializeField] private float _hitImpulse = 18f;
+    [SerializeField] private float _hitUpImpulse = 8f;
 
     [Networked] private TickTimer Life { get; set; }
 
@@ -74,28 +74,36 @@ public class SpellBall : NetworkBehaviour
     // Projette tout ce qui se trouve dans le rayon : objets physiques et joueurs
     private void Explode(Vector3 center)
     {
+        var hitPlayers = new System.Collections.Generic.HashSet<PlayerSpellEffects>();
+        var hitBodies = new System.Collections.Generic.HashSet<Rigidbody>();
+
         var hits = Physics.OverlapSphere(center, _explosionRadius, ~0, QueryTriggerInteraction.Ignore);
         foreach (var hitCollider in hits)
         {
-            var rigidbody = hitCollider.attachedRigidbody;
-            if (rigidbody != null)
-            {
-                rigidbody.AddExplosionForce(_explosionForce, center, _explosionRadius, 0.5f, ForceMode.Impulse);
-                continue;
-            }
-
+            // Les joueurs d'abord : leur capsule KCC porte un Rigidbody kinematic,
+            // insensible aux forces physiques — l'éjection passe par le knockback réseau
             var effects = hitCollider.GetComponentInParent<PlayerSpellEffects>();
             if (effects != null)
             {
-                // Éjection : poussée horizontale qui s'atténue avec la distance + décollage vertical
-                Vector3 away = effects.transform.position - center;
-                away.y = 0f;
-                float distanceFactor = 1f - Mathf.Clamp01(away.magnitude / _explosionRadius) * 0.5f;
-                Vector3 horizontal = away.sqrMagnitude > 0.001f ? away.normalized : transform.forward;
+                if (hitPlayers.Add(effects))
+                {
+                    // Poussée horizontale atténuée avec la distance + décollage vertical
+                    Vector3 away = effects.transform.position - center;
+                    away.y = 0f;
+                    float distanceFactor = 1f - Mathf.Clamp01(away.magnitude / _explosionRadius) * 0.5f;
+                    Vector3 horizontal = away.sqrMagnitude > 0.001f ? away.normalized : transform.forward;
 
-                Vector3 knockback = horizontal * (_hitImpulse * distanceFactor);
-                knockback.y = _hitUpImpulse;
-                effects.ApplyKnockback(knockback);
+                    Vector3 knockback = horizontal * (_hitImpulse * distanceFactor);
+                    knockback.y = _hitUpImpulse;
+                    effects.ApplyKnockback(knockback);
+                }
+                continue;
+            }
+
+            var rigidbody = hitCollider.attachedRigidbody;
+            if (rigidbody != null && rigidbody.isKinematic == false && hitBodies.Add(rigidbody))
+            {
+                rigidbody.AddExplosionForce(_explosionForce, center, _explosionRadius, 0.5f, ForceMode.Impulse);
             }
         }
     }
