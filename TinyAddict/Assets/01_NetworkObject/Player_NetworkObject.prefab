@@ -561,7 +561,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6066431044231784134, guid: bebc380d595234047a851e4b53101eaf, type: 3}
       propertyPath: NetworkedBehaviours.Array.size
-      value: 12
+      value: 11
       objectReference: {fileID: 0}
     - target: {fileID: 6066431044231784134, guid: bebc380d595234047a851e4b53101eaf, type: 3}
       propertyPath: 'NetworkedBehaviours.Array.data[0]'
@@ -590,23 +590,23 @@ PrefabInstance:
     - target: {fileID: 6066431044231784134, guid: bebc380d595234047a851e4b53101eaf, type: 3}
       propertyPath: 'NetworkedBehaviours.Array.data[6]'
       value: 
-      objectReference: {fileID: 9156395791538500758}
+      objectReference: {fileID: 4624148881878037665}
     - target: {fileID: 6066431044231784134, guid: bebc380d595234047a851e4b53101eaf, type: 3}
       propertyPath: 'NetworkedBehaviours.Array.data[7]'
       value: 
-      objectReference: {fileID: 4624148881878037665}
+      objectReference: {fileID: 2451985089587934349}
     - target: {fileID: 6066431044231784134, guid: bebc380d595234047a851e4b53101eaf, type: 3}
       propertyPath: 'NetworkedBehaviours.Array.data[8]'
       value: 
-      objectReference: {fileID: 2451985089587934349}
+      objectReference: {fileID: 8410923494423236203}
     - target: {fileID: 6066431044231784134, guid: bebc380d595234047a851e4b53101eaf, type: 3}
       propertyPath: 'NetworkedBehaviours.Array.data[9]'
       value: 
-      objectReference: {fileID: 8410923494423236203}
+      objectReference: {fileID: 8524957883816088181}
     - target: {fileID: 6066431044231784134, guid: bebc380d595234047a851e4b53101eaf, type: 3}
       propertyPath: 'NetworkedBehaviours.Array.data[10]'
       value: 
-      objectReference: {fileID: 8524957883816088181}
+      objectReference: {fileID: 5726396737517724789}
     - target: {fileID: 6066431044231784134, guid: bebc380d595234047a851e4b53101eaf, type: 3}
       propertyPath: 'NetworkedBehaviours.Array.data[11]'
       value: 
@@ -829,14 +829,3 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NetworkedColor
   _ObjectColor: {r: 0.6320754, g: 0.6320754, b: 0.6320754, a: 1}
   _renderer: {fileID: 0}
---- !u!114 &9156395791538500758 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 7629328886242818910, guid: bebc380d595234047a851e4b53101eaf, type: 3}
-  m_PrefabInstance: {fileID: 1653629507265466312}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8233805172249388685}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 20284260342fa4060bc6c2caf0c52042, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerProfile

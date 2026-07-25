@@ -114,7 +114,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6066431044231784134, guid: bebc380d595234047a851e4b53101eaf, type: 3}
       propertyPath: NetworkedBehaviours.Array.size
-      value: 9
+      value: 8
       objectReference: {fileID: 0}
     - target: {fileID: 6066431044231784134, guid: bebc380d595234047a851e4b53101eaf, type: 3}
       propertyPath: 'NetworkedBehaviours.Array.data[0]'
@@ -143,11 +143,11 @@ PrefabInstance:
     - target: {fileID: 6066431044231784134, guid: bebc380d595234047a851e4b53101eaf, type: 3}
       propertyPath: 'NetworkedBehaviours.Array.data[6]'
       value: 
-      objectReference: {fileID: 7148577046184955903}
+      objectReference: {fileID: 7409143801888452320}
     - target: {fileID: 6066431044231784134, guid: bebc380d595234047a851e4b53101eaf, type: 3}
       propertyPath: 'NetworkedBehaviours.Array.data[7]'
       value: 
-      objectReference: {fileID: 7409143801888452320}
+      objectReference: {fileID: 6007497309609664284}
     - target: {fileID: 6066431044231784134, guid: bebc380d595234047a851e4b53101eaf, type: 3}
       propertyPath: 'NetworkedBehaviours.Array.data[8]'
       value: 
@@ -259,14 +259,3 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c49f3eea5f81f8340899d3f8f1cfde8d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ScrollCaster
---- !u!114 &7148577046184955903 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 7629328886242818910, guid: bebc380d595234047a851e4b53101eaf, type: 3}
-  m_PrefabInstance: {fileID: 780260463320282273}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 20284260342fa4060bc6c2caf0c52042, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerProfile
