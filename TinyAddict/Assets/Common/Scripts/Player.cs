@@ -17,15 +17,32 @@ namespace Projectiles
         private Transform _cameraPivot;
         [SerializeField]
         private MeshRenderer[] _thirdPersonRenderers;
+        [SerializeField]
+        private Animator _animator;
+        [Networked]
+        private Vector2 _animMoveVelocity { get; set; }
 
         [Networked]
         private NetworkButtons _lastButtonsInput { get; set; }
+        
+        [Networked]
+        private byte _jumpTriggerCount { get; set; }
+        [Networked]
+        private byte _onHitTriggerCount { get; set; }
+        [Networked]
+        private byte _throwTriggerCount { get; set; }
+
+        private byte _renderedJumpTriggerCount;
+        private byte _renderedOnHitTriggerCount;
+        private byte _renderedThrowTriggerCount;
 
         private SimpleKCC _kcc;
         private PlayerInput _input;
         private Transform _cameraTransform;
         private ScrollCaster _scrollCaster;
         private PlayerSpellEffects _spellEffects;
+        private static readonly int X = Animator.StringToHash("X");
+        private static readonly int Y = Animator.StringToHash("Y");
 
         // NetworkBehaviour INTERFACE
 
@@ -67,6 +84,27 @@ namespace Projectiles
 
             // Set the absolute look rotation for Render so the camera reacts every rendered frame.
             _kcc.SetLookRotation(_input.LookRotation, -90f, 90f);
+            
+            _animator.SetFloat(X, _animMoveVelocity.x);
+            _animator.SetFloat(Y, _animMoveVelocity.y);
+            
+            if (_jumpTriggerCount != _renderedJumpTriggerCount)
+            {
+                _renderedJumpTriggerCount = _jumpTriggerCount;
+                _animator.SetTrigger("Jump");
+            }
+
+            if (_onHitTriggerCount != _renderedOnHitTriggerCount)
+            {
+                _renderedOnHitTriggerCount = _onHitTriggerCount;
+                _animator.SetTrigger("OnHit");
+            }
+
+            if (_throwTriggerCount != _renderedThrowTriggerCount)
+            {
+                _renderedThrowTriggerCount = _throwTriggerCount;
+                _animator.SetTrigger("Throw");
+            }
         }
 
         // MONOBEHAVIOUR
@@ -122,6 +160,8 @@ namespace Projectiles
 
             Vector3 inputDirection = _kcc.TransformRotation * new Vector3(moveDirection.x, 0f, moveDirection.y);
             Vector3 moveVelocity = inputDirection * _moveSpeed;
+            
+            _animMoveVelocity = input.MoveDirection;
 
             float   jumpImpulse  = default;
             // Gestion du saut/gravité (vélocité verticale gérée manuellement)
@@ -130,6 +170,7 @@ namespace Projectiles
                 if (isStunned == false && input.Buttons.WasPressed(_lastButtonsInput, EInputButtons.Jump))
                 {
                     jumpImpulse = _jumpImpulse;
+                    _jumpTriggerCount++;
                 }
             }
 
