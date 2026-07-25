@@ -31,4 +31,43 @@ public static class SpellWords
             return sb.ToString();
         }
     }
+
+    /// <summary>
+    /// Erreur de correspondance entre 0 (identique) et 1 (rien à voir), calculée
+    /// sur la distance de Levenshtein normalisée. Sert de marge d'erreur quand
+    /// Vosk renvoie un mot voisin de celui attendu.
+    /// </summary>
+    public static float MatchError(string heard, string expected)
+    {
+        if (string.IsNullOrEmpty(heard) || string.IsNullOrEmpty(expected))
+            return 1f;
+
+        int distance = Levenshtein(heard, expected);
+        int maxLength = System.Math.Max(heard.Length, expected.Length);
+        return maxLength == 0 ? 1f : (float)distance / maxLength;
+    }
+
+    private static int Levenshtein(string a, string b)
+    {
+        int[] previous = new int[b.Length + 1];
+        int[] current = new int[b.Length + 1];
+
+        for (int j = 0; j <= b.Length; j++)
+            previous[j] = j;
+
+        for (int i = 1; i <= a.Length; i++)
+        {
+            current[0] = i;
+            for (int j = 1; j <= b.Length; j++)
+            {
+                int cost = a[i - 1] == b[j - 1] ? 0 : 1;
+                current[j] = System.Math.Min(
+                    System.Math.Min(current[j - 1] + 1, previous[j] + 1),
+                    previous[j - 1] + cost);
+            }
+            (previous, current) = (current, previous);
+        }
+
+        return previous[b.Length];
+    }
 }
