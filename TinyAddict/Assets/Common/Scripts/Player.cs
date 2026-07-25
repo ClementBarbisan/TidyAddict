@@ -125,7 +125,7 @@ namespace Projectiles
             Vector2 pitchRotation = _kcc.GetLookRotation(true, false);
             _cameraPivot.localRotation = Quaternion.Euler(pitchRotation);
 
-            if (input.Buttons.WasPressed(_lastButtonsInput, EInputButtons.Fire))
+            if (input.Buttons.WasPressed(_lastButtonsInput, EInputButtons.Fire) && _weapon.isActiveAndEnabled)
             {
                 _weapon.Fire();
             }

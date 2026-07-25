@@ -1,4 +1,3 @@
-using System;
 using Fusion;
 using Fusion.Addons.Physics;
 using UnityEngine;
@@ -6,58 +5,84 @@ using UnityEngine.InputSystem;
 
 public class PlayerGrabbing : NetworkBehaviour
 {
-    public Transform HoldPoint;
-    [SerializeField] private float grabDistance = 3.0f;
-    [SerializeField] private float _force = 10;
-    [SerializeField] private InputActionReference _pull, _push;
+    [SerializeField] private float grabDistance = 10.0f;
+    [SerializeField] private float forcePower = 10f;
+    [SerializeField] private InputActionReference pullAction, pushAction;
+
     private bool _pressedOldPush, _pressedOldPull;
     private Transform _cam;
-    
+
     private void Start()
     {
-        _pull.action.Enable();
-        _push.action.Enable();
-        _cam = Camera.main.transform;
+        if (pullAction != null) pullAction.action.Enable();
+        if (pushAction != null) pushAction.action.Enable();
+
+        if (Camera.main != null)
+        {
+            _cam = Camera.main.transform;
+        }
     }
 
     public override void FixedUpdateNetwork()
     {
-        // On ne gère l'action que si on possède l'autorité sur le joueur
-        if (_pull.action.IsPressed() && _pressedOldPull == false)
+        // On ne lit les inputs locaux que si l'on a l'autorité sur le joueur (le joueur local)
+        if (!HasInputAuthority) return;
+
+        bool isPullPressed = pullAction != null && pullAction.action.IsPressed();
+        bool isPushPressed = pushAction != null && pushAction.action.IsPressed();
+
+        // Détection de l'appui (KeyDown)
+        if (isPullPressed && !_pressedOldPull)
         {
-            // Exemple : On appuie sur la touche Interaction (ex: 'E' ou clic)
-            TryPullObject();
+            TryApplyForce(isPush: false);
         }
-        if (_push.action.IsPressed() && _pressedOldPush == false)
+
+        if (isPushPressed && !_pressedOldPush)
         {
-            TryPushObject();
+            TryApplyForce(isPush: true);
         }
-        _pressedOldPull = _pull.action.IsPressed();
-        _pressedOldPush = _push.action.IsPressed();
+
+        _pressedOldPull = isPullPressed;
+        _pressedOldPush = isPushPressed;
     }
 
-    private void TryPullObject()
+    private void TryApplyForce(bool isPush)
     {
+        Vector3 rayOrigin = _cam != null ? _cam.position : transform.position + Vector3.up;
+        Vector3 rayDirection = _cam != null ? _cam.forward : transform.forward;
+        
         // Raycast pour détecter l'objet devant soi
-        if (Physics.Raycast(transform.position + Vector3.up, transform.forward, out RaycastHit hit, grabDistance))
+        if (Physics.Raycast(rayOrigin, rayDirection, out RaycastHit hit, grabDistance))
         {
-            if (hit.collider.CompareTag("Grabbable") && hit.collider.TryGetComponent<NetworkRigidbody>(out var rb))
+            if (hit.collider.CompareTag("Grabbable") && hit.collider.TryGetComponent<NetworkRigidbody>(out var nrb))
             {
-                rb.PhysicsBody.AddForce((_cam.position - rb.transform.position) * _force);
+                // Calcul du vecteur de force
+                Vector3 direction = (nrb.transform.position - rayOrigin).normalized;
+                Debug.Log("Try Apply force");
+                // Si on tire (Pull), on inverse la direction
+                if (!isPush)
+                {
+                    direction = -direction;
+                }
+
+                Vector3 appliedForce = direction * forcePower;
+
+                // Envoie l'ordre d'appliquer la force sur le Serveur
+                RPC_ApplyForce(nrb, appliedForce);
             }
         }
     }
-    
-    private void TryPushObject()
+
+    // Le RPC est envoyé de l'Input Authority (le client) vers la State Authority (le serveur)
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    private void RPC_ApplyForce(NetworkRigidbody targetNRB, Vector3 force)
     {
-        // Raycast pour détecter l'objet devant soi
-        if (Physics.Raycast(transform.position + Vector3.up, transform.forward, out RaycastHit hit, grabDistance))
+        Debug.Log("Apply force.");
+        if (targetNRB != null && targetNRB.PhysicsBody != null)
         {
-            if (hit.collider.CompareTag("Grabbable") && hit.collider.TryGetComponent<NetworkRigidbody>(out var rb))
-            {
-                rb.PhysicsBody.AddForce((_cam.position - rb.transform.position) * _force);
-            }
+            // Le serveur applique la force sur le Rigidbody
+            // NetworkRigidbody se chargera de synchroniser le mouvement chez TOUS les clients
+            targetNRB.PhysicsBody.AddForce(force);
         }
     }
-    
 }
