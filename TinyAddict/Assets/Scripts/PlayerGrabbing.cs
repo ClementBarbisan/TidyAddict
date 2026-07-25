@@ -74,7 +74,7 @@ public class PlayerGrabbing : NetworkBehaviour
     }
 
     // Le RPC est envoyé de l'Input Authority (le client) vers la State Authority (le serveur)
-    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
     private void RPC_ApplyForce(NetworkRigidbody targetNRB, Vector3 force)
     {
         Debug.Log("Apply force.");
