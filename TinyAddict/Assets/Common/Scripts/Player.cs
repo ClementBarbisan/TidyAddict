@@ -14,11 +14,6 @@ namespace Projectiles
         [SerializeField]
         private float _jumpImpulse = 6f;
         [SerializeField]
-        private float _gravity = -20f;
-        [Networked]
-        private float _verticalVelocity { get; set; }
-
-        [SerializeField]
         private Transform _cameraPivot;
         [SerializeField]
         private MeshRenderer[] _thirdPersonRenderers;
@@ -117,17 +112,12 @@ namespace Projectiles
             // Gestion du saut/gravité (vélocité verticale gérée manuellement)
             if (_kcc.IsGrounded)
             {
-                // Reste au sol tant qu'aucun saut n'est demandé
-                _verticalVelocity = 0f;
-                
                 if (input.Buttons.WasPressed(_lastButtonsInput, EInputButtons.Jump))
                 {
                     jumpImpulse = _jumpImpulse;
                 }
             }
-
-            moveVelocity.y = _verticalVelocity;
-
+            
             _kcc.Move(moveVelocity, jumpImpulse);
 
             // Update fire transform before fire
