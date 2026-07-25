@@ -3,7 +3,6 @@
     "com.photonengine.fusion-physics": "https://github.com/Photon-Server/Photon-UPM.git#fusion/v2/fusion-physics",
     "com.photonengine.fusion-simple-kcc": "https://github.com/Photon-Server/Photon-UPM.git#fusion/v2/fusion-simple-kcc",
     "com.photonengine.voice-fusion": "https://github.com/Photon-Server/Photon-UPM.git#fusion/v2/voice-for-fusion",
-    "com.whisper.unity": "https://github.com/Macoron/whisper.unity.git?path=/Packages/com.whisper.unity",
     "com.unity.ai.navigation": "2.0.13",
     "com.unity.burst": "1.8.29",
     "com.unity.collab-proxy": "2.12.4",

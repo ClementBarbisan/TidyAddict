@@ -3,13 +3,13 @@ using Photon.Voice.Unity;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
-using Whisper;
 
 /// <summary>
 /// Configure le système de parchemins de sort en un clic :
+/// - Plugins Vosk ciblés par plateforme (Windows x64, macOS universel)
 /// - Prefabs SpellScroll (parchemin + mot flottant) et SpellBall (boule de sort)
 /// - ScrollCaster + HandAnchor sur PlayerBase.prefab
-/// - IncantationRecorder sur le runner + WhisperManager + parchemins de test dans SampleScene
+/// - IncantationRecorder sur le runner + parchemins de test dans SampleScene
 /// </summary>
 public static class SpellSystemSetup
 {
@@ -19,7 +19,6 @@ public static class SpellSystemSetup
     private const string BallPrefabPath = "Assets/Prefabs/SpellBall.prefab";
     private const string ParchmentMaterialPath = "Assets/Materials/SpellParchment.mat";
     private const string BallMaterialPath = "Assets/Materials/SpellBallOrb.mat";
-    private const string WhisperModelPath = "Whisper/ggml-base-q5_1.bin";
 
     private static readonly Vector3[] ScrollSpawnPositions =
     {
@@ -29,13 +28,17 @@ public static class SpellSystemSetup
         new Vector3(-2f, 0.05f, -5f),
     };
 
+    private const string VoskModelFolder = "VoskModel/vosk-model-small-fr-0.22";
+
     [MenuItem("Tools/TinyAddict/Setup Spell Scrolls")]
     public static void Setup()
     {
-        if (System.IO.File.Exists(Application.streamingAssetsPath + "/" + WhisperModelPath) == false)
+        if (System.IO.Directory.Exists(System.IO.Path.Combine(Application.streamingAssetsPath, VoskModelFolder)) == false)
         {
-            Debug.LogWarning($"[SpellSystemSetup] Modèle Whisper introuvable : StreamingAssets/{WhisperModelPath} — la reconnaissance vocale ne marchera pas.");
+            Debug.LogWarning($"[SpellSystemSetup] Modèle Vosk introuvable : StreamingAssets/{VoskModelFolder} — la reconnaissance vocale ne marchera pas.");
         }
+
+        ConfigureVoskPlugins();
 
         var ballPrefab = CreateSpellBallPrefab();
         var scrollPrefab = CreateScrollPrefab();
@@ -43,6 +46,37 @@ public static class SpellSystemSetup
         SetupScene(scrollPrefab);
         AssetDatabase.SaveAssets();
         Debug.Log("[SpellSystemSetup] Terminé : prefabs créés, joueur câblé, scène configurée.");
+    }
+
+    // PLUGINS VOSK
+
+    private static void ConfigureVoskPlugins()
+    {
+        // Natives Windows x64 (libvosk + runtime MinGW)
+        foreach (string dll in new[] { "libvosk.dll", "libstdc++-6.dll", "libwinpthread-1.dll", "libgcc_s_seh-1.dll" })
+        {
+            ConfigureNativePlugin($"Assets/Plugins/Vosk/win-x64/{dll}", BuildTarget.StandaloneWindows64, "Windows");
+        }
+
+        // Native macOS (dylib universel Intel + Apple Silicon)
+        ConfigureNativePlugin("Assets/Plugins/Vosk/osx/libvosk.dylib", BuildTarget.StandaloneOSX, "OSX");
+    }
+
+    private static void ConfigureNativePlugin(string assetPath, BuildTarget target, string editorOs)
+    {
+        var importer = AssetImporter.GetAtPath(assetPath) as PluginImporter;
+        if (importer == null)
+        {
+            Debug.LogWarning($"[SpellSystemSetup] Plugin introuvable : {assetPath}");
+            return;
+        }
+
+        importer.SetCompatibleWithAnyPlatform(false);
+        importer.SetCompatibleWithPlatform(target, true);
+        // Aussi utilisé dans l'éditeur, mais uniquement sur l'OS correspondant
+        importer.SetCompatibleWithEditor(true);
+        importer.SetEditorData("OS", editorOs);
+        importer.SaveAndReimport();
     }
 
     // PREFABS
@@ -204,27 +238,22 @@ public static class SpellSystemSetup
         {
             if (runner.GetComponent<IncantationRecorder>() == null)
                 runner.gameObject.AddComponent<IncantationRecorder>();
+
+            // Purge des éventuels scripts manquants laissés par l'ancien système Whisper
+            GameObjectUtility.RemoveMonoBehavioursWithMissingScript(runner.gameObject);
         }
         else
         {
             Debug.LogWarning("[SpellSystemSetup] Runner avec Recorder introuvable — lancez d'abord le setup du vocal spatial.");
         }
 
-        var whisper = Object.FindFirstObjectByType<WhisperManager>(FindObjectsInactive.Include);
-        if (whisper == null)
+        // L'ancien WhisperManager de scène n'a plus lieu d'être
+        var oldWhisperGo = GameObject.Find("WhisperManager");
+        if (oldWhisperGo != null)
         {
-            whisper = new GameObject("WhisperManager").AddComponent<WhisperManager>();
+            Object.DestroyImmediate(oldWhisperGo);
+            Debug.Log("[SpellSystemSetup] Ancien WhisperManager supprimé de la scène.");
         }
-
-        whisper.language = "fr";
-        whisper.initialPrompt = SpellWords.InitialPrompt;
-        // Un seul mot attendu : un segment unique évite les découpages hasardeux
-        whisper.singleSegment = true;
-        var whisperSo = new SerializedObject(whisper);
-        whisperSo.FindProperty("modelPath").stringValue = WhisperModelPath;
-        whisperSo.FindProperty("isModelPathInStreamingAssets").boolValue = true;
-        whisperSo.FindProperty("initOnAwake").boolValue = true;
-        whisperSo.ApplyModifiedPropertiesWithoutUndo();
 
         if (Object.FindFirstObjectByType<SpellScroll>(FindObjectsInactive.Include) == null)
         {

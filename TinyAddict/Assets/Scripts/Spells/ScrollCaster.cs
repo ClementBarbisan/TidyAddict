@@ -1,25 +1,23 @@
+using System;
 using System.Threading.Tasks;
 using Fusion;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using Whisper;
 
 /// <summary>
-/// Côté joueur : porte le parchemin, gère l'incantation (clic gauche maintenu =
-/// enregistrement du micro Photon, relâché = transcription Whisper + comparaison
-/// floue avec le mot du parchemin) et demande au serveur de lancer le sort.
-/// G pour reposer le parchemin. Pendant qu'on tient un parchemin, les autres
-/// interactions des mains (tir, grab) sont bloquées.
+/// Côté joueur : porte le parchemin et gère l'incantation. Clic gauche maintenu =
+/// enregistrement du micro Photon (les autres joueurs entendent l'incantation),
+/// relâché = reconnaissance Vosk en grammaire fermée (seuls les 20 mots de sort
+/// peuvent sortir). Si le mot du parchemin est reconnu, le sort part et le
+/// parchemin disparaît. G pour reposer le parchemin. Pendant qu'on tient un
+/// parchemin, les autres interactions des mains (tir, grab) sont bloquées.
 /// </summary>
 public class ScrollCaster : NetworkBehaviour
 {
     [SerializeField] private Transform _handAnchor;
     [SerializeField] private Transform _castOrigin;
     [SerializeField] private NetworkObject _spellBallPrefab;
-    [SerializeField, Range(0f, 1f)]
-    [Tooltip("Erreur maximale tolérée entre le mot dit et le mot attendu (0 = parfait, 1 = tout accepté)")]
-    private float _errorThreshold = 0.4f;
-    [SerializeField] private float _minRecordSeconds = 0.35f;
+    [SerializeField] private float _minRecordSeconds = 0.3f;
     [SerializeField] private float _maxRecordSeconds = 6f;
 
     [Networked] public SpellScroll HeldScroll { get; set; }
@@ -29,11 +27,17 @@ public class ScrollCaster : NetworkBehaviour
 
     private bool _isRecording;
     private float _recordStartTime;
-    private bool _whisperBusy;
+    private bool _recognitionBusy;
     private string _feedback;
     private float _feedbackUntil;
-    private WhisperManager _whisper;
     private GUIStyle _guiStyle;
+
+    public override void Spawned()
+    {
+        // Précharge le modèle Vosk pour éviter la latence au premier sort
+        if (HasInputAuthority)
+            VoskSpellRecognizer.Preload();
+    }
 
     private void Update()
     {
@@ -52,7 +56,7 @@ public class ScrollCaster : NetworkBehaviour
             return;
         }
 
-        if (_whisperBusy)
+        if (_recognitionBusy)
             return;
 
         if (_isRecording == false && keyboard.gKey.wasPressedThisFrame)
@@ -69,6 +73,12 @@ public class ScrollCaster : NetworkBehaviour
         {
             _ = FinishIncantationAsync();
         }
+    }
+
+    private void OnDestroy()
+    {
+        if (_isRecording)
+            MicMuteControl.ForceTransmit = false;
     }
 
     // INCANTATION
@@ -111,7 +121,7 @@ public class ScrollCaster : NetworkBehaviour
 
         if (duration < _minRecordSeconds)
         {
-            ShowFeedback("Trop court : maintenez le clic et lisez le mot");
+            ShowFeedback("Trop court : maintenez le clic et dites le mot");
             return;
         }
 
@@ -119,66 +129,37 @@ public class ScrollCaster : NetworkBehaviour
         if (expectedWord == null)
             return;
 
-        if (_whisper == null)
-            _whisper = FindFirstObjectByType<WhisperManager>();
-
-        if (_whisper == null)
-        {
-            ShowFeedback("Reconnaissance vocale indisponible");
-            return;
-        }
-
-        _whisperBusy = true;
+        _recognitionBusy = true;
         ShowFeedback("...", 10f);
         try
         {
-            if (_whisper.IsLoaded == false)
-                await _whisper.InitModel();
+            string heard = await VoskSpellRecognizer.RecognizeAsync(samples, tap.SamplingRate);
 
-            // Whisper hallucine sur les clips très courts : on encadre le mot de
-            // silence pour lui donner du contexte et garantir une durée minimale.
-            samples = PadWithSilence(samples, tap.SamplingRate, 0.5f, 2.5f);
-
-            var result = await _whisper.GetTextAsync(samples, tap.SamplingRate, 1);
-            string heard = result != null ? result.Result : string.Empty;
-
-            // Le parchemin a pu disparaître pendant la transcription
-            if (HeldScroll == null)
+            // Le joueur ou le parchemin a pu disparaître pendant la reconnaissance
+            if (Object == null || Object.IsValid == false || HeldScroll == null)
                 return;
 
-            // Vocabulaire fermé : la transcription est rabattue sur le mot de sort
-            // le plus proche parmi les 20 — on valide si c'est celui du parchemin.
-            float expectedError = SpellWords.MatchError(heard, expectedWord);
-            int closestIndex = SpellWords.FindClosest(heard, out float closestError);
-            bool closestIsExpected = closestIndex >= 0 && SpellWords.Words[closestIndex] == expectedWord;
+            // La grammaire fermée renvoie exactement un de nos mots (ou [unk])
+            bool matched = heard != null &&
+                Array.Exists(heard.Split(' '), token => string.Equals(token, expectedWord, StringComparison.OrdinalIgnoreCase));
 
-            if (expectedError <= _errorThreshold || (closestIsExpected && closestError <= _errorThreshold + 0.2f))
+            if (matched)
             {
                 ShowFeedback($"« {expectedWord.ToUpperInvariant()} » — sort lancé !");
                 RPC_CastSpell();
             }
             else
             {
-                string cleaned = SpellWords.Normalize(heard);
-                string closestWord = closestIndex >= 0 ? SpellWords.Words[closestIndex] : "?";
-                ShowFeedback(cleaned.Length == 0
-                    ? "Je n'ai rien entendu, réessayez"
-                    : $"Raté... j'ai entendu « {cleaned} » (plus proche de « {closestWord} »)");
+                string cleaned = heard?.Replace("[unk]", "").Trim();
+                ShowFeedback(string.IsNullOrEmpty(cleaned)
+                    ? "Mot non reconnu — réessayez en articulant"
+                    : $"Raté... j'ai entendu « {cleaned} »");
             }
         }
         finally
         {
-            _whisperBusy = false;
+            _recognitionBusy = false;
         }
-    }
-
-    private static float[] PadWithSilence(float[] samples, int sampleRate, float padSeconds, float minTotalSeconds)
-    {
-        int pad = (int)(sampleRate * padSeconds);
-        int total = Mathf.Max(samples.Length + pad * 2, (int)(sampleRate * minTotalSeconds));
-        var padded = new float[total];
-        samples.CopyTo(padded, pad);
-        return padded;
     }
 
     // RPCs (client → serveur)
@@ -238,8 +219,8 @@ public class ScrollCaster : NetworkBehaviour
         if (HeldScroll != null)
         {
             line = _isRecording
-                ? $"<color=red>●</color> Prononcez : <color=yellow>{HeldScroll.Word.ToUpperInvariant()}</color> (relâchez pour valider)"
-                : $"Parchemin : <color=yellow>{HeldScroll.Word.ToUpperInvariant()}</color> — maintenez clic gauche et lisez le mot • G pour reposer";
+                ? $"<color=red>●</color> Dites : <color=yellow>{HeldScroll.Word.ToUpperInvariant()}</color> (relâchez pour valider)"
+                : $"Parchemin : <color=yellow>{HeldScroll.Word.ToUpperInvariant()}</color> — maintenez clic gauche et dites le mot • G pour reposer";
         }
 
         if (Time.time < _feedbackUntil && string.IsNullOrEmpty(_feedback) == false)
@@ -252,7 +233,6 @@ public class ScrollCaster : NetworkBehaviour
 
         var rect = new Rect(0f, Screen.height * 0.72f, Screen.width, 60f);
 
-        // Ombre pour la lisibilité
         var shadow = rect;
         shadow.x += 1f;
         shadow.y += 1f;
