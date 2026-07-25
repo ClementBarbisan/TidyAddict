@@ -17,11 +17,14 @@ public class GameState : NetworkBehaviour
     [SerializeField] private int _requiredPlayers = 4;
     [SerializeField] private float _matchSeconds = 300f;
 
-    // Zones de collecte (boîtes centrées sur ces points) — les visuels de la
-    // scène sont créés par le setup éditeur aux mêmes positions
+    // Position/taille de secours si aucun CollectionZoneMarker n'est trouvé
+    // dans la scène (normalement les rectangles colorés portent le marqueur)
     [SerializeField] private Vector3 _redZoneCenter = new Vector3(-12f, 1f, 0f);
     [SerializeField] private Vector3 _blueZoneCenter = new Vector3(12f, 1f, 0f);
     [SerializeField] private Vector3 _zoneHalfExtents = new Vector3(4f, 2f, 4f);
+
+    private CollectionZoneMarker _redZoneMarker;
+    private CollectionZoneMarker _blueZoneMarker;
 
     [Networked] public NetworkBool GameStarted { get; set; }
     [Networked] public NetworkBool GameEnded { get; set; }
@@ -98,8 +101,9 @@ public class GameState : NetworkBehaviour
         // Comptage des zones ~4 fois par seconde, inutile de le faire à chaque tick
         if (Runner.Tick % 16 == 0)
         {
-            RedCollected = CountCollectiblesInZone(_redZoneCenter);
-            BlueCollected = CountCollectiblesInZone(_blueZoneCenter);
+            RefreshZoneMarkers();
+            RedCollected = CountCollectiblesInZone(_redZoneMarker, _redZoneCenter);
+            BlueCollected = CountCollectiblesInZone(_blueZoneMarker, _blueZoneCenter);
         }
 
         if (MatchTimer.Expired(Runner))
@@ -107,8 +111,9 @@ public class GameState : NetworkBehaviour
             GameEnded = true;
 
             // Dernier comptage pour le verdict
-            RedCollected = CountCollectiblesInZone(_redZoneCenter);
-            BlueCollected = CountCollectiblesInZone(_blueZoneCenter);
+            RefreshZoneMarkers();
+            RedCollected = CountCollectiblesInZone(_redZoneMarker, _redZoneCenter);
+            BlueCollected = CountCollectiblesInZone(_blueZoneMarker, _blueZoneCenter);
 
             if (RedCollected > BlueCollected)
                 WinnerTeam = (int)Team.Red;
@@ -119,10 +124,27 @@ public class GameState : NetworkBehaviour
         }
     }
 
-    private int CountCollectiblesInZone(Vector3 center)
+    private void RefreshZoneMarkers()
     {
+        if (_redZoneMarker != null && _blueZoneMarker != null)
+            return;
+
+        foreach (var marker in FindObjectsByType<CollectionZoneMarker>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+        {
+            if (marker.Team == Team.Red)
+                _redZoneMarker = marker;
+            else if (marker.Team == Team.Blue)
+                _blueZoneMarker = marker;
+        }
+    }
+
+    private int CountCollectiblesInZone(CollectionZoneMarker marker, Vector3 fallbackCenter)
+    {
+        Vector3 center = marker != null ? marker.Center : fallbackCenter;
+        Vector3 halfExtents = marker != null ? marker.HalfExtents : _zoneHalfExtents;
+
         var counted = new HashSet<GameObject>();
-        var hits = Physics.OverlapBox(center, _zoneHalfExtents, Quaternion.identity, ~0, QueryTriggerInteraction.Ignore);
+        var hits = Physics.OverlapBox(center, halfExtents, Quaternion.identity, ~0, QueryTriggerInteraction.Ignore);
 
         foreach (var hit in hits)
         {
@@ -134,11 +156,4 @@ public class GameState : NetworkBehaviour
         return counted.Count;
     }
 
-    private void OnDrawGizmosSelected()
-    {
-        Gizmos.color = new Color(1f, 0.3f, 0.25f, 0.5f);
-        Gizmos.DrawWireCube(_redZoneCenter, _zoneHalfExtents * 2f);
-        Gizmos.color = new Color(0.3f, 0.55f, 1f, 0.5f);
-        Gizmos.DrawWireCube(_blueZoneCenter, _zoneHalfExtents * 2f);
-    }
 }
