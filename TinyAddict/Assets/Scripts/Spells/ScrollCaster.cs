@@ -19,6 +19,9 @@ public class ScrollCaster : NetworkBehaviour
     [SerializeField] private NetworkObject _spellBallPrefab;
     [SerializeField] private float _minRecordSeconds = 0.3f;
     [SerializeField] private float _maxRecordSeconds = 6f;
+    [SerializeField, Range(0f, 1f)]
+    [Tooltip("Marge d'erreur tolérée entre le mot entendu et le mot attendu (0 = strict, 1 = tout accepté)")]
+    private float _errorThreshold = 0.35f;
 
     [Networked] public SpellScroll HeldScroll { get; set; }
 
@@ -133,27 +136,46 @@ public class ScrollCaster : NetworkBehaviour
         ShowFeedback("...", 10f);
         try
         {
-            string heard = await VoskSpellRecognizer.RecognizeAsync(samples, tap.SamplingRate);
+            var alternatives = await VoskSpellRecognizer.RecognizeAsync(samples, tap.SamplingRate);
 
             // Le joueur ou le parchemin a pu disparaître pendant la reconnaissance
             if (Object == null || Object.IsValid == false || HeldScroll == null)
                 return;
 
-            // La grammaire fermée renvoie exactement un de nos mots (ou [unk])
-            bool matched = heard != null &&
-                Array.Exists(heard.Split(' '), token => string.Equals(token, expectedWord, StringComparison.OrdinalIgnoreCase));
+            // Marge d'erreur : on garde la meilleure hypothèse (correspondance
+            // exacte = 0, sinon proximité Levenshtein token par token)
+            float bestError = 1f;
+            string bestHeard = null;
 
-            if (matched)
+            foreach (string alternative in alternatives)
+            {
+                foreach (string token in alternative.Split(' '))
+                {
+                    if (token.Length == 0 || token == "[unk]")
+                        continue;
+
+                    float error = SpellWords.MatchError(token.ToLowerInvariant(), expectedWord);
+                    if (error < bestError)
+                    {
+                        bestError = error;
+                        bestHeard = token;
+                    }
+                }
+            }
+
+            Debug.Log($"[ScrollCaster] attendu « {expectedWord} », entendu « {bestHeard ?? "(rien)"} » " +
+                      $"(erreur {bestError:F2} / seuil {_errorThreshold:F2}) — hypothèses : {string.Join(" | ", alternatives)}");
+
+            if (bestError <= _errorThreshold)
             {
                 ShowFeedback($"« {expectedWord.ToUpperInvariant()} » — sort lancé !");
                 RPC_CastSpell();
             }
             else
             {
-                string cleaned = heard?.Replace("[unk]", "").Trim();
-                ShowFeedback(string.IsNullOrEmpty(cleaned)
+                ShowFeedback(bestHeard == null
                     ? "Mot non reconnu — réessayez en articulant"
-                    : $"Raté... j'ai entendu « {cleaned} »");
+                    : $"Raté... j'ai entendu « {bestHeard} »");
             }
         }
         finally
