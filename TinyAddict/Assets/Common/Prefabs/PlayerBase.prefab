@@ -794,6 +794,7 @@ GameObject:
   - component: {fileID: 6887230146135067273}
   - component: {fileID: 6333160310831806214}
   - component: {fileID: 5947192473664987860}
+  - component: {fileID: 7629328886242818910}
   m_Layer: 0
   m_Name: PlayerBase
   m_TagString: Untagged
@@ -844,6 +845,7 @@ MonoBehaviour:
   - {fileID: 6887230146135067273}
   - {fileID: 6333160310831806214}
   - {fileID: 5947192473664987860}
+  - {fileID: 7629328886242818910}
   - {fileID: 6452215950440311741}
   ForceRemoteRenderTimeframe: 0
 --- !u!114 &4726586567304971162
@@ -971,6 +973,7 @@ MonoBehaviour:
   _spellBallPrefab: {fileID: 3044970036757127736, guid: 8acc3df215c96554eb49d3a77b977b7d, type: 3}
   _iceZonePrefab: {fileID: 1184266125318369186, guid: 564bf2b22fb1d724ba02801071d959de, type: 3}
   _buffSeconds: 30
+  _stunSeconds: 10
   _minRecordSeconds: 0.3
   _maxRecordSeconds: 6
   _errorThreshold: 0.35
@@ -993,6 +996,26 @@ MonoBehaviour:
   _shrinkForceMultiplier: 0.3
   _shrinkScale: 0.4
   _shrinkVoicePitch: 1.6
+  _growScale: 1.5
+  _growVoicePitch: 0.7
+--- !u!114 &7629328886242818910
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7257134546093304133}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 20284260342fa4060bc6c2caf0c52042, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerProfile
+  _nameTagHeight: 2.2
+  _Nickname:
+    _length: 0
+    _data:
+      Data: 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+  _Team: 0
 --- !u!1 &7506615589450884436
 GameObject:
   m_ObjectHideFlags: 0
