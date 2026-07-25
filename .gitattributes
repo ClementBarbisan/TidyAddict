@@ -1,0 +1,69 @@
+###############################################################################
+# Unity - Text files
+###############################################################################
+
+*.cs text diff=csharp
+*.shader text
+*.compute text
+*.cginc text
+*.hlsl text
+*.json text
+*.asmdef text
+*.asmref text
+*.meta text
+*.unity text
+*.prefab text
+*.mat text
+*.anim text
+*.controller text
+*.overrideController text
+*.playable text
+*.physicMaterial text
+*.physicsMaterial2D text
+*.asset text
+*.uxml text
+*.uss text
+
+###############################################################################
+# Git LFS - Binary assets
+###############################################################################
+
+# Images
+*.psd filter=lfs diff=lfs merge=lfs -text
+*.tga filter=lfs diff=lfs merge=lfs -text
+*.png filter=lfs diff=lfs merge=lfs -text
+*.jpg filter=lfs diff=lfs merge=lfs -text
+*.exr filter=lfs diff=lfs merge=lfs -text
+*.hdr filter=lfs diff=lfs merge=lfs -text
+
+# 3D Models
+*.fbx filter=lfs diff=lfs merge=lfs -text
+*.obj filter=lfs diff=lfs merge=lfs -text
+*.blend filter=lfs diff=lfs merge=lfs -text
+*.anim filter=lfs diff=lfs merge=lfs -text
+*.abc filter=lfs diff=lfs merge=lfs -text
+
+# Audio
+*.wav filter=lfs diff=lfs merge=lfs -text
+*.mp3 filter=lfs diff=lfs merge=lfs -text
+*.ogg filter=lfs diff=lfs merge=lfs -text
+
+# Video
+*.mp4 filter=lfs diff=lfs merge=lfs -text
+*.mov filter=lfs diff=lfs merge=lfs -text
+
+# XR specific heavy files (lightmaps, baked data)
+*.lighting filter=lfs diff=lfs merge=lfs -text
+*.lightmap filter=lfs diff=lfs merge=lfs -text
+
+# Raw binary assets
+*.bytes filter=lfs diff=lfs merge=lfs -text
+
+###############################################################################
+# Unity Smart Merge
+###############################################################################
+
+*.unity merge=unityyamlmerge
+*.prefab merge=unityyamlmerge
+*.anim merge=unityyamlmerge
+*.controller merge=unityyamlmerge
