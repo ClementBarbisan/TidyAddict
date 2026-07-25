@@ -64,6 +64,9 @@ public class PlayerGrabbing : NetworkBehaviour
 
     private void TryApplyForce(bool isPush)
     {
+        if (!_canApplyForce)
+            return;
+        
         Vector3 rayOrigin = _cam != null ? _cam.position : transform.position + Vector3.up;
         Vector3 rayDirection = _cam != null ? _cam.forward : transform.forward;
         
@@ -94,11 +97,12 @@ public class PlayerGrabbing : NetworkBehaviour
     private void RPC_ApplyForce(NetworkRigidbody targetNRB, Vector3 force)
     {
         Debug.Log("Apply force.");
-        if (targetNRB != null && targetNRB.PhysicsBody != null && _canApplyForce)
+        if (targetNRB != null && targetNRB.PhysicsBody != null)
         {
             // Le serveur applique la force sur le Rigidbody
             // NetworkRigidbody se chargera de synchroniser le mouvement chez TOUS les clients
             targetNRB.PhysicsBody.AddForce(force);
+            _canApplyForce = false;
         }
     }
 }
