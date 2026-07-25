@@ -3,23 +3,21 @@ using Fusion;
 using UnityEngine;
 
 /// <summary>
-/// Maintient un nombre constant de parchemins en jeu, côté serveur uniquement.
-/// Le stock initial apparaît au démarrage de la session à des positions
-/// aléatoires dans la zone ; quand un parchemin est consommé par un sort,
-/// un nouveau réapparaît ailleurs après un court délai.
+/// Fait vivre les parchemins sur les ScrollSpawnPoint placés dans la scène :
+/// un parchemin par point au lancement de la partie, et quand l'un est
+/// consommé par un sort, un nouveau réapparaît sur son point après un délai
+/// (avec un mot/sort aléatoire). Côté serveur uniquement.
 /// À placer sur le GameObject du NetworkRunner.
 /// </summary>
 public class SpellScrollSpawner : SimulationBehaviour
 {
     [SerializeField] private NetworkObject _scrollPrefab;
-    [SerializeField] private int _scrollCount = 5;
-    [SerializeField] private Vector3 _areaCenter = new Vector3(0f, 0.05f, 0f);
-    [SerializeField] private Vector2 _areaSize = new Vector2(14f, 14f);
     [SerializeField] private float _respawnDelay = 3f;
 
-    private readonly List<NetworkObject> _scrolls = new List<NetworkObject>(16);
-    private TickTimer _respawnTimer;
-    private bool _initialSpawnDone;
+    private ScrollSpawnPoint[] _points;
+    private readonly Dictionary<ScrollSpawnPoint, NetworkObject> _scrollByPoint = new Dictionary<ScrollSpawnPoint, NetworkObject>(16);
+    private readonly Dictionary<ScrollSpawnPoint, TickTimer> _respawnByPoint = new Dictionary<ScrollSpawnPoint, TickTimer>(16);
+    private bool _warnedNoPoints;
 
     public override void FixedUpdateNetwork()
     {
@@ -30,50 +28,54 @@ public class SpellScrollSpawner : SimulationBehaviour
         if (GameState.Instance == null || GameState.Instance.IsStarted == false || GameState.Instance.IsEnded)
             return;
 
-        // Les parchemins consommés (despawnés) deviennent null
-        _scrolls.RemoveAll(scroll => scroll == null);
-
-        if (_initialSpawnDone == false)
+        if (_points == null || _points.Length == 0)
         {
-            _initialSpawnDone = true;
-            while (_scrolls.Count < _scrollCount)
-                SpawnScroll();
-            return;
+            _points = FindObjectsByType<ScrollSpawnPoint>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            if (_points.Length == 0)
+            {
+                if (_warnedNoPoints == false)
+                {
+                    _warnedNoPoints = true;
+                    Debug.LogWarning("[SpellScrollSpawner] Aucun ScrollSpawnPoint dans la scène — aucun parchemin ne spawnera.");
+                }
+                return;
+            }
         }
 
-        if (_scrolls.Count >= _scrollCount)
+        foreach (var point in _points)
         {
-            _respawnTimer = default;
-            return;
-        }
+            if (point == null)
+                continue;
 
-        // Un parchemin manque : on arme le délai, puis on respawn à expiration
-        if (_respawnTimer.IsRunning == false)
-        {
-            _respawnTimer = TickTimer.CreateFromSeconds(Runner, _respawnDelay);
-            return;
-        }
+            // Le parchemin de ce point est toujours vivant (au sol ou en main)
+            if (_scrollByPoint.TryGetValue(point, out var scroll) && scroll != null)
+                continue;
 
-        if (_respawnTimer.Expired(Runner))
-        {
-            SpawnScroll();
-            _respawnTimer = default;
+            bool neverSpawned = _scrollByPoint.ContainsKey(point) == false;
+            if (neverSpawned)
+            {
+                SpawnAt(point);
+                continue;
+            }
+
+            // Parchemin consommé : on arme le délai, puis on respawn sur le point
+            if (_respawnByPoint.TryGetValue(point, out var timer) == false || timer.IsRunning == false)
+            {
+                _respawnByPoint[point] = TickTimer.CreateFromSeconds(Runner, _respawnDelay);
+                continue;
+            }
+
+            if (timer.Expired(Runner))
+            {
+                _respawnByPoint.Remove(point);
+                SpawnAt(point);
+            }
         }
     }
 
-    private void SpawnScroll()
+    private void SpawnAt(ScrollSpawnPoint point)
     {
-        var position = _areaCenter + new Vector3(
-            Random.Range(-_areaSize.x * 0.5f, _areaSize.x * 0.5f),
-            0f,
-            Random.Range(-_areaSize.y * 0.5f, _areaSize.y * 0.5f));
-
-        _scrolls.Add(Runner.Spawn(_scrollPrefab, position, Quaternion.identity));
-    }
-
-    private void OnDrawGizmosSelected()
-    {
-        Gizmos.color = new Color(1f, 0.9f, 0.4f, 0.5f);
-        Gizmos.DrawWireCube(_areaCenter, new Vector3(_areaSize.x, 0.1f, _areaSize.y));
+        var position = point.transform.position + Vector3.up * 0.05f;
+        _scrollByPoint[point] = Runner.Spawn(_scrollPrefab, position, Quaternion.identity);
     }
 }

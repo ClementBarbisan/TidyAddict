@@ -80,15 +80,17 @@ namespace Projectiles
 
         public override void Render()
         {
-            if (HasInputAuthority == false)
-                return;
+            // Look rotation locale uniquement pour le joueur qu'on contrôle
+            // (les autres sont interpolés automatiquement par Fusion)
+            if (HasInputAuthority)
+            {
+                _kcc.SetLookRotation(_input.LookRotation, -90f, 90f);
+            }
 
-            // Set the absolute look rotation for Render so the camera reacts every rendered frame.
-            _kcc.SetLookRotation(_input.LookRotation, -90f, 90f);
-            
+            // Ceci doit s'exécuter pour TOUS les joueurs (local + distants)
             _animator.SetFloat(X, _animMoveVelocity.x);
             _animator.SetFloat(Y, _animMoveVelocity.y);
-            
+
             if (_jumpTriggerCount != _renderedJumpTriggerCount)
             {
                 _renderedJumpTriggerCount = _jumpTriggerCount;

@@ -371,6 +371,7 @@ public static class SpellSystemSetup
         }
 
         CreateCollectionZoneVisuals();
+        CreateScrollSpawnPoints();
 
         // Supprime les parchemins posés en scène (source des ramassages impossibles) :
         // ils sont désormais spawnés à l'exécution par le SpellScrollSpawner
@@ -386,23 +387,65 @@ public static class SpellSystemSetup
         EditorSceneManager.SaveScene(scene);
     }
 
+    // Points de spawn des parchemins : déplaçables librement dans la scène,
+    // le SpellScrollSpawner fait vivre un parchemin par point
+    private static void CreateScrollSpawnPoints()
+    {
+        if (Object.FindFirstObjectByType<ScrollSpawnPoint>(FindObjectsInactive.Include) != null)
+            return;
+
+        var parent = new GameObject("ScrollSpawnPoints").transform;
+        var positions = new[]
+        {
+            new Vector3(3f, 0.05f, 4f),
+            new Vector3(-4f, 0.05f, 3f),
+            new Vector3(6f, 0.05f, -2f),
+            new Vector3(-2f, 0.05f, -5f),
+            new Vector3(0f, 0.05f, 7f),
+        };
+
+        for (int i = 0; i < positions.Length; i++)
+        {
+            var point = new GameObject($"ScrollSpawnPoint ({i + 1})");
+            point.transform.SetParent(parent, false);
+            point.transform.position = positions[i];
+            point.AddComponent<ScrollSpawnPoint>();
+        }
+
+        Debug.Log($"[SpellSystemSetup] {positions.Length} points de spawn de parchemins créés — déplacez-les librement dans la scène.");
+    }
+
     // Visuels des zones de collecte (purement locaux : le comptage est fait par
     // GameState avec les mêmes centres/tailles que ses valeurs par défaut)
     private static void CreateCollectionZoneVisuals()
     {
         CreateZoneVisual("ZoneCollecteRouge", new Vector3(-12f, 0f, 0f), new Color(1f, 0.3f, 0.25f, 0.35f),
-            "Assets/Materials/ZoneCollecteRouge.mat");
+            "Assets/Materials/ZoneCollecteRouge.mat", Team.Red);
         CreateZoneVisual("ZoneCollecteBleue", new Vector3(12f, 0f, 0f), new Color(0.3f, 0.55f, 1f, 0.35f),
-            "Assets/Materials/ZoneCollecteBleue.mat");
+            "Assets/Materials/ZoneCollecteBleue.mat", Team.Blue);
     }
 
-    private static void CreateZoneVisual(string name, Vector3 position, Color color, string materialPath)
+    private static void CreateZoneVisual(string name, Vector3 position, Color color, string materialPath, Team team)
     {
-        if (GameObject.Find(name) != null)
+        var existingZone = GameObject.Find(name);
+        if (existingZone != null)
+        {
+            // Zone déjà créée par une version précédente : on s'assure qu'elle
+            // porte le marqueur qui pilote la zone de comptage
+            var existingMarker = existingZone.GetComponent<CollectionZoneMarker>();
+            if (existingMarker == null)
+            {
+                existingMarker = existingZone.AddComponent<CollectionZoneMarker>();
+                existingMarker.Team = team;
+                Debug.Log($"[SpellSystemSetup] CollectionZoneMarker ajouté sur {name}.");
+            }
             return;
+        }
 
         var root = new GameObject(name);
         root.transform.position = position;
+        var marker = root.AddComponent<CollectionZoneMarker>();
+        marker.Team = team;
 
         var disc = GameObject.CreatePrimitive(PrimitiveType.Cube);
         disc.name = "Visual";
