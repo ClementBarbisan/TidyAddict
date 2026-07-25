@@ -11,9 +11,12 @@ public class PlayerGrabbing : NetworkBehaviour
 
     private bool _pressedOldPush, _pressedOldPull;
     private Transform _cam;
+    private ScrollCaster _scrollCaster;
 
     private void Start()
     {
+        _scrollCaster = GetComponent<ScrollCaster>();
+
         if (pullAction != null) pullAction.action.Enable();
         if (pushAction != null) pushAction.action.Enable();
 
@@ -27,6 +30,9 @@ public class PlayerGrabbing : NetworkBehaviour
     {
         // On ne lit les inputs locaux que si l'on a l'autorité sur le joueur (le joueur local)
         if (!HasInputAuthority) return;
+
+        // Parchemin en main : pas d'autre interaction avec les mains
+        if (_scrollCaster != null && _scrollCaster.IsHoldingScroll) return;
 
         bool isPullPressed = pullAction != null && pullAction.action.IsPressed();
         bool isPushPressed = pushAction != null && pushAction.action.IsPressed();

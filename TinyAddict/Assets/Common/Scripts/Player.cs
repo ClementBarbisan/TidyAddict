@@ -25,6 +25,7 @@ namespace Projectiles
         private WeaponBase _weapon;
         private PlayerInput _input;
         private Transform _cameraTransform;
+        private ScrollCaster _scrollCaster;
 
         // NetworkBehaviour INTERFACE
 
@@ -75,6 +76,7 @@ namespace Projectiles
             _weapon = GetComponentInChildren<WeaponBase>();
             _kcc = GetComponent<SimpleKCC>();
             _input = GetComponent<PlayerInput>();
+            _scrollCaster = GetComponent<ScrollCaster>();
             _kcc.SetGravity(-20f);
         }
 
@@ -125,7 +127,10 @@ namespace Projectiles
             Vector2 pitchRotation = _kcc.GetLookRotation(true, false);
             _cameraPivot.localRotation = Quaternion.Euler(pitchRotation);
 
-            if (input.Buttons.WasPressed(_lastButtonsInput, EInputButtons.Fire) && _weapon.isActiveAndEnabled)
+            // Parchemin en main : le clic gauche sert à l'incantation, pas au tir
+            bool handsBusy = _scrollCaster != null && _scrollCaster.IsHoldingScroll;
+
+            if (handsBusy == false && input.Buttons.WasPressed(_lastButtonsInput, EInputButtons.Fire) && _weapon.isActiveAndEnabled)
             {
                 _weapon.Fire();
             }
