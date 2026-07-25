@@ -19,6 +19,7 @@ public class ScrollCaster : NetworkBehaviour
     [SerializeField] private NetworkObject _spellBallPrefab;
     [SerializeField] private NetworkObject _iceZonePrefab;
     [SerializeField] private float _buffSeconds = 30f;
+    [SerializeField] private float _stunSeconds = 10f;
     [SerializeField] private float _minRecordSeconds = 0.3f;
     [SerializeField] private float _maxRecordSeconds = 6f;
     [SerializeField, Range(0f, 1f)]
@@ -93,7 +94,7 @@ public class ScrollCaster : NetworkBehaviour
         if (HeldScroll != null)
         {
             var spellType = SpellWords.TypeOf(HeldScroll.WordIndex);
-            if (spellType == SpellType.Confusion || spellType == SpellType.Shrink)
+            if (spellType == SpellType.Confusion || spellType == SpellType.Shrink || spellType == SpellType.Stun)
                 target = FindTargetPlayer();
         }
 
@@ -310,6 +311,13 @@ public class ScrollCaster : NetworkBehaviour
                 var target = FindTargetPlayer();
                 if (target != null)
                     target.ApplyShrink(_buffSeconds);
+                break;
+            }
+            case SpellType.Stun:
+            {
+                var target = FindTargetPlayer();
+                if (target != null)
+                    target.ApplyStun(_stunSeconds);
                 break;
             }
         }

@@ -111,6 +111,11 @@ namespace Projectiles
             // Direction horizontale
             Vector2 moveDirection = input.MoveDirection;
 
+            // Sort electra : paralysé, aucun déplacement volontaire
+            bool isStunned = _spellEffects != null && _spellEffects.IsStunned;
+            if (isStunned)
+                moveDirection = Vector2.zero;
+
             // Sort vertigo : les touches de déplacement sont inversées
             if (_spellEffects != null && _spellEffects.IsConfused)
                 moveDirection = -moveDirection;
@@ -122,7 +127,7 @@ namespace Projectiles
             // Gestion du saut/gravité (vélocité verticale gérée manuellement)
             if (_kcc.IsGrounded)
             {
-                if (input.Buttons.WasPressed(_lastButtonsInput, EInputButtons.Jump))
+                if (isStunned == false && input.Buttons.WasPressed(_lastButtonsInput, EInputButtons.Jump))
                 {
                     jumpImpulse = _jumpImpulse;
                 }
