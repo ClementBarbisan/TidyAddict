@@ -26,6 +26,10 @@ public class SpellScrollSpawner : SimulationBehaviour
         if (Runner.IsServer == false || _scrollPrefab == null)
             return;
 
+        // Pas de parchemins tant que la partie n'est pas lancée depuis le lobby
+        if (GameState.Instance == null || GameState.Instance.IsStarted == false)
+            return;
+
         // Les parchemins consommés (despawnés) deviennent null
         _scrolls.RemoveAll(scroll => scroll == null);
 
