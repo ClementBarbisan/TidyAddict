@@ -36,6 +36,8 @@ public class ScrollCaster : NetworkBehaviour
     private string _feedback;
     private float _feedbackUntil;
     private GUIStyle _guiStyle;
+    private GameObject _targetHighlight;
+    private Material _targetHighlightMaterial;
 
     public override void Spawned()
     {
@@ -53,6 +55,8 @@ public class ScrollCaster : NetworkBehaviour
         var keyboard = Keyboard.current;
         if (mouse == null || keyboard == null)
             return;
+
+        UpdateTargetHighlight();
 
         if (HeldScroll == null)
         {
@@ -80,8 +84,59 @@ public class ScrollCaster : NetworkBehaviour
         }
     }
 
+    // SURBRILLANCE DE LA CIBLE (locale, visible uniquement par le lanceur)
+
+    private void UpdateTargetHighlight()
+    {
+        PlayerSpellEffects target = null;
+
+        if (HeldScroll != null)
+        {
+            var spellType = SpellWords.TypeOf(HeldScroll.WordIndex);
+            if (spellType == SpellType.Confusion || spellType == SpellType.Shrink)
+                target = FindTargetPlayer();
+        }
+
+        if (target == null)
+        {
+            if (_targetHighlight != null && _targetHighlight.activeSelf)
+                _targetHighlight.SetActive(false);
+            return;
+        }
+
+        if (_targetHighlight == null)
+            CreateTargetHighlight();
+
+        _targetHighlight.SetActive(true);
+
+        // Couleur du sort tenu
+        Color color = SpellWords.ColorOf(HeldScroll.WordIndex);
+        _targetHighlightMaterial.SetColor("_BaseColor", color);
+        _targetHighlightMaterial.SetColor("_EmissionColor", color * 3f);
+
+        // Anneau pulsant aux pieds de la cible
+        float pulse = 1.5f + Mathf.Sin(Time.time * 6f) * 0.2f;
+        _targetHighlight.transform.position = target.transform.position + Vector3.up * 0.05f;
+        _targetHighlight.transform.localScale = new Vector3(pulse, 0.03f, pulse);
+    }
+
+    private void CreateTargetHighlight()
+    {
+        _targetHighlight = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        _targetHighlight.name = "TargetHighlight";
+        Destroy(_targetHighlight.GetComponent<Collider>());
+
+        _targetHighlightMaterial = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+        _targetHighlightMaterial.EnableKeyword("_EMISSION");
+        _targetHighlight.GetComponent<MeshRenderer>().material = _targetHighlightMaterial;
+    }
+
     private void OnDestroy()
     {
+        if (_targetHighlight != null)
+            Destroy(_targetHighlight);
+        if (_targetHighlightMaterial != null)
+            Destroy(_targetHighlightMaterial);
         if (_isRecording)
             MicMuteControl.ForceTransmit = false;
     }
