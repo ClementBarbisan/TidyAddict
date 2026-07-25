@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 2271637303154691994}
   - component: {fileID: 7773495907340052561}
   - component: {fileID: 3504711828982160518}
+  - component: {fileID: 1462729614615727756}
   m_Layer: 0
   m_Name: GameState
   m_TagString: Untagged
@@ -52,6 +53,7 @@ MonoBehaviour:
   NestedObjects: []
   NetworkedBehaviours:
   - {fileID: 3504711828982160518}
+  - {fileID: 1462729614615727756}
   ForceRemoteRenderTimeframe: 0
 --- !u!114 &3504711828982160518
 MonoBehaviour:
@@ -66,5 +68,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameState
   _requiredPlayers: 4
+  _matchSeconds: 300
+  _redZoneCenter: {x: -12, y: 1, z: 0}
+  _blueZoneCenter: {x: 12, y: 1, z: 0}
+  _zoneHalfExtents: {x: 4, y: 2, z: 4}
   _GameStarted:
     RawValue: 0
+  _GameEnded:
+    RawValue: 0
+  _WinnerTeam: 0
+  _TotalCollectibles: 0
+  _RedCollected: 0
+  _BlueCollected: 0
+--- !u!114 &1462729614615727756
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3014724924875627003}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bf674a6f9b35a4154bd2d05361ded61c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TeamManager
