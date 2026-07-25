@@ -104,6 +104,7 @@ GameObject:
   - component: {fileID: 6719820110007846808}
   - component: {fileID: 1263896726564679932}
   - component: {fileID: 7278962813788343764}
+  - component: {fileID: -5947880890185583228}
   m_Layer: 0
   m_Name: PlayCubeSmall
   m_TagString: Untagged
@@ -147,6 +148,7 @@ MonoBehaviour:
   NetworkedBehaviours:
   - {fileID: 1263896726564679932}
   - {fileID: 7278962813788343764}
+  - {fileID: -5947880890185583228}
   ForceRemoteRenderTimeframe: 0
 --- !u!54 &5932827127344080253
 Rigidbody:
@@ -224,3 +226,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7a5f5bfb5b3b990418879bb5c05dc94a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &-5947880890185583228
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7119359598460323759}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4ead685bbed7945f1befa73c7ec22360, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GrabbableObject

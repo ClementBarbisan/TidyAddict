@@ -5,7 +5,7 @@ using UnityEngine.InputSystem;
 public class GrabObject : NetworkBehaviour
 {
     [SerializeField] private InputActionReference _grab;
-    [SerializeField] private InputActionReference _throw;
+    [SerializeField] private float _forceThrow = 10f;
     private Transform _cam;
     private NetworkObject _obj;
     private PlayerRef _ref;
