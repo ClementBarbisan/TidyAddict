@@ -26,8 +26,8 @@ public class SpellScrollSpawner : SimulationBehaviour
         if (Runner.IsServer == false || _scrollPrefab == null)
             return;
 
-        // Pas de parchemins tant que la partie n'est pas lancée depuis le lobby
-        if (GameState.Instance == null || GameState.Instance.IsStarted == false)
+        // Pas de parchemins avant le lancement depuis le lobby, ni après la fin du match
+        if (GameState.Instance == null || GameState.Instance.IsStarted == false || GameState.Instance.IsEnded)
             return;
 
         // Les parchemins consommés (despawnés) deviennent null
