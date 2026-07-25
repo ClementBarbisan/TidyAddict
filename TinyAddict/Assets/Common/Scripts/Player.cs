@@ -52,7 +52,7 @@ namespace Projectiles
             {
                 var scene = Runner.SimulationUnityScene.GetComponent<Scene>();
                 _cameraTransform = Camera.main.transform;
-
+                TeamManager.Instance.SetPlayerTeam(GetComponent<NetworkObject>().InputAuthority, Team.None);
                 // Look rotation interpolation is skipped for the local player - it is set manually
                 // in Render from the accumulated (absolute) look rotation for a smooth camera.
                 _kcc.Settings.ForcePredictedLookRotation = true;
@@ -149,6 +149,11 @@ namespace Projectiles
             // Direction horizontale
             Vector2 moveDirection = input.MoveDirection;
 
+            // Sort electra : paralysé, aucun déplacement volontaire
+            bool isStunned = _spellEffects != null && _spellEffects.IsStunned;
+            if (isStunned)
+                moveDirection = Vector2.zero;
+
             // Sort vertigo : les touches de déplacement sont inversées
             if (_spellEffects != null && _spellEffects.IsConfused)
                 moveDirection = -moveDirection;
@@ -162,7 +167,7 @@ namespace Projectiles
             // Gestion du saut/gravité (vélocité verticale gérée manuellement)
             if (_kcc.IsGrounded)
             {
-                if (input.Buttons.WasPressed(_lastButtonsInput, EInputButtons.Jump))
+                if (isStunned == false && input.Buttons.WasPressed(_lastButtonsInput, EInputButtons.Jump))
                 {
                     jumpImpulse = _jumpImpulse;
                     _jumpTriggerCount++;

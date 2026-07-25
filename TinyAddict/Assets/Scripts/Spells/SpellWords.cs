@@ -10,6 +10,7 @@ public enum SpellType
     Invisibility,
     Confusion,
     Shrink,
+    Stun,
 }
 
 /// <summary>
@@ -29,6 +30,7 @@ public static class SpellWords
         "anima",    // 4 - invisibilité 30 s
         "vertigo",  // 5 - confusion : touches inversées de la cible 30 s
         "minima",   // 6 - réduction : la cible rapetisse et perd sa force 30 s
+        "electra",  // 7 - électrification : la cible est paralysée 10 s
     };
 
     public static readonly SpellType[] Types =
@@ -40,6 +42,7 @@ public static class SpellWords
         SpellType.Invisibility,
         SpellType.Confusion,
         SpellType.Shrink,
+        SpellType.Stun,
     };
 
     public static readonly Color[] Colors =
@@ -51,6 +54,7 @@ public static class SpellWords
         new Color(0.80f, 0.90f, 0.95f), // anima   - blanc spectral
         new Color(1.00f, 0.35f, 0.75f), // vertigo - rose
         new Color(0.35f, 1.00f, 0.65f), // minima  - vert menthe
+        new Color(1.00f, 0.95f, 0.20f), // electra - jaune éclair
     };
 
     // Affiché sur le parchemin pour savoir ce que fait le sort avant de le lancer
@@ -59,10 +63,11 @@ public static class SpellWords
         "Gèle le sol : ralentit les joueurs proches (sauf vous)",
         "Boule de feu explosive : projette tout à l'impact",
         "Vitesse augmentée pendant 30 s",
-        "Grab et poussée renforcés pendant 30 s",
+        "Vous grandissez : grab et poussée renforcés pendant 30 s",
         "Invisibilité pendant 30 s",
         "Inverse les touches du joueur visé pendant 30 s",
         "Rétrécit le joueur visé : force réduite pendant 30 s",
+        "Électrifie le joueur visé : paralysé pendant 10 s",
     };
 
     public static SpellType TypeOf(int wordIndex)

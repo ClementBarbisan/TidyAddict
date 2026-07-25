@@ -55,6 +55,21 @@ public class VoiceSpeakingIndicator : MonoBehaviour
             if (voiceObject.IsSpeaking == false)
                 continue;
 
+            // Pseudo coloré par équipe si le joueur a rempli son profil au lobby
+            var profile = voiceObject.GetComponentInParent<PlayerProfile>();
+            if (profile != null && profile.HasProfile)
+            {
+                string hex = ColorUtility.ToHtmlStringRGB(profile.TeamColor);
+                float range = DefaultAudibleDistance;
+                var profileSource = voiceObject.SpeakerInUse != null ? voiceObject.SpeakerInUse.GetComponent<AudioSource>() : null;
+                if (profileSource != null)
+                    range = profileSource.maxDistance;
+
+                if (camera == null || Vector3.Distance(listenerPosition, voiceObject.transform.position) <= range)
+                    _speaking.Add($"<color=#{hex}>{profile.Nickname}</color>");
+                continue;
+            }
+
             float audibleDistance = DefaultAudibleDistance;
             if (voiceObject.SpeakerInUse != null)
             {
