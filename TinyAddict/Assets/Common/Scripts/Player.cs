@@ -107,14 +107,14 @@ namespace Projectiles
 
             // Calculate input direction based on recently updated look rotation
             Vector3 inputDirection = _kcc.TransformRotation * new Vector3(input.MoveDirection.x, 0f, input.MoveDirection.y);
-
+            
+            _kcc.Move(inputDirection * _moveSpeed);
+            
             // Jump - only if grounded and button was pressed this tick
             if (input.Buttons.WasPressed(_lastButtonsInput, EInputButtons.Jump) && _kcc.IsGrounded)
             {
-                _kcc.Move(Vector3.up * _jumpImpulse);
+                //_kcc.
             }
-
-            _kcc.Move(inputDirection * _moveSpeed);
 
             // Update fire transform before fire
             Vector2 pitchRotation = _kcc.GetLookRotation(true, false);
