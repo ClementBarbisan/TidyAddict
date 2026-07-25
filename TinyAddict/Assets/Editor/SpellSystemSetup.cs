@@ -20,14 +20,6 @@ public static class SpellSystemSetup
     private const string ParchmentMaterialPath = "Assets/Materials/SpellParchment.mat";
     private const string BallMaterialPath = "Assets/Materials/SpellBallOrb.mat";
 
-    private static readonly Vector3[] ScrollSpawnPositions =
-    {
-        new Vector3(3f, 0.05f, 4f),
-        new Vector3(-4f, 0.05f, 3f),
-        new Vector3(6f, 0.05f, -2f),
-        new Vector3(-2f, 0.05f, -5f),
-    };
-
     private const string VoskModelFolder = "VoskModel/vosk-model-small-fr-0.22";
 
     [MenuItem("Tools/TinyAddict/Setup Spell Scrolls")]
@@ -241,6 +233,16 @@ public static class SpellSystemSetup
 
             // Purge des éventuels scripts manquants laissés par l'ancien système Whisper
             GameObjectUtility.RemoveMonoBehavioursWithMissingScript(runner.gameObject);
+
+            // Les parchemins sont spawnés à l'exécution via Runner.Spawn : plus fiable
+            // que des objets réseau posés en scène (pas de baking de scène en jeu)
+            var spawner = runner.GetComponent<SpellScrollSpawner>();
+            if (spawner == null)
+                spawner = runner.gameObject.AddComponent<SpellScrollSpawner>();
+
+            var spawnerSo = new SerializedObject(spawner);
+            spawnerSo.FindProperty("_scrollPrefab").objectReferenceValue = scrollPrefab.GetComponent<NetworkObject>();
+            spawnerSo.ApplyModifiedPropertiesWithoutUndo();
         }
         else
         {
@@ -255,15 +257,15 @@ public static class SpellSystemSetup
             Debug.Log("[SpellSystemSetup] Ancien WhisperManager supprimé de la scène.");
         }
 
-        if (Object.FindFirstObjectByType<SpellScroll>(FindObjectsInactive.Include) == null)
+        // Supprime les parchemins posés en scène (source des ramassages impossibles) :
+        // ils sont désormais spawnés à l'exécution par le SpellScrollSpawner
+        var sceneScrolls = Object.FindObjectsByType<SpellScroll>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach (var sceneScroll in sceneScrolls)
         {
-            foreach (var position in ScrollSpawnPositions)
-            {
-                var instance = (GameObject)PrefabUtility.InstantiatePrefab(scrollPrefab, scene);
-                instance.transform.position = position;
-            }
-            Debug.Log($"[SpellSystemSetup] {ScrollSpawnPositions.Length} parchemins placés dans la scène.");
+            Object.DestroyImmediate(sceneScroll.gameObject);
         }
+        if (sceneScrolls.Length > 0)
+            Debug.Log($"[SpellSystemSetup] {sceneScrolls.Length} parchemins de scène supprimés (remplacés par le SpellScrollSpawner).");
 
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);
