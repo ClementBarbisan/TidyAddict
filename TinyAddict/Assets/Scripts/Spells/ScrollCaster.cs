@@ -242,7 +242,57 @@ public class ScrollCaster : NetworkBehaviour
                 if (effects != null)
                     effects.ApplyInvisibility(_buffSeconds);
                 break;
+
+            case SpellType.Confusion:
+            {
+                var target = FindTargetPlayer();
+                if (target != null)
+                    target.ApplyConfusion(_buffSeconds);
+                break;
+            }
+            case SpellType.Shrink:
+            {
+                var target = FindTargetPlayer();
+                if (target != null)
+                    target.ApplyShrink(_buffSeconds);
+                break;
+            }
         }
+    }
+
+    // Cible des sorts offensifs : le joueur visé (spherecast depuis la caméra),
+    // sinon le joueur le plus proche dans un rayon de 8 m. Jamais soi-même.
+    private PlayerSpellEffects FindTargetPlayer()
+    {
+        Vector3 origin = _castOrigin != null ? _castOrigin.position : transform.position + Vector3.up;
+        Vector3 direction = _castOrigin != null ? _castOrigin.forward : transform.forward;
+
+        if (Physics.SphereCast(origin, 1.2f, direction, out RaycastHit hit, 30f, ~0, QueryTriggerInteraction.Ignore))
+        {
+            var aimed = hit.collider.GetComponentInParent<PlayerSpellEffects>();
+            if (aimed != null && aimed != GetComponent<PlayerSpellEffects>())
+                return aimed;
+        }
+
+        PlayerSpellEffects closest = null;
+        float closestDistance = 8f;
+        var self = GetComponent<PlayerSpellEffects>();
+
+        foreach (var candidateCollider in Physics.OverlapSphere(transform.position, 8f, ~0, QueryTriggerInteraction.Ignore))
+        {
+            var candidate = candidateCollider.GetComponentInParent<PlayerSpellEffects>();
+            if (candidate == null || candidate == self)
+                continue;
+
+            float distance = Vector3.Distance(transform.position, candidate.transform.position);
+            if (distance < closestDistance)
+            {
+                closestDistance = distance;
+                closest = candidate;
+            }
+        }
+
+        return closest;
     }
 
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]

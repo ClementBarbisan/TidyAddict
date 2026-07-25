@@ -109,15 +109,15 @@ namespace Projectiles
             _kcc.SetLookRotation(input.LookRotation, -90f, 90f);
 
             // Direction horizontale
-            Vector3 inputDirection = _kcc.TransformRotation * new Vector3(input.MoveDirection.x, 0f, input.MoveDirection.y);
+            Vector2 moveDirection = input.MoveDirection;
+
+            // Sort vertigo : les touches de déplacement sont inversées
+            if (_spellEffects != null && _spellEffects.IsConfused)
+                moveDirection = -moveDirection;
+
+            Vector3 inputDirection = _kcc.TransformRotation * new Vector3(moveDirection.x, 0f, moveDirection.y);
             Vector3 moveVelocity = inputDirection * _moveSpeed;
 
-            // Effets de sort : ralentissement/buff de vitesse et poussée d'explosion
-            if (_spellEffects != null)
-            {
-                moveVelocity *= _spellEffects.SpeedMultiplier;
-                moveVelocity += _spellEffects.CurrentKnockback;
-            }
             float   jumpImpulse  = default;
             // Gestion du saut/gravité (vélocité verticale gérée manuellement)
             if (_kcc.IsGrounded)
@@ -127,7 +127,23 @@ namespace Projectiles
                     jumpImpulse = _jumpImpulse;
                 }
             }
-            
+
+            // Effets de sort : ralentissement/buff de vitesse et éjection d'explosion
+            if (_spellEffects != null)
+            {
+                moveVelocity *= _spellEffects.SpeedMultiplier;
+
+                Vector3 knockback = _spellEffects.CurrentKnockback;
+                moveVelocity += new Vector3(knockback.x, 0f, knockback.z);
+
+                // La composante verticale de l'éjection n'est appliquée qu'au premier
+                // tick (impulsion one-shot, comme un saut)
+                if (knockback.y > 0f && _spellEffects.IsKnockbackFresh(Runner.DeltaTime))
+                {
+                    jumpImpulse = Mathf.Max(jumpImpulse, knockback.y);
+                }
+            }
+
             _kcc.Move(moveVelocity, jumpImpulse);
 
             // Update fire transform before fire
