@@ -5,10 +5,11 @@ using UnityEngine;
 /// <summary>
 /// État global de la partie, spawné par le serveur au démarrage de la session.
 /// - Lobby : la partie est lancée par l'hôte quand assez de joueurs sont là.
-/// - Match : chrono de 5 min ; chaque équipe doit ramener les objets
-///   « Grabbable » dans SA zone de collecte. Le serveur compte les objets
-///   dans chaque zone ; à la fin du chrono, l'équipe avec le plus haut %
-///   de collecte gagne.
+/// - Match de 5 min : chaque équipe charge une JAUGE (0 → 100 %) en gardant
+///   des objets « Grabbable » dans sa zone : plus il y a d'objets dedans, plus
+///   ça charge vite (réglage par défaut : 5 objets pendant 1 min = +25 %).
+///   Les zones SAUTENT d'étape en étape chaque minute (ZoneStepPoint).
+///   Victoire : première jauge à 100 %, sinon la plus haute à la fin du chrono.
 /// </summary>
 public class GameState : NetworkBehaviour
 {
@@ -16,36 +17,45 @@ public class GameState : NetworkBehaviour
 
     [SerializeField] private int _requiredPlayers = 4;
     [SerializeField] private float _matchSeconds = 300f;
+    [SerializeField] private int _zoneSteps = 5;
+
+    [Tooltip("Charge apportée par UN objet resté UNE minute dans la zone (0.05 = 5 % → 5 objets × 1 min = 25 %)")]
+    [SerializeField] private float _chargePerObjectPerMinute = 0.05f;
 
     // Position/taille de secours si aucun CollectionZoneMarker n'est trouvé
-    // dans la scène (normalement les rectangles colorés portent le marqueur)
     [SerializeField] private Vector3 _redZoneCenter = new Vector3(-12f, 1f, 0f);
     [SerializeField] private Vector3 _blueZoneCenter = new Vector3(12f, 1f, 0f);
     [SerializeField] private Vector3 _zoneHalfExtents = new Vector3(4f, 2f, 4f);
 
     private CollectionZoneMarker _redZoneMarker;
     private CollectionZoneMarker _blueZoneMarker;
+    private ZoneStepPoint[] _stepPoints;
+    private int _appliedStep = -1;
 
     [Networked] public NetworkBool GameStarted { get; set; }
     [Networked] public NetworkBool GameEnded { get; set; }
     [Networked] public int WinnerTeam { get; set; }        // 0 = égalité, 1 = rouge, 2 = bleu
     [Networked] public TickTimer MatchTimer { get; set; }
-    [Networked] public int TotalCollectibles { get; set; }
+    [Networked] public float RedCharge { get; set; }
+    [Networked] public float BlueCharge { get; set; }
     [Networked] public int RedCollected { get; set; }
     [Networked] public int BlueCollected { get; set; }
 
     public int RequiredPlayers => _requiredPlayers;
     public int MaxPlayersPerTeam => Mathf.Max(1, _requiredPlayers / 2);
-    public Vector3 RedZoneCenter => _redZoneCenter;
-    public Vector3 BlueZoneCenter => _blueZoneCenter;
-    public Vector3 ZoneHalfExtents => _zoneHalfExtents;
 
     public bool IsStarted => Object != null && Object.IsValid && GameStarted;
     public bool IsEnded => Object != null && Object.IsValid && GameEnded;
     public bool CanStart => ConnectedPlayers >= _requiredPlayers;
 
-    public float RedPercent => TotalCollectibles > 0 ? RedCollected / (float)TotalCollectibles : 0f;
-    public float BluePercent => TotalCollectibles > 0 ? BlueCollected / (float)TotalCollectibles : 0f;
+    // Jauges 0..1 affichées par le HUD
+    public float RedPercent => Object != null && Object.IsValid ? RedCharge : 0f;
+    public float BluePercent => Object != null && Object.IsValid ? BlueCharge : 0f;
+
+    public int ZoneStepsCount => _zoneSteps;
+    public float StepSeconds => _matchSeconds / Mathf.Max(1, _zoneSteps);
+    public float ElapsedSeconds => IsStarted ? Mathf.Max(0f, _matchSeconds - RemainingSeconds) : 0f;
+    public int CurrentStep => Mathf.Clamp((int)(ElapsedSeconds / StepSeconds), 0, _zoneSteps - 1);
 
     public float RemainingSeconds
     {
@@ -90,7 +100,6 @@ public class GameState : NetworkBehaviour
 
         GameStarted = true;
         MatchTimer = TickTimer.CreateFromSeconds(Runner, _matchSeconds);
-        TotalCollectibles = GameObject.FindGameObjectsWithTag("Grabbable").Length;
     }
 
     public override void FixedUpdateNetwork()
@@ -106,22 +115,73 @@ public class GameState : NetworkBehaviour
             BlueCollected = CountCollectiblesInZone(_blueZoneMarker, _blueZoneCenter);
         }
 
-        if (MatchTimer.Expired(Runner))
+        // Les jauges chargent en continu : chaque objet présent dans la zone
+        // apporte _chargePerObjectPerMinute par minute
+        float chargePerObjectPerSecond = _chargePerObjectPerMinute / 60f;
+        RedCharge = Mathf.Clamp01(RedCharge + RedCollected * chargePerObjectPerSecond * Runner.DeltaTime);
+        BlueCharge = Mathf.Clamp01(BlueCharge + BlueCollected * chargePerObjectPerSecond * Runner.DeltaTime);
+
+        // Victoire immédiate à 100 %
+        bool redWinsNow = RedCharge >= 1f;
+        bool blueWinsNow = BlueCharge >= 1f;
+
+        if (redWinsNow || blueWinsNow || MatchTimer.Expired(Runner))
         {
             GameEnded = true;
 
-            // Dernier comptage pour le verdict
-            RefreshZoneMarkers();
-            RedCollected = CountCollectiblesInZone(_redZoneMarker, _redZoneCenter);
-            BlueCollected = CountCollectiblesInZone(_blueZoneMarker, _blueZoneCenter);
-
-            if (RedCollected > BlueCollected)
+            if (RedCharge > BlueCharge)
                 WinnerTeam = (int)Team.Red;
-            else if (BlueCollected > RedCollected)
+            else if (BlueCharge > RedCharge)
                 WinnerTeam = (int)Team.Blue;
             else
                 WinnerTeam = 0;
         }
+    }
+
+    public override void Render()
+    {
+        MoveZonesToCurrentStep();
+    }
+
+    // Déplace les rectangles de zone sur le point de l'étape courante.
+    // Exécuté chez tous les clients : le chrono est réseau, tout le monde
+    // déplace les mêmes objets au même moment.
+    private void MoveZonesToCurrentStep()
+    {
+        int step = IsStarted ? CurrentStep : 0;
+        if (step == _appliedStep)
+            return;
+
+        RefreshZoneMarkers();
+        if (_stepPoints == null || _stepPoints.Length == 0)
+            _stepPoints = FindObjectsByType<ZoneStepPoint>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+
+        if (_stepPoints.Length == 0)
+            return;
+
+        bool redMoved = TryMoveZone(_redZoneMarker, Team.Red, step);
+        bool blueMoved = TryMoveZone(_blueZoneMarker, Team.Blue, step);
+
+        if (redMoved && blueMoved)
+            _appliedStep = step;
+    }
+
+    private bool TryMoveZone(CollectionZoneMarker marker, Team team, int step)
+    {
+        if (marker == null)
+            return false;
+
+        foreach (var point in _stepPoints)
+        {
+            if (point == null || point.Team != team || point.Step != step)
+                continue;
+
+            marker.transform.position = point.transform.position;
+            return true;
+        }
+
+        // Pas de point défini pour cette étape : la zone reste où elle est
+        return true;
     }
 
     private void RefreshZoneMarkers()
@@ -155,5 +215,4 @@ public class GameState : NetworkBehaviour
 
         return counted.Count;
     }
-
 }

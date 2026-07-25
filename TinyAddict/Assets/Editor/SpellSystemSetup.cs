@@ -371,6 +371,7 @@ public static class SpellSystemSetup
         }
 
         CreateCollectionZoneVisuals();
+        CreateZoneStepPoints();
         CreateScrollSpawnPoints();
 
         // Supprime les parchemins posés en scène (source des ramassages impossibles) :
@@ -402,6 +403,11 @@ public static class SpellSystemSetup
             new Vector3(6f, 0.05f, -2f),
             new Vector3(-2f, 0.05f, -5f),
             new Vector3(0f, 0.05f, 7f),
+            new Vector3(8f, 0.05f, 5f),
+            new Vector3(-8f, 0.05f, -3f),
+            new Vector3(5f, 0.05f, -7f),
+            new Vector3(-6f, 0.05f, 7f),
+            new Vector3(0f, 0.05f, -2f),
         };
 
         for (int i = 0; i < positions.Length; i++)
@@ -413,6 +419,52 @@ public static class SpellSystemSetup
         }
 
         Debug.Log($"[SpellSystemSetup] {positions.Length} points de spawn de parchemins créés — déplacez-les librement dans la scène.");
+    }
+
+    // Étapes du parcours des zones : 5 points rouges + 5 points bleus, la zone
+    // de chaque équipe saute sur le point suivant chaque minute
+    private static void CreateZoneStepPoints()
+    {
+        if (Object.FindFirstObjectByType<ZoneStepPoint>(FindObjectsInactive.Include) != null)
+            return;
+
+        var parent = new GameObject("ZoneSteps").transform;
+
+        var redPositions = new[]
+        {
+            new Vector3(-12f, 0f, 0f),
+            new Vector3(-8f, 0f, 8f),
+            new Vector3(-4f, 0f, -8f),
+            new Vector3(-10f, 0f, -6f),
+            new Vector3(-6f, 0f, 4f),
+        };
+        var bluePositions = new[]
+        {
+            new Vector3(12f, 0f, 0f),
+            new Vector3(8f, 0f, -8f),
+            new Vector3(4f, 0f, 8f),
+            new Vector3(10f, 0f, 6f),
+            new Vector3(6f, 0f, -4f),
+        };
+
+        for (int i = 0; i < redPositions.Length; i++)
+        {
+            CreateStepPoint(parent, Team.Red, i, redPositions[i]);
+            CreateStepPoint(parent, Team.Blue, i, bluePositions[i]);
+        }
+
+        Debug.Log("[SpellSystemSetup] 10 points d'étapes de zones créés (5 rouges, 5 bleus) — déplacez-les librement.");
+    }
+
+    private static void CreateStepPoint(Transform parent, Team team, int step, Vector3 position)
+    {
+        var point = new GameObject($"ZoneStep{(team == Team.Red ? "Rouge" : "Bleu")} ({step + 1})");
+        point.transform.SetParent(parent, false);
+        point.transform.position = position;
+
+        var stepPoint = point.AddComponent<ZoneStepPoint>();
+        stepPoint.Team = team;
+        stepPoint.Step = step;
     }
 
     // Visuels des zones de collecte (purement locaux : le comptage est fait par

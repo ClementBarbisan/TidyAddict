@@ -83,8 +83,8 @@ public class MatchHUD : MonoBehaviour
 
         string redHex = ColorUtility.ToHtmlStringRGB(PlayerProfile.RedTeamColor);
         string blueHex = ColorUtility.ToHtmlStringRGB(PlayerProfile.BlueTeamColor);
-        string redLine = $"<color=#{redHex}>Rouge {gameState.RedPercent * 100f:0}%</color>";
-        string blueLine = $"<color=#{blueHex}>Bleu {gameState.BluePercent * 100f:0}%</color>";
+        string redLine = $"<color=#{redHex}>Rouge {gameState.RedPercent * 100f:0}% ({gameState.RedCollected} obj)</color>";
+        string blueLine = $"<color=#{blueHex}>Bleu {gameState.BluePercent * 100f:0}% ({gameState.BlueCollected} obj)</color>";
 
         string line;
         if (localTeam == Team.Red)
@@ -94,7 +94,17 @@ public class MatchHUD : MonoBehaviour
         else
             line = $"{redLine}   •   {blueLine}";
 
-        DrawWithBackground(new Rect(Screen.width * 0.5f - 260f, 46f, 520f, 28f), line, _hudStyle);
+        DrawWithBackground(new Rect(Screen.width * 0.5f - 300f, 46f, 600f, 28f), line, _hudStyle);
+
+        // Compte à rebours avant le prochain déplacement des zones
+        if (gameState.CurrentStep < gameState.ZoneStepsCount - 1)
+        {
+            float nextMoveIn = gameState.StepSeconds - gameState.ElapsedSeconds % gameState.StepSeconds;
+            string moveLine = nextMoveIn <= 10f
+                ? $"<color=orange>Les zones bougent dans {nextMoveIn:0}s !</color>"
+                : $"Zones : étape {gameState.CurrentStep + 1}/{gameState.ZoneStepsCount} — déplacement dans {nextMoveIn:0}s";
+            DrawWithBackground(new Rect(Screen.width * 0.5f - 200f, 78f, 400f, 24f), moveLine, _hudStyle);
+        }
 
         DrawTeamRosters();
     }
