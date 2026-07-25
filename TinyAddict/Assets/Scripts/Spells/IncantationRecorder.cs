@@ -15,6 +15,7 @@ public class IncantationRecorder : MonoBehaviour
 
     public Recorder Recorder { get; private set; }
     public int SamplingRate { get; private set; }
+    public int Channels { get; private set; } = 1;
     public bool IsCapturing { get; private set; }
 
     private readonly object _lock = new object();
@@ -40,7 +41,23 @@ public class IncantationRecorder : MonoBehaviour
     {
         // Seul le runner réellement connecté crée un flux : c'est lui la bonne instance
         Instance = this;
-        SamplingRate = createdParams.Voice.Info.SamplingRate;
+
+        // Les pré-processeurs reçoivent les frames AVANT le rééchantillonneur de
+        // Photon : au taux et au nombre de canaux de la SOURCE micro, pas à ceux
+        // du flux réseau (Voice.Info). Se tromper ici rend l'audio inintelligible.
+        if (createdParams.AudioDesc != null)
+        {
+            SamplingRate = createdParams.AudioDesc.SamplingRate;
+            Channels = Mathf.Max(1, createdParams.AudioDesc.Channels);
+        }
+        else
+        {
+            SamplingRate = createdParams.Voice.Info.SamplingRate;
+            Channels = 1;
+        }
+
+        Debug.Log($"[IncantationRecorder] Source micro : {SamplingRate} Hz, {Channels} canal(aux) " +
+                  $"(flux réseau : {createdParams.Voice.Info.SamplingRate} Hz)");
 
         if (createdParams.Voice is LocalVoiceAudioFloat floatVoice)
         {
@@ -66,7 +83,26 @@ public class IncantationRecorder : MonoBehaviour
         lock (_lock)
         {
             IsCapturing = false;
-            float[] samples = _buffer.ToArray();
+
+            float[] samples;
+            if (Channels <= 1)
+            {
+                samples = _buffer.ToArray();
+            }
+            else
+            {
+                // Downmix multi-canal → mono (moyenne des canaux entrelacés)
+                int frames = _buffer.Count / Channels;
+                samples = new float[frames];
+                for (int i = 0; i < frames; i++)
+                {
+                    float sum = 0f;
+                    for (int c = 0; c < Channels; c++)
+                        sum += _buffer[i * Channels + c];
+                    samples[i] = sum / Channels;
+                }
+            }
+
             _buffer.Clear();
             return samples;
         }
