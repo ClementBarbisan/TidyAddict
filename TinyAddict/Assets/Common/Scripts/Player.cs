@@ -24,6 +24,7 @@ namespace Projectiles
         private SimpleKCC _kcc;
         private PlayerInput _input;
         private Transform _cameraTransform;
+        private ScrollCaster _scrollCaster;
 
         // NetworkBehaviour INTERFACE
 
@@ -73,6 +74,7 @@ namespace Projectiles
         {
             _kcc = GetComponent<SimpleKCC>();
             _input = GetComponent<PlayerInput>();
+            _scrollCaster = GetComponent<ScrollCaster>();
             _kcc.SetGravity(-20f);
         }
 
@@ -122,7 +124,7 @@ namespace Projectiles
             // Update fire transform before fire
             Vector2 pitchRotation = _kcc.GetLookRotation(true, false);
             _cameraPivot.localRotation = Quaternion.Euler(pitchRotation);
-            
+
             _lastButtonsInput = input.Buttons;
         }
     }
