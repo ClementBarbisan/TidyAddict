@@ -441,6 +441,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GrabObject
   HoldPoint: {fileID: 0}
   grabDistance: 15
-  _force: 10
+  _force: 1
   _pull: {fileID: -4090225696740746782, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   _push: {fileID: 3001919216989983466, guid: 052faaac586de48259a63d0c4782560b, type: 3}

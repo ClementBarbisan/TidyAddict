@@ -75,6 +75,7 @@ namespace Projectiles
             _weapon = GetComponentInChildren<WeaponBase>();
             _kcc = GetComponent<SimpleKCC>();
             _input = GetComponent<PlayerInput>();
+            _kcc.SetGravity(-20f);
         }
 
         protected void LateUpdate()
