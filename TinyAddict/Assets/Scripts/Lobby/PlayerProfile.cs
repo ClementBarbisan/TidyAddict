@@ -2,32 +2,74 @@ using Fusion;
 using UnityEngine;
 
 /// <summary>
-/// Profil réseau du joueur : pseudo + équipe (1 = rouge, 2 = bleu), choisis
-/// dans le menu de lobby. Affiche un pseudo flottant coloré au-dessus de la
-/// tête, visible par les autres joueurs (masqué si le joueur est invisible).
+/// Profil réseau du joueur : pseudo (networked) + équipe, gérée par le
+/// TeamManager (source de vérité unique — le choix du lobby et les zones
+/// TriggerPlayerDetector passent tous les deux par lui). La couleur du corps
+/// passe par NetworkedColor. Affiche un pseudo flottant coloré au-dessus de
+/// la tête, masqué si le joueur est invisible.
 /// </summary>
 public class PlayerProfile : NetworkBehaviour
 {
     public static readonly Color RedTeamColor = new Color(1f, 0.3f, 0.25f);
     public static readonly Color BlueTeamColor = new Color(0.3f, 0.55f, 1f);
 
+    public static Color ColorOfTeam(Team team)
+    {
+        return team == Team.Red ? RedTeamColor : team == Team.Blue ? BlueTeamColor : Color.white;
+    }
+
     [SerializeField] private float _nameTagHeight = 2.2f;
 
     [Networked] public NetworkString<_16> Nickname { get; set; }
-    [Networked] public int Team { get; set; }
 
     private TextMesh _nameTag;
     private PlayerSpellEffects _effects;
 
-    public bool HasProfile => Object != null && Object.IsValid && Team != 0;
+    public Team Team
+    {
+        get
+        {
+            if (Object == null || Object.IsValid == false || TeamManager.Instance == null)
+                return Team.None;
+            return TeamManager.Instance.GetPlayerTeam(Object.InputAuthority);
+        }
+    }
 
-    public Color TeamColor => Team == 1 ? RedTeamColor : Team == 2 ? BlueTeamColor : Color.white;
+    public bool HasProfile => Team != Team.None;
+    public Color TeamColor => ColorOfTeam(Team);
+
+    public override void Spawned()
+    {
+        // Corps neutre tant qu'aucune équipe n'est choisie (le Color networked
+        // par défaut est noir transparent, pas ce qu'on veut voir)
+        if (Object.HasStateAuthority)
+        {
+            var color = GetComponent<NetworkedColor>();
+            if (color != null && color.ObjectColor == default)
+                color.ObjectColor = Color.white;
+        }
+    }
+
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    public void RPC_BecomeSpectator()
+    {
+        // Équipes pleines : le serveur retire le personnage — plus de corps,
+        // plus d'interactions possibles, le client passe en caméra libre
+        Runner.Despawn(Object);
+    }
 
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
     public void RPC_SetProfile(string nickname, int team)
     {
         Nickname = nickname;
-        Team = Mathf.Clamp(team, 1, 2);
+        var chosenTeam = (Team)Mathf.Clamp(team, (int)Team.Red, (int)Team.Blue);
+
+        if (TeamManager.Instance != null)
+            TeamManager.Instance.SetPlayerTeam(Object.InputAuthority, chosenTeam);
+
+        var color = GetComponent<NetworkedColor>();
+        if (color != null)
+            color.RequestColorChange(ColorOfTeam(chosenTeam));
     }
 
     private void Awake()
@@ -45,7 +87,8 @@ public class PlayerProfile : NetworkBehaviour
 
         // Pas de tag au-dessus de sa propre tête, ni sur un profil vide,
         // ni sur un joueur invisible (ça trahirait le sort anima)
-        bool show = HasInputAuthority == false && Team != 0 &&
+        Team team = Team;
+        bool show = HasInputAuthority == false && team != Team.None &&
                     (_effects == null || _effects.IsInvisible == false);
 
         if (_nameTag.gameObject.activeSelf != show)
@@ -57,7 +100,7 @@ public class PlayerProfile : NetworkBehaviour
         string nickname = Nickname.ToString();
         if (_nameTag.text != nickname)
             _nameTag.text = nickname;
-        _nameTag.color = TeamColor;
+        _nameTag.color = ColorOfTeam(team);
 
         // Toujours face à la caméra
         if (Camera.main != null)
