@@ -337,6 +337,8 @@ public static class SpellSystemSetup
             Debug.Log("[SpellSystemSetup] Ancien WhisperManager supprimé de la scène.");
         }
 
+        CreateCollectionZoneVisuals();
+
         // Supprime les parchemins posés en scène (source des ramassages impossibles) :
         // ils sont désormais spawnés à l'exécution par le SpellScrollSpawner
         var sceneScrolls = Object.FindObjectsByType<SpellScroll>(FindObjectsInactive.Include, FindObjectsSortMode.None);
@@ -349,6 +351,52 @@ public static class SpellSystemSetup
 
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);
+    }
+
+    // Visuels des zones de collecte (purement locaux : le comptage est fait par
+    // GameState avec les mêmes centres/tailles que ses valeurs par défaut)
+    private static void CreateCollectionZoneVisuals()
+    {
+        CreateZoneVisual("ZoneCollecteRouge", new Vector3(-12f, 0f, 0f), new Color(1f, 0.3f, 0.25f, 0.35f),
+            "Assets/Materials/ZoneCollecteRouge.mat");
+        CreateZoneVisual("ZoneCollecteBleue", new Vector3(12f, 0f, 0f), new Color(0.3f, 0.55f, 1f, 0.35f),
+            "Assets/Materials/ZoneCollecteBleue.mat");
+    }
+
+    private static void CreateZoneVisual(string name, Vector3 position, Color color, string materialPath)
+    {
+        if (GameObject.Find(name) != null)
+            return;
+
+        var root = new GameObject(name);
+        root.transform.position = position;
+
+        var disc = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        disc.name = "Visual";
+        disc.transform.SetParent(root.transform, false);
+        disc.transform.localPosition = new Vector3(0f, 0.02f, 0f);
+        // Même emprise au sol que la zone de comptage de GameState (8 x 8 m)
+        disc.transform.localScale = new Vector3(8f, 0.04f, 8f);
+        Object.DestroyImmediate(disc.GetComponent<Collider>());
+        disc.GetComponent<MeshRenderer>().sharedMaterial = GetOrCreateTransparentMaterial(materialPath, color);
+
+        var labelObject = new GameObject("Label");
+        labelObject.transform.SetParent(root.transform, false);
+        labelObject.transform.localPosition = new Vector3(0f, 3f, 0f);
+
+        var label = labelObject.AddComponent<TextMesh>();
+        var font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        label.font = font;
+        label.fontSize = 64;
+        label.characterSize = 0.12f;
+        label.anchor = TextAnchor.MiddleCenter;
+        label.alignment = TextAlignment.Center;
+        label.fontStyle = FontStyle.Bold;
+        label.color = new Color(color.r, color.g, color.b, 1f);
+        label.text = name == "ZoneCollecteRouge" ? "ZONE ROUGE" : "ZONE BLEUE";
+        labelObject.GetComponent<MeshRenderer>().sharedMaterial = font.material;
+
+        Debug.Log($"[SpellSystemSetup] Zone de collecte créée : {name} à {position}");
     }
 
     // HELPERS

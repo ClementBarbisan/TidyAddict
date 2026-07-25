@@ -26,6 +26,8 @@ public class LobbyMenu : MonoBehaviour
     private string _nickname = "";
     private int _team;
     private bool _profileSent;
+    private bool _wantSpectator;
+    private bool _spectatorStarted;
     private bool _cursorRestored;
     private float _nextRefresh;
 
@@ -59,6 +61,16 @@ public class LobbyMenu : MonoBehaviour
         {
             _profileSent = true;
             _localProfile.RPC_SetProfile(_nickname, _team);
+        }
+
+        // Passage en spectateur : le serveur despawn notre personnage,
+        // puis on active la caméra fantôme
+        if (_wantSpectator && _spectatorStarted == false && _localProfile != null)
+        {
+            _spectatorStarted = true;
+            _localProfile.RPC_BecomeSpectator();
+            SpectatorController.Activate();
+            _step = Step.Done;
         }
 
         // La partie a été lancée (par l'hôte) : on ferme le menu
@@ -189,28 +201,45 @@ public class LobbyMenu : MonoBehaviour
         GUILayout.Space(16f);
 
         CountTeams(out int redCount, out int blueCount);
+        int maxPerTeam = GameState.Instance != null ? GameState.Instance.MaxPlayersPerTeam : 2;
+        bool redFull = redCount >= maxPerTeam;
+        bool blueFull = blueCount >= maxPerTeam;
 
         GUILayout.BeginHorizontal();
 
         var previousColor = GUI.backgroundColor;
         GUI.backgroundColor = PlayerProfile.RedTeamColor;
-        if (GUILayout.Button($"ROUGE\n({redCount} joueur{(redCount > 1 ? "s" : "")})", _buttonStyle, GUILayout.Height(90f)))
+        GUI.enabled = redFull == false;
+        if (GUILayout.Button($"ROUGE\n({redCount}/{maxPerTeam}){(redFull ? "\nCOMPLET" : "")}", _buttonStyle, GUILayout.Height(90f)))
         {
-            _team = 1;
+            _team = (int)Team.Red;
             _step = Step.Waiting;
         }
 
         GUILayout.Space(12f);
 
         GUI.backgroundColor = PlayerProfile.BlueTeamColor;
-        if (GUILayout.Button($"BLEU\n({blueCount} joueur{(blueCount > 1 ? "s" : "")})", _buttonStyle, GUILayout.Height(90f)))
+        GUI.enabled = blueFull == false;
+        if (GUILayout.Button($"BLEU\n({blueCount}/{maxPerTeam}){(blueFull ? "\nCOMPLET" : "")}", _buttonStyle, GUILayout.Height(90f)))
         {
-            _team = 2;
+            _team = (int)Team.Blue;
             _step = Step.Waiting;
         }
 
+        GUI.enabled = true;
         GUI.backgroundColor = previousColor;
         GUILayout.EndHorizontal();
+
+        // Les deux équipes sont pleines : il ne reste que le mode fantôme
+        if (redFull && blueFull)
+        {
+            GUILayout.Space(16f);
+            GUILayout.Label("Les deux équipes sont complètes", _labelStyle);
+            if (GUILayout.Button("Regarder en spectateur (fantôme)", _buttonStyle, GUILayout.Height(44f)))
+            {
+                _wantSpectator = true;
+            }
+        }
     }
 
     private void DrawWaitingStep()
@@ -260,9 +289,9 @@ public class LobbyMenu : MonoBehaviour
         {
             if (profile == null || profile.HasProfile == false)
                 continue;
-            if (profile.Team == 1)
+            if (profile.Team == Team.Red)
                 redCount++;
-            else if (profile.Team == 2)
+            else if (profile.Team == Team.Blue)
                 blueCount++;
         }
     }

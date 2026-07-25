@@ -16,7 +16,7 @@ namespace Projectiles
         [SerializeField]
         private Transform _cameraPivot;
         [SerializeField]
-        private MeshRenderer[] _thirdPersonRenderers;
+        private SkinnedMeshRenderer[] _thirdPersonRenderers;
         [SerializeField]
         private Animator _animator;
         [Networked]
@@ -52,7 +52,8 @@ namespace Projectiles
             {
                 var scene = Runner.SimulationUnityScene.GetComponent<Scene>();
                 _cameraTransform = Camera.main.transform;
-                TeamManager.Instance.SetPlayerTeam(GetComponent<NetworkObject>().InputAuthority, Team.None);
+                if (TeamManager.Instance != null)
+                    TeamManager.Instance.SetPlayerTeam(GetComponent<NetworkObject>().InputAuthority, Team.None);
                 // Look rotation interpolation is skipped for the local player - it is set manually
                 // in Render from the accumulated (absolute) look rotation for a smooth camera.
                 _kcc.Settings.ForcePredictedLookRotation = true;
