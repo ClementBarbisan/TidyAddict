@@ -94,7 +94,7 @@ public class PlayerGrabbing : NetworkBehaviour
                 // Envoie l'ordre d'appliquer la force sur le Serveur
                 RPC_ApplyForce(nrb, appliedForce, _cam.position + _cam.forward * grabDistance, isPush);
                 effect.ShowBeam(_cam.position + _cam.forward * grabDistance, isPush);
-                _canApplyForce = false;
+               
             }
         }
     }
@@ -110,6 +110,7 @@ public class PlayerGrabbing : NetworkBehaviour
             // NetworkRigidbody se chargera de synchroniser le mouvement chez TOUS les clients
             targetNRB.PhysicsBody.AddForce(force);
             RPC_ShowBeamEffect(hitPoint, isPush);
+            _canApplyForce = false;
         }
         
     }
