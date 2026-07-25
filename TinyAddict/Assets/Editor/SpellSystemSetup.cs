@@ -19,6 +19,8 @@ public static class SpellSystemSetup
     private const string BallPrefabPath = "Assets/Prefabs/SpellBall.prefab";
     private const string ParchmentMaterialPath = "Assets/Materials/SpellParchment.mat";
     private const string BallMaterialPath = "Assets/Materials/SpellBallOrb.mat";
+    private const string IceZonePrefabPath = "Assets/Prefabs/IceZone.prefab";
+    private const string IceMaterialPath = "Assets/Materials/SpellIceZone.mat";
 
     private const string VoskModelFolder = "VoskModel/vosk-model-small-fr-0.22";
 
@@ -33,8 +35,9 @@ public static class SpellSystemSetup
         ConfigureVoskPlugins();
 
         var ballPrefab = CreateSpellBallPrefab();
+        var iceZonePrefab = CreateIceZonePrefab();
         var scrollPrefab = CreateScrollPrefab();
-        SetupPlayerPrefab(ballPrefab);
+        SetupPlayerPrefab(ballPrefab, iceZonePrefab);
         SetupScene(scrollPrefab);
         AssetDatabase.SaveAssets();
         Debug.Log("[SpellSystemSetup] Terminé : prefabs créés, joueur câblé, scène configurée.");
@@ -114,6 +117,41 @@ public static class SpellSystemSetup
         return AssetDatabase.LoadAssetAtPath<NetworkObject>(BallPrefabPath);
     }
 
+    private static NetworkObject CreateIceZonePrefab()
+    {
+        var existing = AssetDatabase.LoadAssetAtPath<NetworkObject>(IceZonePrefabPath);
+        if (existing != null)
+            return existing;
+
+        EnsureFolder("Assets/Prefabs");
+
+        var root = new GameObject("IceZone");
+        try
+        {
+            root.AddComponent<NetworkObject>();
+            root.AddComponent<NetworkTransform>();
+            root.AddComponent<IceZone>();
+
+            // Disque bleu translucide au sol (rayon 4 m, comme IceZone._radius)
+            var disc = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            disc.name = "Visual";
+            disc.transform.SetParent(root.transform, false);
+            disc.transform.localScale = new Vector3(8f, 0.02f, 8f);
+            Object.DestroyImmediate(disc.GetComponent<Collider>());
+            disc.GetComponent<MeshRenderer>().sharedMaterial = GetOrCreateTransparentMaterial(
+                IceMaterialPath, new Color(0.35f, 0.75f, 1f, 0.45f));
+
+            PrefabUtility.SaveAsPrefabAsset(root, IceZonePrefabPath);
+        }
+        finally
+        {
+            Object.DestroyImmediate(root);
+        }
+
+        Debug.Log($"[SpellSystemSetup] Prefab créé : {IceZonePrefabPath}");
+        return AssetDatabase.LoadAssetAtPath<NetworkObject>(IceZonePrefabPath);
+    }
+
     private static GameObject CreateScrollPrefab()
     {
         var existing = AssetDatabase.LoadAssetAtPath<GameObject>(ScrollPrefabPath);
@@ -173,7 +211,7 @@ public static class SpellSystemSetup
 
     // JOUEUR
 
-    private static void SetupPlayerPrefab(NetworkObject ballPrefab)
+    private static void SetupPlayerPrefab(NetworkObject ballPrefab, NetworkObject iceZonePrefab)
     {
         var root = PrefabUtility.LoadPrefabContents(PlayerPrefabPath);
         try
@@ -198,10 +236,14 @@ public static class SpellSystemSetup
             if (caster == null)
                 caster = root.AddComponent<ScrollCaster>();
 
+            if (root.GetComponent<PlayerSpellEffects>() == null)
+                root.AddComponent<PlayerSpellEffects>();
+
             var so = new SerializedObject(caster);
             so.FindProperty("_handAnchor").objectReferenceValue = handAnchor;
             so.FindProperty("_castOrigin").objectReferenceValue = cameraPivot;
             so.FindProperty("_spellBallPrefab").objectReferenceValue = ballPrefab;
+            so.FindProperty("_iceZonePrefab").objectReferenceValue = iceZonePrefab;
             so.ApplyModifiedPropertiesWithoutUndo();
 
             PrefabUtility.SaveAsPrefabAsset(root, PlayerPrefabPath);
@@ -272,6 +314,28 @@ public static class SpellSystemSetup
     }
 
     // HELPERS
+
+    private static Material GetOrCreateTransparentMaterial(string path, Color color)
+    {
+        var material = AssetDatabase.LoadAssetAtPath<Material>(path);
+        if (material != null)
+            return material;
+
+        EnsureFolder("Assets/Materials");
+
+        material = new Material(Shader.Find("Universal Render Pipeline/Lit")) { color = color };
+        // Recette URP pour la transparence alpha
+        material.SetFloat("_Surface", 1f);
+        material.SetOverrideTag("RenderType", "Transparent");
+        material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+        material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+        material.SetInt("_ZWrite", 0);
+        material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+        material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+
+        AssetDatabase.CreateAsset(material, path);
+        return material;
+    }
 
     private static Material GetOrCreateMaterial(string path, Color color, bool emissive)
     {

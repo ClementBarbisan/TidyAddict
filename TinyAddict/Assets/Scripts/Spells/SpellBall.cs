@@ -13,13 +13,39 @@ public class SpellBall : NetworkBehaviour
 
     [Networked] private TickTimer Life { get; set; }
 
+    // Index du mot/sort dans SpellWords : détermine la couleur (et plus tard l'effet)
+    [Networked] public int SpellIndex { get; set; }
+
     public override void Spawned()
     {
         if (Object.HasStateAuthority)
         {
             Life = TickTimer.CreateFromSeconds(Runner, _lifeSeconds);
         }
+
+        ApplySpellVisual();
     }
+
+    private void ApplySpellVisual()
+    {
+        Color color = SpellWords.ColorOf(SpellIndex);
+
+        var renderer = GetComponentInChildren<MeshRenderer>();
+        if (renderer != null)
+        {
+            var block = new MaterialPropertyBlock();
+            block.SetColor("_BaseColor", color);
+            block.SetColor("_EmissionColor", color * 3f);
+            renderer.SetPropertyBlock(block);
+        }
+
+        var light = GetComponentInChildren<Light>();
+        if (light != null)
+            light.color = color;
+    }
+
+    [SerializeField] private float _explosionRadius = 4f;
+    [SerializeField] private float _explosionForce = 12f;
 
     public override void FixedUpdateNetwork()
     {
@@ -36,15 +62,34 @@ public class SpellBall : NetworkBehaviour
 
         if (Physics.Raycast(transform.position, transform.forward, out RaycastHit hit, step + 0.2f, ~0, QueryTriggerInteraction.Ignore))
         {
-            if (hit.rigidbody != null)
-            {
-                hit.rigidbody.AddForceAtPosition(transform.forward * _hitImpulse, hit.point, ForceMode.Impulse);
-            }
-
+            Explode(hit.point);
             Runner.Despawn(Object);
             return;
         }
 
         transform.position += transform.forward * step;
+    }
+
+    // Projette tout ce qui se trouve dans le rayon : objets physiques et joueurs
+    private void Explode(Vector3 center)
+    {
+        var hits = Physics.OverlapSphere(center, _explosionRadius, ~0, QueryTriggerInteraction.Ignore);
+        foreach (var hitCollider in hits)
+        {
+            var rigidbody = hitCollider.attachedRigidbody;
+            if (rigidbody != null)
+            {
+                rigidbody.AddExplosionForce(_explosionForce, center, _explosionRadius, 0.5f, ForceMode.Impulse);
+                continue;
+            }
+
+            var effects = hitCollider.GetComponentInParent<PlayerSpellEffects>();
+            if (effects != null)
+            {
+                Vector3 direction = (effects.transform.position + Vector3.up - center).normalized;
+                direction.y = 0f;
+                effects.ApplyKnockback(direction.normalized * _hitImpulse);
+            }
+        }
     }
 }

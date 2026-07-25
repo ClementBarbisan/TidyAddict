@@ -1,21 +1,74 @@
 using System.Text;
+using UnityEngine;
+
+public enum SpellType
+{
+    Ice,
+    Fire,
+    SpeedBuff,
+    ForceBuff,
+    Invisibility,
+}
 
 /// <summary>
-/// Table des mots de sort et grammaire fermée pour Vosk : le moteur ne peut
-/// reconnaître QUE ces mots (+ [unk] pour le bruit). Contrainte Vosk : chaque
-/// mot doit exister dans le lexique du modèle français. Ces 20 mots latins ont
-/// tous été vérifiés présents dans le vocabulaire de vosk-model-small-fr-0.22
-/// (n'ajoutez pas de mot inventé : il serait ignoré par la reconnaissance).
+/// Table des sorts : 5 mots latins, chaque mot déclenche TOUJOURS le même sort.
+/// Contrainte Vosk : chaque mot doit exister dans le lexique du modèle français —
+/// ces 5 mots ont été vérifiés présents dans vosk-model-small-fr-0.22
+/// (n'ajoutez pas de mot inventé, il serait ignoré par la reconnaissance).
 /// </summary>
 public static class SpellWords
 {
     public static readonly string[] Words =
     {
-        "aqua", "terra", "luna", "stella", "nova",
-        "inferno", "petra", "anima", "draco", "fortuna",
-        "gloria", "victoria", "sanctus", "dominus", "maximus",
-        "solaris", "aurora", "corona", "omega", "vita",
+        "polaris",  // 0 - glace : ralentit les autres joueurs autour de soi
+        "inferno",  // 1 - feu : boule de feu explosive
+        "aurora",   // 2 - vitesse : buff de vitesse 30 s
+        "maximus",  // 3 - force : grab/poussée renforcés 30 s
+        "anima",    // 4 - invisibilité 30 s
     };
+
+    public static readonly SpellType[] Types =
+    {
+        SpellType.Ice,
+        SpellType.Fire,
+        SpellType.SpeedBuff,
+        SpellType.ForceBuff,
+        SpellType.Invisibility,
+    };
+
+    public static readonly Color[] Colors =
+    {
+        new Color(0.35f, 0.75f, 1.00f), // polaris - bleu glace
+        new Color(1.00f, 0.20f, 0.05f), // inferno - rouge feu
+        new Color(0.80f, 0.30f, 1.00f), // aurora  - violet
+        new Color(1.00f, 0.75f, 0.00f), // maximus - or
+        new Color(0.80f, 0.90f, 0.95f), // anima   - blanc spectral
+    };
+
+    // Affiché sur le parchemin pour savoir ce que fait le sort avant de le lancer
+    public static readonly string[] Descriptions =
+    {
+        "Gèle le sol : ralentit les joueurs proches (sauf vous)",
+        "Boule de feu explosive : projette tout à l'impact",
+        "Vitesse augmentée pendant 30 s",
+        "Grab et poussée renforcés pendant 30 s",
+        "Invisibilité pendant 30 s",
+    };
+
+    public static SpellType TypeOf(int wordIndex)
+    {
+        return Types[Mathf.Abs(wordIndex) % Types.Length];
+    }
+
+    public static Color ColorOf(int wordIndex)
+    {
+        return Colors[Mathf.Abs(wordIndex) % Colors.Length];
+    }
+
+    public static string DescriptionOf(int wordIndex)
+    {
+        return Descriptions[Mathf.Abs(wordIndex) % Descriptions.Length];
+    }
 
     /// <summary>Grammaire JSON passée à VoskRecognizer : vocabulaire fermé + [unk].</summary>
     public static string GrammarJson

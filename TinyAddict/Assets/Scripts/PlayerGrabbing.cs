@@ -98,7 +98,13 @@ public class PlayerGrabbing : NetworkBehaviour
                     direction = -direction;
                 }
 
-                Vector3 appliedForce = direction * forcePower;
+                // Sort maximus : force démultipliée pendant la durée du buff
+                float forceMultiplier = 1f;
+                var spellEffects = GetComponent<PlayerSpellEffects>();
+                if (spellEffects != null)
+                    forceMultiplier = spellEffects.ForceMultiplier;
+
+                Vector3 appliedForce = direction * forcePower * forceMultiplier;
 
                 // Envoie l'ordre d'appliquer la force sur le Serveur
                 RPC_ApplyForce(nrb, appliedForce);
