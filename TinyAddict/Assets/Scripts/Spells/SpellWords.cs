@@ -8,6 +8,8 @@ public enum SpellType
     SpeedBuff,
     ForceBuff,
     Invisibility,
+    Confusion,
+    Shrink,
 }
 
 /// <summary>
@@ -25,6 +27,8 @@ public static class SpellWords
         "aurora",   // 2 - vitesse : buff de vitesse 30 s
         "maximus",  // 3 - force : grab/poussée renforcés 30 s
         "anima",    // 4 - invisibilité 30 s
+        "vertigo",  // 5 - confusion : touches inversées de la cible 30 s
+        "minima",   // 6 - réduction : la cible rapetisse et perd sa force 30 s
     };
 
     public static readonly SpellType[] Types =
@@ -34,6 +38,8 @@ public static class SpellWords
         SpellType.SpeedBuff,
         SpellType.ForceBuff,
         SpellType.Invisibility,
+        SpellType.Confusion,
+        SpellType.Shrink,
     };
 
     public static readonly Color[] Colors =
@@ -43,6 +49,8 @@ public static class SpellWords
         new Color(0.80f, 0.30f, 1.00f), // aurora  - violet
         new Color(1.00f, 0.75f, 0.00f), // maximus - or
         new Color(0.80f, 0.90f, 0.95f), // anima   - blanc spectral
+        new Color(1.00f, 0.35f, 0.75f), // vertigo - rose
+        new Color(0.35f, 1.00f, 0.65f), // minima  - vert menthe
     };
 
     // Affiché sur le parchemin pour savoir ce que fait le sort avant de le lancer
@@ -53,6 +61,8 @@ public static class SpellWords
         "Vitesse augmentée pendant 30 s",
         "Grab et poussée renforcés pendant 30 s",
         "Invisibilité pendant 30 s",
+        "Inverse les touches du joueur visé pendant 30 s",
+        "Rétrécit le joueur visé : force réduite pendant 30 s",
     };
 
     public static SpellType TypeOf(int wordIndex)

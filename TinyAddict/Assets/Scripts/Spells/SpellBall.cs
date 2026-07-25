@@ -9,7 +9,8 @@ public class SpellBall : NetworkBehaviour
 {
     [SerializeField] private float _speed = 18f;
     [SerializeField] private float _lifeSeconds = 5f;
-    [SerializeField] private float _hitImpulse = 10f;
+    [SerializeField] private float _hitImpulse = 16f;
+    [SerializeField] private float _hitUpImpulse = 6f;
 
     [Networked] private TickTimer Life { get; set; }
 
@@ -86,9 +87,15 @@ public class SpellBall : NetworkBehaviour
             var effects = hitCollider.GetComponentInParent<PlayerSpellEffects>();
             if (effects != null)
             {
-                Vector3 direction = (effects.transform.position + Vector3.up - center).normalized;
-                direction.y = 0f;
-                effects.ApplyKnockback(direction.normalized * _hitImpulse);
+                // Éjection : poussée horizontale qui s'atténue avec la distance + décollage vertical
+                Vector3 away = effects.transform.position - center;
+                away.y = 0f;
+                float distanceFactor = 1f - Mathf.Clamp01(away.magnitude / _explosionRadius) * 0.5f;
+                Vector3 horizontal = away.sqrMagnitude > 0.001f ? away.normalized : transform.forward;
+
+                Vector3 knockback = horizontal * (_hitImpulse * distanceFactor);
+                knockback.y = _hitUpImpulse;
+                effects.ApplyKnockback(knockback);
             }
         }
     }
