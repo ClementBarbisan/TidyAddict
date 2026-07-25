@@ -6,6 +6,7 @@ namespace Projectiles
     public enum EInputButtons
     {
         Fire = 0,
+        Jump = 1,
     }
 
     public struct GameplayInput : INetworkInput
@@ -136,9 +137,13 @@ namespace Projectiles
                 _accumulatedInput.Buttons.Set(EInputButtons.Fire, true);
             }
 
+            if (_inputActions.Player.Jump.WasPressedThisFrame())
+            {
+                _accumulatedInput.Buttons.Set(EInputButtons.Jump, true);
+            }
+
             _accumulatedInput.MoveDirection = _inputActions.Player.Move.ReadValue<Vector2>();
 
-            // Accumulate look delta into the absolute look rotation (pitch is clamped when applied to the KCC)
             var lookValue = _inputActions.Player.Look.ReadValue<Vector2>();
             _lookRotation += new Vector2(-lookValue.y, lookValue.x);
             _accumulatedInput.LookRotation = _lookRotation;

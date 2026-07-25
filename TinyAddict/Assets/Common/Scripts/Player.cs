@@ -12,6 +12,8 @@ namespace Projectiles
         [SerializeField]
         private float _moveSpeed = 10f;
         [SerializeField]
+        private float _jumpImpulse = 6f;
+        [SerializeField]
         private Transform _cameraPivot;
         [SerializeField]
         private MeshRenderer[] _thirdPersonRenderers;
@@ -103,17 +105,21 @@ namespace Projectiles
         {
             _kcc.SetLookRotation(input.LookRotation, -90f, 90f);
 
-            // Calculate input direction based on recently updated look rotation (the change propagates internally also to KCC.TransformRotation)
+            // Calculate input direction based on recently updated look rotation
             Vector3 inputDirection = _kcc.TransformRotation * new Vector3(input.MoveDirection.x, 0f, input.MoveDirection.y);
+
+            // Jump - only if grounded and button was pressed this tick
+            if (input.Buttons.WasPressed(_lastButtonsInput, EInputButtons.Jump) && _kcc.IsGrounded)
+            {
+                _kcc.Move(Vector3.up * _jumpImpulse);
+            }
+
             _kcc.Move(inputDirection * _moveSpeed);
 
             // Update fire transform before fire
             Vector2 pitchRotation = _kcc.GetLookRotation(true, false);
             _cameraPivot.localRotation = Quaternion.Euler(pitchRotation);
 
-            // KCC position is not updated yet at this point and positions of all
-            // enemies are not updated as well so fire will be one tick off.
-            // Check PlayerAgent in AdvancedSample where Fire is initiated precisely.
             if (input.Buttons.WasPressed(_lastButtonsInput, EInputButtons.Fire))
             {
                 _weapon.Fire();
