@@ -11,12 +11,12 @@ TagManager:
   - 
   - Water
   - UI
-  - Interactable
-  - 
-  - 
-  - 
-  - 
-  - 
+  - KCC
+  - FirstPerson
+  - ThirdPerson
+  - Agent
+  - Target
+  - Projectile
   - 
   - 
   - 
