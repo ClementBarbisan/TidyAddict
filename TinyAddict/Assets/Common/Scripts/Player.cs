@@ -31,7 +31,7 @@ namespace Projectiles
             if (HasInputAuthority && _cameraTransform == null)
             {
                 var scene = Runner.SimulationUnityScene.GetComponent<Scene>();
-                _cameraTransform = scene.Camera.transform;
+                _cameraTransform = Camera.main.transform;
 
                 // Look rotation interpolation is skipped for the local player - it is set manually
                 // in Render from the accumulated (absolute) look rotation for a smooth camera.

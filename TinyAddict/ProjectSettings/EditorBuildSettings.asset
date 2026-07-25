@@ -6,26 +6,26 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/SampleScene.unity
-    guid: 99c9720ab356a0642a771bea13969a05
-  - enabled: 0
     path: Assets/Common/Start.unity
     guid: fa4a40d5abde0c24b9337a0c15710bb9
-  - enabled: 0
+  - enabled: 1
     path: Assets/01_NetworkObject/01_NetworkObject.unity
     guid: 3ada9cf83baea4e4a9c4f582022640d5
-  - enabled: 0
+  - enabled: 1
     path: Assets/02_NetworkObjectFireData/02_NetworkObjectFireData.unity
     guid: 794e7fda64b86074f9f491538917d623
-  - enabled: 0
+  - enabled: 1
     path: Assets/03_ProjectileCountProperty/03_ProjectileCountProperty.unity
     guid: 063533c2fcf4af4459fa24279fa54d9e
-  - enabled: 0
+  - enabled: 1
     path: Assets/04_ProjectileDataBuffer_Hitscan/04_ProjectileDataBuffer_Hitscan.unity
     guid: 99fc012a82fcde242aa798e1a40fe078
-  - enabled: 0
+  - enabled: 1
     path: Assets/05_ProjectileDataBuffer_Kinematic/05_ProjectileDataBuffer_Kinematic.unity
     guid: 69cd682d2697cdc4eb7c22da602c2600
+  - enabled: 1
+    path: Assets/Scenes/SampleScene.unity
+    guid: 99c9720ab356a0642a771bea13969a05
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 217aaf12efbe355469a6108d8da90264, type: 3}
   m_UseUCBPForAssetBundles: 0
