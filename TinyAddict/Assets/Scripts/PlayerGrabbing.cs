@@ -76,7 +76,6 @@ public class PlayerGrabbing : NetworkBehaviour
             {
                 // Calcul du vecteur de force
                 Vector3 direction = (nrb.transform.position - rayOrigin).normalized;
-                Debug.Log("Try Apply force");
                 // Si on tire (Pull), on inverse la direction
                 if (!isPush)
                 {
@@ -103,7 +102,6 @@ public class PlayerGrabbing : NetworkBehaviour
     [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
     private void RPC_ApplyForce(NetworkRigidbody targetNRB, Vector3 force, Vector3 hitPoint, bool isPush)
     {
-        Debug.Log("Apply force.");
         if (targetNRB != null && targetNRB.PhysicsBody != null)
         {
             // Le serveur applique la force sur le Rigidbody
