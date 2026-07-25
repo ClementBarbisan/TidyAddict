@@ -30,10 +30,12 @@ public class TriggerPlayerDetector : NetworkBehaviour
         if (tag == "Blue")
         {
             color.RequestColorChange(Color.blue);
+            TeamManager.Instance.SetPlayerTeam(player, Team.Blue);
         }
         else if (tag == "Red")
         {
             color.RequestColorChange(Color.red);
+            TeamManager.Instance.SetPlayerTeam(player, Team.Red);
         }
     }
 }
