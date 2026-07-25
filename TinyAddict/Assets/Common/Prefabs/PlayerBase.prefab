@@ -990,6 +990,9 @@ MonoBehaviour:
   _slowMultiplier: 0.45
   _speedBuffMultiplier: 1.6
   _forceBuffMultiplier: 2.5
+  _shrinkForceMultiplier: 0.3
+  _shrinkScale: 0.4
+  _shrinkVoicePitch: 1.6
 --- !u!1 &7506615589450884436
 GameObject:
   m_ObjectHideFlags: 0
