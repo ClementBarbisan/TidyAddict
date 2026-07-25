@@ -158,7 +158,26 @@ public static class SpellSystemSetup
     {
         var existing = AssetDatabase.LoadAssetAtPath<NetworkObject>(GameStatePrefabPath);
         if (existing != null)
-            return existing;
+        {
+            // Prefab déjà créé par une version précédente du setup : on s'assure
+            // qu'il porte bien le TeamManager
+            if (existing.GetComponent<TeamManager>() == null)
+            {
+                var contents = PrefabUtility.LoadPrefabContents(GameStatePrefabPath);
+                try
+                {
+                    if (contents.GetComponent<TeamManager>() == null)
+                        contents.AddComponent<TeamManager>();
+                    PrefabUtility.SaveAsPrefabAsset(contents, GameStatePrefabPath);
+                    Debug.Log("[SpellSystemSetup] TeamManager ajouté au prefab GameState.");
+                }
+                finally
+                {
+                    PrefabUtility.UnloadPrefabContents(contents);
+                }
+            }
+            return AssetDatabase.LoadAssetAtPath<NetworkObject>(GameStatePrefabPath);
+        }
 
         EnsureFolder("Assets/Prefabs");
 
@@ -167,6 +186,9 @@ public static class SpellSystemSetup
         {
             root.AddComponent<NetworkObject>();
             root.AddComponent<GameState>();
+            // Le TeamManager vit sur le même objet réseau spawné à l'exécution :
+            // en objet de scène, son dictionnaire ne se synchronisait pas
+            root.AddComponent<TeamManager>();
             PrefabUtility.SaveAsPrefabAsset(root, GameStatePrefabPath);
         }
         finally
@@ -327,6 +349,17 @@ public static class SpellSystemSetup
         else
         {
             Debug.LogWarning("[SpellSystemSetup] Runner avec Recorder introuvable — lancez d'abord le setup du vocal spatial.");
+        }
+
+        // Le TeamManager de scène ne se synchronise pas (objet réseau de scène
+        // non attaché) : il vit désormais sur le prefab GameState spawné à
+        // l'exécution. On retire la copie de scène, sinon son Awake capture
+        // l'Instance et fait s'autodétruire la version spawnée (et GameState avec).
+        var sceneTeamManager = Object.FindFirstObjectByType<TeamManager>(FindObjectsInactive.Include);
+        if (sceneTeamManager != null)
+        {
+            Object.DestroyImmediate(sceneTeamManager.gameObject);
+            Debug.Log("[SpellSystemSetup] TeamManager de scène supprimé (déplacé sur le prefab GameState).");
         }
 
         // L'ancien WhisperManager de scène n'a plus lieu d'être
