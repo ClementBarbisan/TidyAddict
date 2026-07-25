@@ -364,6 +364,18 @@ PrefabInstance:
       propertyPath: SortKey
       value: 4073310531
       objectReference: {fileID: 0}
+    - target: {fileID: 5932827127344080253, guid: 254021f35cc07364f9cf4a715fe915e2, type: 3}
+      propertyPath: m_UseGravity
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5932827127344080253, guid: 254021f35cc07364f9cf4a715fe915e2, type: 3}
+      propertyPath: m_LinearDamping
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5932827127344080253, guid: 254021f35cc07364f9cf4a715fe915e2, type: 3}
+      propertyPath: m_AngularDamping
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 7119359598460323759, guid: 254021f35cc07364f9cf4a715fe915e2, type: 3}
       propertyPath: m_Name
       value: PlayCubeSmall (3)
@@ -640,6 +652,18 @@ PrefabInstance:
       propertyPath: m_Name
       value: PlayCubeLarge (1)
       objectReference: {fileID: 0}
+    - target: {fileID: 4712466408864022697, guid: 9d4cf92a9761ef34a871be7c303a0ffb, type: 3}
+      propertyPath: m_UseGravity
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4712466408864022697, guid: 9d4cf92a9761ef34a871be7c303a0ffb, type: 3}
+      propertyPath: m_LinearDamping
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 4712466408864022697, guid: 9d4cf92a9761ef34a871be7c303a0ffb, type: 3}
+      propertyPath: m_AngularDamping
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 6872117801838454134, guid: 9d4cf92a9761ef34a871be7c303a0ffb, type: 3}
       propertyPath: SortKey
       value: 1549701352
@@ -913,6 +937,18 @@ PrefabInstance:
     - target: {fileID: 4394116666436281940, guid: 254021f35cc07364f9cf4a715fe915e2, type: 3}
       propertyPath: SortKey
       value: 3396831747
+      objectReference: {fileID: 0}
+    - target: {fileID: 5932827127344080253, guid: 254021f35cc07364f9cf4a715fe915e2, type: 3}
+      propertyPath: m_UseGravity
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5932827127344080253, guid: 254021f35cc07364f9cf4a715fe915e2, type: 3}
+      propertyPath: m_LinearDamping
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5932827127344080253, guid: 254021f35cc07364f9cf4a715fe915e2, type: 3}
+      propertyPath: m_AngularDamping
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 7119359598460323759, guid: 254021f35cc07364f9cf4a715fe915e2, type: 3}
       propertyPath: m_Name
@@ -2027,6 +2063,18 @@ PrefabInstance:
       propertyPath: SortKey
       value: 897428652
       objectReference: {fileID: 0}
+    - target: {fileID: 5932827127344080253, guid: 254021f35cc07364f9cf4a715fe915e2, type: 3}
+      propertyPath: m_UseGravity
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5932827127344080253, guid: 254021f35cc07364f9cf4a715fe915e2, type: 3}
+      propertyPath: m_LinearDamping
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5932827127344080253, guid: 254021f35cc07364f9cf4a715fe915e2, type: 3}
+      propertyPath: m_AngularDamping
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 7119359598460323759, guid: 254021f35cc07364f9cf4a715fe915e2, type: 3}
       propertyPath: m_Name
       value: PlayCubeSmall (1)
@@ -2628,6 +2676,18 @@ PrefabInstance:
     - target: {fileID: 2561033736457803393, guid: 9d4cf92a9761ef34a871be7c303a0ffb, type: 3}
       propertyPath: m_Name
       value: PlayCubeLarge
+      objectReference: {fileID: 0}
+    - target: {fileID: 4712466408864022697, guid: 9d4cf92a9761ef34a871be7c303a0ffb, type: 3}
+      propertyPath: m_UseGravity
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4712466408864022697, guid: 9d4cf92a9761ef34a871be7c303a0ffb, type: 3}
+      propertyPath: m_LinearDamping
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 4712466408864022697, guid: 9d4cf92a9761ef34a871be7c303a0ffb, type: 3}
+      propertyPath: m_AngularDamping
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 6872117801838454134, guid: 9d4cf92a9761ef34a871be7c303a0ffb, type: 3}
       propertyPath: SortKey
@@ -4393,14 +4453,6 @@ PrefabInstance:
     - target: {fileID: 6872117801838454134, guid: 9d4cf92a9761ef34a871be7c303a0ffb, type: 3}
       propertyPath: SortKey
       value: 2239326465
-      objectReference: {fileID: 0}
-    - target: {fileID: 6872117801838454134, guid: 9d4cf92a9761ef34a871be7c303a0ffb, type: 3}
-      propertyPath: NetworkedBehaviours.Array.size
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 6872117801838454134, guid: 9d4cf92a9761ef34a871be7c303a0ffb, type: 3}
-      propertyPath: 'NetworkedBehaviours.Array.data[2]'
-      value: 
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -10094,6 +10146,18 @@ PrefabInstance:
     - target: {fileID: 4394116666436281940, guid: 254021f35cc07364f9cf4a715fe915e2, type: 3}
       propertyPath: SortKey
       value: 3948304992
+      objectReference: {fileID: 0}
+    - target: {fileID: 5932827127344080253, guid: 254021f35cc07364f9cf4a715fe915e2, type: 3}
+      propertyPath: m_UseGravity
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5932827127344080253, guid: 254021f35cc07364f9cf4a715fe915e2, type: 3}
+      propertyPath: m_LinearDamping
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5932827127344080253, guid: 254021f35cc07364f9cf4a715fe915e2, type: 3}
+      propertyPath: m_AngularDamping
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 7119359598460323759, guid: 254021f35cc07364f9cf4a715fe915e2, type: 3}
       propertyPath: m_Name

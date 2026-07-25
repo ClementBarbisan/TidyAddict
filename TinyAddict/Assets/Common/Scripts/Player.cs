@@ -91,11 +91,11 @@ namespace Projectiles
             _animator.SetFloat(X, _animMoveVelocity.x);
             _animator.SetFloat(Y, _animMoveVelocity.y);
 
-            if (_jumpTriggerCount != _renderedJumpTriggerCount)
+            /*if (_jumpTriggerCount != _renderedJumpTriggerCount)
             {
                 _renderedJumpTriggerCount = _jumpTriggerCount;
                 _animator.SetTrigger("Jump");
-            }
+            }*/
 
             if (_onHitTriggerCount != _renderedOnHitTriggerCount)
             {
@@ -118,7 +118,7 @@ namespace Projectiles
             _input = GetComponent<PlayerInput>();
             _scrollCaster = GetComponent<ScrollCaster>();
             _spellEffects = GetComponent<PlayerSpellEffects>();
-            _kcc.SetGravity(-20f);
+            _kcc.SetGravity(-100f);
         }
 
         protected void LateUpdate()
@@ -168,14 +168,14 @@ namespace Projectiles
 
             float   jumpImpulse  = default;
             // Gestion du saut/gravité (vélocité verticale gérée manuellement)
-            if (_kcc.IsGrounded)
+            /*if (_kcc.IsGrounded)
             {
                 if (isStunned == false && input.Buttons.WasPressed(_lastButtonsInput, EInputButtons.Jump))
                 {
                     jumpImpulse = _jumpImpulse;
                     _jumpTriggerCount++;
                 }
-            }
+            }*/
 
             // Effets de sort : ralentissement/buff de vitesse et éjection d'explosion
             if (_spellEffects != null)
