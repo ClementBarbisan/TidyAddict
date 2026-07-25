@@ -19,7 +19,7 @@ public static class SpellSystemSetup
     private const string BallPrefabPath = "Assets/Prefabs/SpellBall.prefab";
     private const string ParchmentMaterialPath = "Assets/Materials/SpellParchment.mat";
     private const string BallMaterialPath = "Assets/Materials/SpellBallOrb.mat";
-    private const string WhisperModelPath = "Whisper/ggml-tiny-q5_1.bin";
+    private const string WhisperModelPath = "Whisper/ggml-base-q5_1.bin";
 
     private static readonly Vector3[] ScrollSpawnPositions =
     {
@@ -218,6 +218,8 @@ public static class SpellSystemSetup
 
         whisper.language = "fr";
         whisper.initialPrompt = SpellWords.InitialPrompt;
+        // Un seul mot attendu : un segment unique évite les découpages hasardeux
+        whisper.singleSegment = true;
         var whisperSo = new SerializedObject(whisper);
         whisperSo.FindProperty("modelPath").stringValue = WhisperModelPath;
         whisperSo.FindProperty("isModelPathInStreamingAssets").boolValue = true;

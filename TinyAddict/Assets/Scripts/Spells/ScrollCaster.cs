@@ -135,15 +135,24 @@ public class ScrollCaster : NetworkBehaviour
             if (_whisper.IsLoaded == false)
                 await _whisper.InitModel();
 
+            // Whisper hallucine sur les clips très courts : on encadre le mot de
+            // silence pour lui donner du contexte et garantir une durée minimale.
+            samples = PadWithSilence(samples, tap.SamplingRate, 0.5f, 2.5f);
+
             var result = await _whisper.GetTextAsync(samples, tap.SamplingRate, 1);
             string heard = result != null ? result.Result : string.Empty;
-            float error = SpellWords.MatchError(heard, expectedWord);
 
             // Le parchemin a pu disparaître pendant la transcription
             if (HeldScroll == null)
                 return;
 
-            if (error <= _errorThreshold)
+            // Vocabulaire fermé : la transcription est rabattue sur le mot de sort
+            // le plus proche parmi les 20 — on valide si c'est celui du parchemin.
+            float expectedError = SpellWords.MatchError(heard, expectedWord);
+            int closestIndex = SpellWords.FindClosest(heard, out float closestError);
+            bool closestIsExpected = closestIndex >= 0 && SpellWords.Words[closestIndex] == expectedWord;
+
+            if (expectedError <= _errorThreshold || (closestIsExpected && closestError <= _errorThreshold + 0.2f))
             {
                 ShowFeedback($"« {expectedWord.ToUpperInvariant()} » — sort lancé !");
                 RPC_CastSpell();
@@ -151,15 +160,25 @@ public class ScrollCaster : NetworkBehaviour
             else
             {
                 string cleaned = SpellWords.Normalize(heard);
+                string closestWord = closestIndex >= 0 ? SpellWords.Words[closestIndex] : "?";
                 ShowFeedback(cleaned.Length == 0
                     ? "Je n'ai rien entendu, réessayez"
-                    : $"Raté... j'ai entendu « {cleaned} »");
+                    : $"Raté... j'ai entendu « {cleaned} » (plus proche de « {closestWord} »)");
             }
         }
         finally
         {
             _whisperBusy = false;
         }
+    }
+
+    private static float[] PadWithSilence(float[] samples, int sampleRate, float padSeconds, float minTotalSeconds)
+    {
+        int pad = (int)(sampleRate * padSeconds);
+        int total = Mathf.Max(samples.Length + pad * 2, (int)(sampleRate * minTotalSeconds));
+        var padded = new float[total];
+        samples.CopyTo(padded, pad);
+        return padded;
     }
 
     // RPCs (client → serveur)

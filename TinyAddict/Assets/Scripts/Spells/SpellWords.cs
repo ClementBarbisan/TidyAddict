@@ -17,7 +17,31 @@ public static class SpellWords
     };
 
     /// <summary>Prompt donné à Whisper pour biaiser la transcription vers nos mots.</summary>
-    public static string InitialPrompt => "Mots magiques : " + string.Join(", ", Words) + ".";
+    public static string InitialPrompt =>
+        "Le joueur prononce un seul mot magique en latin parmi cette liste : " +
+        string.Join(", ", Words) + ". Transcris uniquement ce mot.";
+
+    /// <summary>
+    /// Vocabulaire fermé : trouve le mot de sort le plus proche de la transcription.
+    /// Retourne l'index dans <see cref="Words"/> et l'erreur correspondante.
+    /// </summary>
+    public static int FindClosest(string heard, out float bestError)
+    {
+        int bestIndex = -1;
+        bestError = 1f;
+
+        for (int i = 0; i < Words.Length; i++)
+        {
+            float error = MatchError(heard, Words[i]);
+            if (error < bestError)
+            {
+                bestError = error;
+                bestIndex = i;
+            }
+        }
+
+        return bestIndex;
+    }
 
     /// <summary>
     /// Erreur de correspondance entre 0 (parfait) et 1 (rien à voir).
