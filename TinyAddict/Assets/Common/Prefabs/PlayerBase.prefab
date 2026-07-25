@@ -794,7 +794,7 @@ GameObject:
   - component: {fileID: 6887230146135067273}
   - component: {fileID: 6333160310831806214}
   - component: {fileID: 5947192473664987860}
-  - component: {fileID: 7629328886242818910}
+  - component: {fileID: 3247278654505736760}
   m_Layer: 0
   m_Name: PlayerBase
   m_TagString: Untagged
@@ -845,7 +845,7 @@ MonoBehaviour:
   - {fileID: 6887230146135067273}
   - {fileID: 6333160310831806214}
   - {fileID: 5947192473664987860}
-  - {fileID: 7629328886242818910}
+  - {fileID: 3247278654505736760}
   - {fileID: 6452215950440311741}
   ForceRemoteRenderTimeframe: 0
 --- !u!114 &4726586567304971162
@@ -917,6 +917,7 @@ MonoBehaviour:
   - {fileID: 3620351382297746391}
   - {fileID: 8922761718229575981}
   - {fileID: 958588170164976770}
+  _animator: {fileID: 0}
 --- !u!54 &8539779225907803301
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -998,7 +999,7 @@ MonoBehaviour:
   _shrinkVoicePitch: 1.6
   _growScale: 1.5
   _growVoicePitch: 0.7
---- !u!114 &7629328886242818910
+--- !u!114 &3247278654505736760
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1007,7 +1008,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 7257134546093304133}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 20284260342fa4060bc6c2caf0c52042, type: 3}
+  m_Script: {fileID: 11500000, guid: 67001cc3647a6a546a19ff361cbf842e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerProfile
   _nameTagHeight: 2.2

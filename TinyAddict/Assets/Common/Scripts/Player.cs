@@ -16,7 +16,7 @@ namespace Projectiles
         [SerializeField]
         private Transform _cameraPivot;
         [SerializeField]
-        private MeshRenderer[] _thirdPersonRenderers;
+        private SkinnedMeshRenderer[] _thirdPersonRenderers;
         [SerializeField]
         private Animator _animator;
         [Networked]
