@@ -59,7 +59,7 @@ public class VoiceSpeakingIndicator : MonoBehaviour
             var profile = voiceObject.GetComponentInParent<PlayerProfile>();
             if (profile != null && profile.HasProfile)
             {
-                string hex = ColorUtility.ToHtmlStringRGB(profile.TeamColor);
+                string hex = UITheme.PseudoHex(profile.Team);
                 float range = DefaultAudibleDistance;
                 var profileSource = voiceObject.SpeakerInUse != null ? voiceObject.SpeakerInUse.GetComponent<AudioSource>() : null;
                 if (profileSource != null)
@@ -88,34 +88,30 @@ public class VoiceSpeakingIndicator : MonoBehaviour
         if (_speaking.Count == 0)
             return;
 
+        UITheme.Begin();
+
         if (_labelStyle == null)
-        {
-            _labelStyle = new GUIStyle(GUI.skin.label)
-            {
-                fontSize = 14,
-                fontStyle = FontStyle.Bold,
-                richText = true,
-                alignment = TextAnchor.MiddleLeft,
-                padding = new RectOffset(8, 8, 2, 2),
-            };
-        }
+            _labelStyle = UITheme.Label(UITheme.BodyBold, 17, UITheme.Parchment, TextAnchor.MiddleLeft);
 
-        const float rowHeight = 24f;
-        float y = Screen.height - 16f - _speaking.Count * rowHeight;
+        // Bas-gauche (design system) : pill par locuteur, ● succès + pseudo teinté
+        const float rowHeight = 34f;
+        float y = UITheme.VirtualHeight - 36f - _speaking.Count * (rowHeight + 6f);
 
-        var previousColor = GUI.color;
         foreach (var name in _speaking)
         {
-            var content = new GUIContent($"<color=lime>●</color> {name}");
-            float width = _labelStyle.CalcSize(content).x;
-            var rect = new Rect(16f, y, width, rowHeight);
+            var content = new GUIContent(name);
+            float textWidth = _labelStyle.CalcSize(content).x;
+            var pill = new Rect(32f, y, textWidth + 52f, rowHeight);
 
-            GUI.color = new Color(0f, 0f, 0f, 0.5f);
-            GUI.DrawTexture(rect, Texture2D.whiteTexture);
-            GUI.color = previousColor;
+            UITheme.DrawRounded(pill, UITheme.WithAlpha(UITheme.PanelHud, 0.85f), 17f);
+            UITheme.DrawBorder(pill, UITheme.WithAlpha(UITheme.Brass, 0.55f), 1.5f, 17f);
 
-            GUI.Label(rect, content, _labelStyle);
-            y += rowHeight;
+            // Point vert pulsant façon "voix active"
+            float pulse = 0.6f + Mathf.PingPong(Time.time * 1.4f, 0.4f);
+            UITheme.DrawRounded(new Rect(pill.x + 13f, pill.y + 11f, 12f, 12f), UITheme.WithAlpha(UITheme.Success, pulse), 6f);
+
+            GUI.Label(new Rect(pill.x + 34f, pill.y, textWidth + 10f, pill.height), content, _labelStyle);
+            y += rowHeight + 6f;
         }
     }
 }

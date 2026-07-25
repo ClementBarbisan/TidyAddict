@@ -77,30 +77,31 @@ public class MicMuteControl : MonoBehaviour
 
     private void OnGUI()
     {
-        if (_labelStyle == null)
-        {
-            _labelStyle = new GUIStyle(GUI.skin.label)
-            {
-                fontSize = 14,
-                fontStyle = FontStyle.Bold,
-                richText = true,
-                alignment = TextAnchor.MiddleCenter,
-            };
-        }
+        UITheme.Begin();
 
-        string text = IsMuted
-            ? "<color=red>Micro muté</color> (M)"
-            : "<color=lime>Micro activé</color> (M)";
+        if (_labelStyle == null)
+            _labelStyle = UITheme.Label(UITheme.BodyExtraBold, 14, UITheme.Parchment, TextAnchor.MiddleLeft);
+
+        // Pill micro (design system : r999, dot 12 px vert = actif / rouge = coupé)
+        string text = IsMuted ? "MICRO COUPÉ" : "MICRO ACTIVÉ";
+        Color dotColor = IsMuted ? UITheme.Danger : UITheme.Success;
 
         var content = new GUIContent(text);
-        float width = _labelStyle.CalcSize(content).x + 16f;
-        var rect = new Rect(Screen.width - width - 12f, 12f, width, 26f);
+        float textWidth = _labelStyle.CalcSize(content).x;
+        float width = textWidth + 78f;
+        var pill = new Rect(UITheme.VirtualWidth - width - 32f, 28f, width, 36f);
 
-        var previousColor = GUI.color;
-        GUI.color = new Color(0f, 0f, 0f, 0.5f);
-        GUI.DrawTexture(rect, Texture2D.whiteTexture);
-        GUI.color = previousColor;
+        UITheme.DrawRounded(pill, UITheme.WithAlpha(UITheme.PanelHud, 0.85f), 18f);
+        UITheme.DrawBorder(pill, UITheme.WithAlpha(UITheme.Brass, 0.55f), 1.5f, 18f);
 
-        GUI.Label(rect, content, _labelStyle);
+        UITheme.DrawRounded(new Rect(pill.x + 14f, pill.y + 12f, 12f, 12f), dotColor, 6f);
+        GUI.Label(new Rect(pill.x + 34f, pill.y, textWidth + 8f, pill.height), content, _labelStyle);
+
+        // Touche M dans un petit cadre
+        var keyRect = new Rect(pill.xMax - 32f, pill.y + 7f, 22f, 22f);
+        UITheme.DrawBorder(keyRect, UITheme.WithAlpha(UITheme.TextDim, 0.6f), 1.5f, 6f);
+        var keyStyle = new GUIStyle(_labelStyle) { alignment = TextAnchor.MiddleCenter, fontSize = 12 };
+        keyStyle.normal.textColor = UITheme.TextDim;
+        GUI.Label(keyRect, "M", keyStyle);
     }
 }

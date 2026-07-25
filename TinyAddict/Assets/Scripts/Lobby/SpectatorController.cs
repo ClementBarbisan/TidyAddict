@@ -9,6 +9,8 @@ using UnityEngine.InputSystem;
 /// </summary>
 public class SpectatorController : MonoBehaviour
 {
+    public static bool IsActive { get; private set; }
+
     private const float MoveSpeed = 8f;
     private const float FastMultiplier = 2.5f;
     private const float LookSensitivity = 0.12f;
@@ -25,9 +27,15 @@ public class SpectatorController : MonoBehaviour
 
     private void Start()
     {
+        IsActive = true;
         TryAttachCamera();
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+    }
+
+    private void OnDestroy()
+    {
+        IsActive = false;
     }
 
     private void TryAttachCamera()

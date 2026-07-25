@@ -228,14 +228,15 @@ public class ScrollCaster : NetworkBehaviour
 
             if (bestError <= _errorThreshold)
             {
-                ShowFeedback($"« {expectedWord.ToUpperInvariant()} » — sort lancé !");
+                ShowFeedback($"◆  <b>{expectedWord.ToUpperInvariant()}</b> — sort lancé !", 2.5f, isError: false,
+                    SpellWords.ColorOf(HeldScroll.WordIndex));
                 RPC_CastSpell();
             }
             else
             {
                 ShowFeedback(bestHeard == null
-                    ? "Mot non reconnu — réessayez en articulant"
-                    : $"Raté... j'ai entendu « {bestHeard} »");
+                    ? "✗  Mot non reconnu — réessayez en articulant"
+                    : $"✗  Raté… j'ai entendu <i>« {bestHeard} »</i>", 2.5f, isError: true, default);
             }
         }
         finally
@@ -391,12 +392,22 @@ public class ScrollCaster : NetworkBehaviour
         HeldScroll = null;
     }
 
-    // UI LOCALE
+    // UI LOCALE (design system : bandeau d'incantation + toasts)
 
-    private void ShowFeedback(string message, float seconds = 3f)
+    private bool _feedbackIsError;
+    private Color _feedbackColor;
+    private GUIStyle _wordStyle;
+    private GUIStyle _wordListenStyle;
+    private GUIStyle _descStyle;
+    private GUIStyle _hintStyle;
+    private GUIStyle _toastStyle;
+
+    private void ShowFeedback(string message, float seconds = 3f, bool isError = false, Color spellColor = default)
     {
         _feedback = message;
         _feedbackUntil = Time.time + seconds;
+        _feedbackIsError = isError;
+        _feedbackColor = spellColor == default ? UITheme.Parchment : spellColor;
     }
 
     private void OnGUI()
@@ -404,48 +415,71 @@ public class ScrollCaster : NetworkBehaviour
         if (Object == null || Object.IsValid == false || HasInputAuthority == false)
             return;
 
-        if (_guiStyle == null)
-        {
-            _guiStyle = new GUIStyle(GUI.skin.label)
-            {
-                fontSize = 16,
-                fontStyle = FontStyle.Bold,
-                richText = true,
-                alignment = TextAnchor.MiddleCenter,
-            };
-        }
+        UITheme.Begin();
+        EnsureUiStyles();
 
-        string line = null;
+        float centerX = UITheme.VirtualWidth * 0.5f;
+        float bandBottom = UITheme.VirtualHeight - 36f;
 
+        // BANDEAU D'INCANTATION (bas-centre, bord 1.5 couleur du sort)
         if (HeldScroll != null)
         {
-            // Couleur et description du sort : on sait ce qu'on lance avant de le dire
-            string hex = ColorUtility.ToHtmlStringRGB(SpellWords.ColorOf(HeldScroll.WordIndex));
-            string coloredWord = $"<color=#{hex}>{HeldScroll.Word.ToUpperInvariant()}</color>";
+            Color spellColor = SpellWords.ColorOf(HeldScroll.WordIndex);
+            string word = HeldScroll.Word.ToUpperInvariant();
             string description = SpellWords.DescriptionOf(HeldScroll.WordIndex);
 
-            line = _isRecording
-                ? $"<color=red>●</color> Dites : {coloredWord} (relâchez pour valider)\n<size=13>{description}</size>"
-                : $"Parchemin : {coloredWord} — <size=13>{description}</size>\nMaintenez clic gauche et dites le mot • G pour reposer";
+            var band = new Rect(centerX - 380f, bandBottom - 108f, 760f, 108f);
+            UITheme.DrawRounded(band, UITheme.WithAlpha(UITheme.PanelHud, 0.88f), 14f);
+            UITheme.DrawBorder(band, UITheme.WithAlpha(spellColor, 0.8f), 1.5f, 14f);
+
+            if (_isRecording)
+            {
+                // Point rouge pulsant + mot en grand
+                float pulse = 0.55f + Mathf.PingPong(Time.time * 1.6f, 0.45f);
+                UITheme.DrawRounded(new Rect(band.x + 34f, band.y + 34f, 16f, 16f), UITheme.WithAlpha(UITheme.Danger, pulse), 8f);
+
+                _wordListenStyle.normal.textColor = spellColor;
+                GUI.Label(new Rect(band.x + 66f, band.y + 12f, band.width - 100f, 56f), $"Dites :  {word}", _wordListenStyle);
+                _hintStyle.normal.textColor = UITheme.TextDim;
+                GUI.Label(new Rect(band.x, band.y + 70f, band.width, 24f), "RELÂCHEZ POUR VALIDER", _hintStyle);
+            }
+            else
+            {
+                _wordStyle.normal.textColor = spellColor;
+                GUI.Label(new Rect(band.x + 32f, band.y + 12f, band.width - 64f, 42f),
+                    $"◆  Parchemin :  {word}", _wordStyle);
+                _descStyle.normal.textColor = UITheme.Parchment;
+                GUI.Label(new Rect(band.x + 32f, band.y + 52f, band.width - 64f, 24f), description, _descStyle);
+                _hintStyle.normal.textColor = UITheme.TextDim;
+                GUI.Label(new Rect(band.x + 32f, band.y + 78f, band.width - 64f, 22f),
+                    "MAINTENEZ CLIC GAUCHE ET DITES LE MOT  •  G POUR REPOSER", _hintStyle);
+            }
         }
 
+        // TOAST DE RÉSULTAT (au-dessus du bandeau)
         if (Time.time < _feedbackUntil && string.IsNullOrEmpty(_feedback) == false)
         {
-            line = line == null ? _feedback : $"{line}\n{_feedback}";
-        }
+            Color borderColor = _feedbackIsError ? UITheme.Danger : _feedbackColor;
+            var content = new GUIContent(_feedback);
+            float width = _toastStyle.CalcSize(content).x + 48f;
+            var toast = new Rect(centerX - width * 0.5f, bandBottom - 172f, width, 48f);
 
-        if (line == null)
+            UITheme.DrawRounded(toast, UITheme.WithAlpha(UITheme.PanelHud, 0.9f), 12f);
+            UITheme.DrawBorder(toast, UITheme.WithAlpha(borderColor, 0.85f), 1.5f, 12f);
+            _toastStyle.normal.textColor = _feedbackIsError ? UITheme.Danger : UITheme.Parchment;
+            GUI.Label(toast, content, _toastStyle);
+        }
+    }
+
+    private void EnsureUiStyles()
+    {
+        if (_wordStyle != null)
             return;
 
-        var rect = new Rect(0f, Screen.height * 0.72f, Screen.width, 60f);
-
-        var shadow = rect;
-        shadow.x += 1f;
-        shadow.y += 1f;
-        var previousColor = GUI.color;
-        GUI.color = Color.black;
-        GUI.Label(shadow, line, _guiStyle);
-        GUI.color = previousColor;
-        GUI.Label(rect, line, _guiStyle);
+        _wordStyle = UITheme.Label(UITheme.Display, 34, UITheme.Parchment, TextAnchor.MiddleLeft);
+        _wordListenStyle = UITheme.Label(UITheme.Display, 40, UITheme.Parchment, TextAnchor.MiddleLeft);
+        _descStyle = UITheme.Label(UITheme.Body, 18, UITheme.Parchment, TextAnchor.MiddleLeft);
+        _hintStyle = UITheme.Label(UITheme.BodyExtraBold, 13, UITheme.TextDim, TextAnchor.MiddleCenter);
+        _toastStyle = UITheme.Label(UITheme.BodyBold, 19, UITheme.Parchment, TextAnchor.MiddleCenter);
     }
 }

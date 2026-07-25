@@ -10,8 +10,9 @@ using UnityEngine;
 /// </summary>
 public class PlayerProfile : NetworkBehaviour
 {
-    public static readonly Color RedTeamColor = new Color(1f, 0.3f, 0.25f);
-    public static readonly Color BlueTeamColor = new Color(0.3f, 0.55f, 1f);
+    // Couleurs officielles du design system (#FF4D40 / #4D8CFF)
+    public static readonly Color RedTeamColor = new Color32(0xFF, 0x4D, 0x40, 0xFF);
+    public static readonly Color BlueTeamColor = new Color32(0x4D, 0x8C, 0xFF, 0xFF);
 
     public static Color ColorOfTeam(Team team)
     {
@@ -106,7 +107,8 @@ public class PlayerProfile : NetworkBehaviour
         string nickname = Nickname.ToString();
         if (_nameTag.text != nickname)
             _nameTag.text = nickname;
-        _nameTag.color = ColorOfTeam(team);
+        // Teinte lisible sur fond sombre (spec design : #FF8F84 / #8FB5FF)
+        _nameTag.color = UITheme.PseudoColor(team);
 
         // Toujours face à la caméra
         if (Camera.main != null)

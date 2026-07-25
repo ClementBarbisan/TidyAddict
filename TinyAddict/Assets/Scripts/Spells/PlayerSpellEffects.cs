@@ -192,62 +192,61 @@ public class PlayerSpellEffects : NetworkBehaviour
         }
     }
 
-    // UI LOCALE : liste des effets actifs sur soi, avec le temps restant
+    // UI LOCALE : badges des effets actifs sur soi (design system :
+    // h 40, r 10, ◆ + nom + temps, barre 3 px couleur du sort)
+
+    private readonly System.Collections.Generic.List<(string label, float remaining, Color color)> _statusBadges =
+        new System.Collections.Generic.List<(string, float, Color)>(8);
 
     private void OnGUI()
     {
         if (Object == null || Object.IsValid == false || HasInputAuthority == false)
             return;
 
+        UITheme.Begin();
+
         if (_statusStyle == null)
-        {
-            _statusStyle = new GUIStyle(GUI.skin.label)
-            {
-                fontSize = 14,
-                fontStyle = FontStyle.Bold,
-                richText = true,
-                alignment = TextAnchor.MiddleLeft,
-                padding = new RectOffset(8, 8, 2, 2),
-            };
-        }
+            _statusStyle = UITheme.Label(UITheme.BodyBold, 17, UITheme.Parchment, TextAnchor.MiddleLeft);
 
-        _statusLines.Clear();
-        AppendStatus(_statusLines, SlowTimer, "Ralenti", "#59BFFF");
-        AppendStatus(_statusLines, SpeedBuffTimer, "Vitesse +", "#CC4DFF");
-        AppendStatus(_statusLines, ForceBuffTimer, "Force +", "#FFBF00");
-        AppendStatus(_statusLines, InvisibilityTimer, "Invisible", "#CCE6F2");
-        AppendStatus(_statusLines, ConfusionTimer, "Confusion", "#FF59BF");
-        AppendStatus(_statusLines, ShrinkTimer, "Rétréci", "#59FFA6");
-        AppendStatus(_statusLines, StunTimer, "Électrifié", "#FFF233");
+        _statusBadges.Clear();
+        AppendStatus(SlowTimer, "Ralenti", SpellWords.ColorOf(0));          // polaris
+        AppendStatus(SpeedBuffTimer, "Vitesse +", SpellWords.ColorOf(2));   // aurora
+        AppendStatus(ForceBuffTimer, "Force +", SpellWords.ColorOf(3));     // maximus
+        AppendStatus(InvisibilityTimer, "Invisible", SpellWords.ColorOf(4)); // anima
+        AppendStatus(ConfusionTimer, "Confusion", SpellWords.ColorOf(5));   // vertigo
+        AppendStatus(ShrinkTimer, "Rétréci", SpellWords.ColorOf(6));        // minima
+        AppendStatus(StunTimer, "Électrifié", SpellWords.ColorOf(7));       // electra
 
-        if (_statusLines.Count == 0)
+        if (_statusBadges.Count == 0)
             return;
 
-        const float rowHeight = 24f;
-        float y = 12f;
-
-        var previousColor = GUI.color;
-        foreach (string statusLine in _statusLines)
+        float y = 28f;
+        foreach (var (label, remaining, color) in _statusBadges)
         {
-            var content = new GUIContent(statusLine);
-            float width = _statusStyle.CalcSize(content).x;
-            var rect = new Rect(12f, y, width, rowHeight);
+            var content = new GUIContent($"◆  {label}");
+            float textWidth = _statusStyle.CalcSize(content).x;
+            var badge = new Rect(32f, y, textWidth + 76f, 40f);
 
-            GUI.color = new Color(0f, 0f, 0f, 0.5f);
-            GUI.DrawTexture(rect, Texture2D.whiteTexture);
-            GUI.color = previousColor;
+            UITheme.DrawPanel(badge, 10f);
 
-            GUI.Label(rect, content, _statusStyle);
-            y += rowHeight + 2f;
+            _statusStyle.normal.textColor = color;
+            GUI.Label(new Rect(badge.x + 14f, badge.y, textWidth + 10f, 37f), content, _statusStyle);
+            _statusStyle.normal.textColor = UITheme.Parchment;
+            GUI.Label(new Rect(badge.x + textWidth + 28f, badge.y, 44f, 37f), $"{remaining:0} s", _statusStyle);
+
+            // Barre 3 px couleur du sort en bas du badge
+            UITheme.DrawRounded(new Rect(badge.x + 6f, badge.yMax - 4f, badge.width - 12f, 3f), color, 1.5f);
+
+            y += 48f;
         }
     }
 
-    private void AppendStatus(System.Collections.Generic.List<string> lines, TickTimer timer, string label, string hexColor)
+    private void AppendStatus(TickTimer timer, string label, Color color)
     {
         if (timer.ExpiredOrNotRunning(Runner))
             return;
 
         float remaining = timer.RemainingTime(Runner) ?? 0f;
-        lines.Add($"<color={hexColor}>{label}</color> {remaining:F0}s");
+        _statusBadges.Add((label, remaining, color));
     }
 }

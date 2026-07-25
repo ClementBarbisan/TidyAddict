@@ -45,16 +45,17 @@ public static class SpellWords
         SpellType.Stun,
     };
 
+    // Couleurs officielles du design system (bord + lueur + ◆, jamais fond plein)
     public static readonly Color[] Colors =
     {
-        new Color(0.35f, 0.75f, 1.00f), // polaris - bleu glace
-        new Color(1.00f, 0.20f, 0.05f), // inferno - rouge feu
-        new Color(0.80f, 0.30f, 1.00f), // aurora  - violet
-        new Color(1.00f, 0.75f, 0.00f), // maximus - or
-        new Color(0.80f, 0.90f, 0.95f), // anima   - blanc spectral
-        new Color(1.00f, 0.35f, 0.75f), // vertigo - rose
-        new Color(0.35f, 1.00f, 0.65f), // minima  - vert menthe
-        new Color(1.00f, 0.95f, 0.20f), // electra - jaune éclair
+        new Color32(0x7E, 0xD6, 0xFF, 0xFF), // polaris - #7ED6FF
+        new Color32(0xFF, 0x6B, 0x2C, 0xFF), // inferno - #FF6B2C
+        new Color32(0xB3, 0x6B, 0xFF, 0xFF), // aurora  - #B36BFF
+        new Color32(0xFF, 0xC9, 0x33, 0xFF), // maximus - #FFC933
+        new Color32(0xEA, 0xF4, 0xFF, 0xFF), // anima   - #EAF4FF
+        new Color32(0xFF, 0x6B, 0xD6, 0xFF), // vertigo - #FF6BD6
+        new Color32(0x6B, 0xFF, 0xB8, 0xFF), // minima  - #6BFFB8
+        new Color32(0xFF, 0xEE, 0x4D, 0xFF), // electra - #FFEE4D
     };
 
     // Affiché sur le parchemin pour savoir ce que fait le sort avant de le lancer

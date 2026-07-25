@@ -1,9 +1,9 @@
 using UnityEngine;
 
 /// <summary>
-/// HUD de match : chrono + % de collecte de son équipe et de l'équipe adverse
-/// en haut de l'écran pendant la partie ; écran de victoire à la fin du chrono.
-/// S'auto-instancie, aucun setup nécessaire.
+/// HUD de match (design system dark fantasy) : chrono + jauges des deux équipes
+/// + ligne zones en haut-centre, roster en haut-droite, écran de victoire à la
+/// fin du chrono, overlay spectateur. S'auto-instancie, aucun setup nécessaire.
 /// </summary>
 public class MatchHUD : MonoBehaviour
 {
@@ -13,9 +13,11 @@ public class MatchHUD : MonoBehaviour
     private PlayerProfile _localProfile;
     private PlayerProfile[] _profiles = new PlayerProfile[0];
 
-    private GUIStyle _hudStyle;
-    private GUIStyle _rosterStyle;
     private GUIStyle _timerStyle;
+    private GUIStyle _capsStyle;
+    private GUIStyle _gaugeLabelStyle;
+    private GUIStyle _zoneLineStyle;
+    private GUIStyle _rosterStyle;
     private GUIStyle _endTitleStyle;
     private GUIStyle _endSubtitleStyle;
 
@@ -55,6 +57,7 @@ public class MatchHUD : MonoBehaviour
         if (gameState == null || gameState.IsStarted == false)
             return;
 
+        UITheme.Begin();
         EnsureStyles();
 
         if (gameState.IsEnded)
@@ -63,163 +66,200 @@ public class MatchHUD : MonoBehaviour
             return;
         }
 
-        DrawMatchHud(gameState);
+        DrawTopCenter(gameState);
+        DrawTeamRosters();
+        DrawSpectatorHint();
     }
 
-    private void DrawMatchHud(GameState gameState)
+    // HAUT-CENTRE : chrono → jauges → ligne zones (marge haute 28 px)
+
+    private void DrawTopCenter(GameState gameState)
     {
-        // Chrono au centre haut
+        float centerX = UITheme.VirtualWidth * 0.5f;
+
+        // Chrono (danger sous 30 s, pulse)
         float remaining = Mathf.Max(0f, gameState.RemainingSeconds);
         int minutes = Mathf.FloorToInt(remaining / 60f);
         int seconds = Mathf.FloorToInt(remaining % 60f);
-        string timerText = $"{minutes:0}:{seconds:00}";
 
-        // Rouge quand il reste moins de 30 s
-        string timerColored = remaining <= 30f ? $"<color=red>{timerText}</color>" : timerText;
-        DrawWithBackground(new Rect(Screen.width * 0.5f - 50f, 8f, 100f, 34f), timerColored, _timerStyle);
+        var timerRect = new Rect(centerX - 80f, 28f, 160f, 56f);
+        UITheme.DrawPanel(timerRect);
+        bool danger = remaining <= 30f;
+        _timerStyle.normal.textColor = danger
+            ? UITheme.WithAlpha(UITheme.Danger, 0.65f + Mathf.PingPong(Time.time, 0.35f))
+            : UITheme.Parchment;
+        GUI.Label(timerRect, $"{minutes:0}:{seconds:00}", _timerStyle);
 
-        // % de son équipe et de l'équipe adverse
+        // Jauges des deux équipes (la nôtre à gauche)
         Team localTeam = _localProfile != null ? _localProfile.Team : Team.None;
+        bool localIsBlue = localTeam == Team.Blue;
 
-        string redHex = ColorUtility.ToHtmlStringRGB(PlayerProfile.RedTeamColor);
-        string blueHex = ColorUtility.ToHtmlStringRGB(PlayerProfile.BlueTeamColor);
-        string redLine = $"<color=#{redHex}>Rouge {gameState.RedPercent * 100f:0}% ({gameState.RedCollected} obj)</color>";
-        string blueLine = $"<color=#{blueHex}>Bleu {gameState.BluePercent * 100f:0}% ({gameState.BlueCollected} obj)</color>";
+        var leftPanel = new Rect(centerX - 470f, 96f, 450f, 64f);
+        var rightPanel = new Rect(centerX + 20f, 96f, 450f, 64f);
 
-        string line;
-        if (localTeam == Team.Red)
-            line = $"Votre équipe : {redLine}   •   Adversaires : {blueLine}";
-        else if (localTeam == Team.Blue)
-            line = $"Votre équipe : {blueLine}   •   Adversaires : {redLine}";
-        else
-            line = $"{redLine}   •   {blueLine}";
+        DrawGaugePanel(leftPanel, localIsBlue ? Team.Blue : Team.Red, gameState,
+            localTeam == Team.None ? null : "VOTRE ÉQUIPE");
+        DrawGaugePanel(rightPanel, localIsBlue ? Team.Red : Team.Blue, gameState, null);
 
-        DrawWithBackground(new Rect(Screen.width * 0.5f - 300f, 46f, 600f, 28f), line, _hudStyle);
-
-        // Compte à rebours avant le prochain déplacement des zones
+        // Ligne zones (urgence orange sous 10 s)
         if (gameState.CurrentStep < gameState.ZoneStepsCount - 1)
         {
             float nextMoveIn = gameState.StepSeconds - gameState.ElapsedSeconds % gameState.StepSeconds;
-            string moveLine = nextMoveIn <= 10f
-                ? $"<color=orange>Les zones bougent dans {nextMoveIn:0}s !</color>"
-                : $"Zones : étape {gameState.CurrentStep + 1}/{gameState.ZoneStepsCount} — déplacement dans {nextMoveIn:0}s";
-            DrawWithBackground(new Rect(Screen.width * 0.5f - 200f, 78f, 400f, 24f), moveLine, _hudStyle);
-        }
+            var zoneRect = new Rect(centerX - 260f, 170f, 520f, 34f);
+            UITheme.DrawPanel(zoneRect);
 
-        DrawTeamRosters();
+            if (nextMoveIn <= 10f)
+            {
+                _zoneLineStyle.normal.textColor = UITheme.WithAlpha(UITheme.Urgency, 0.65f + Mathf.PingPong(Time.time, 0.35f));
+                GUI.Label(zoneRect, $"⚠ Les zones bougent dans {nextMoveIn:0} s !", _zoneLineStyle);
+            }
+            else
+            {
+                _zoneLineStyle.normal.textColor = UITheme.TextDim;
+                GUI.Label(zoneRect, $"Zones : étape {gameState.CurrentStep + 1}/{gameState.ZoneStepsCount} — déplacement dans {nextMoveIn:0} s", _zoneLineStyle);
+            }
+        }
     }
 
-    // Petit panneau avec la liste des joueurs connectés de chaque équipe
+    private void DrawGaugePanel(Rect rect, Team team, GameState gameState, string tag)
+    {
+        UITheme.DrawPanel(rect);
+
+        Color teamColor = PlayerProfile.ColorOfTeam(team);
+        float charge = team == Team.Red ? gameState.RedPercent : gameState.BluePercent;
+        int objects = team == Team.Red ? gameState.RedCollected : gameState.BlueCollected;
+        string name = team == Team.Red ? "Rouge" : "Bleu";
+
+        _gaugeLabelStyle.normal.textColor = UITheme.PseudoColor(team);
+        GUI.Label(new Rect(rect.x + 18f, rect.y + 6f, rect.width - 140f, 24f),
+            $"{name}  <b>{charge * 100f:0} %</b>  <size=15>({objects} obj)</size>", _gaugeLabelStyle);
+
+        if (string.IsNullOrEmpty(tag) == false)
+        {
+            _capsStyle.normal.textColor = UITheme.TextDim;
+            var tagStyle = new GUIStyle(_capsStyle) { alignment = TextAnchor.MiddleRight };
+            GUI.Label(new Rect(rect.xMax - 160f, rect.y + 8f, 142f, 20f), tag, tagStyle);
+        }
+
+        UITheme.DrawGauge(new Rect(rect.x + 18f, rect.y + 36f, rect.width - 36f, 18f), charge, teamColor);
+    }
+
+    // HAUT-DROITE : roster des deux équipes (sous le pill micro)
+
     private void DrawTeamRosters()
     {
-        string redHex = ColorUtility.ToHtmlStringRGB(PlayerProfile.RedTeamColor);
-        string blueHex = ColorUtility.ToHtmlStringRGB(PlayerProfile.BlueTeamColor);
+        var lines = new System.Collections.Generic.List<(string text, Color color)>();
 
-        var lines = new System.Collections.Generic.List<string> { $"<color=#{redHex}><b>Équipe Rouge</b></color>" };
-        AppendTeamMembers(lines, Team.Red);
-        lines.Add($"<color=#{blueHex}><b>Équipe Bleue</b></color>");
-        AppendTeamMembers(lines, Team.Blue);
+        AppendTeam(lines, Team.Red, "CLAN ROUGE");
+        AppendTeam(lines, Team.Blue, "CLAN BLEU");
 
-        const float rowHeight = 20f;
-        float panelWidth = 170f;
-        float panelHeight = lines.Count * rowHeight + 10f;
-        // Sous l'indicateur micro, en haut à droite
-        var panel = new Rect(Screen.width - panelWidth - 12f, 46f, panelWidth, panelHeight);
+        const float rowHeight = 26f;
+        float panelWidth = 200f;
+        float panelHeight = lines.Count * rowHeight + 18f;
+        var panel = new Rect(UITheme.VirtualWidth - panelWidth - 32f, 76f, panelWidth, panelHeight);
+        UITheme.DrawPanel(panel);
 
-        var previousColor = GUI.color;
-        GUI.color = new Color(0f, 0f, 0f, 0.5f);
-        GUI.DrawTexture(panel, Texture2D.whiteTexture);
-        GUI.color = previousColor;
-
-        float y = panel.y + 5f;
-        foreach (string rosterLine in lines)
+        float y = panel.y + 9f;
+        foreach (var (text, color) in lines)
         {
-            GUI.Label(new Rect(panel.x + 8f, y, panelWidth - 16f, rowHeight), rosterLine, _rosterStyle);
+            _rosterStyle.normal.textColor = color;
+            GUI.Label(new Rect(panel.x + 16f, y, panelWidth - 32f, rowHeight), text, _rosterStyle);
             y += rowHeight;
         }
     }
 
-    private void AppendTeamMembers(System.Collections.Generic.List<string> lines, Team team)
+    private void AppendTeam(System.Collections.Generic.List<(string, Color)> lines, Team team, string header)
     {
+        lines.Add((header, UITheme.TextDim));
+
         bool any = false;
         foreach (var profile in _profiles)
         {
-            if (profile == null || profile.Object == null || profile.Object.IsValid == false)
-                continue;
-            if (profile.Team != team)
+            if (profile == null || profile.Object == null || profile.Object.IsValid == false || profile.Team != team)
                 continue;
 
-            lines.Add($"  {profile.Nickname}");
+            string marker = profile == _localProfile ? "  <size=13>vous</size>" : "";
+            lines.Add(($"■ {profile.Nickname}{marker}", UITheme.PseudoColor(team)));
             any = true;
         }
 
         if (any == false)
-            lines.Add("  <i>personne</i>");
+            lines.Add(("■ personne", UITheme.WithAlpha(UITheme.TextDim, 0.5f)));
     }
+
+    // SPECTATEUR
+
+    private void DrawSpectatorHint()
+    {
+        if (SpectatorController.IsActive == false)
+            return;
+
+        var rect = new Rect(UITheme.VirtualWidth * 0.5f - 230f, UITheme.VirtualHeight - 64f, 460f, 34f);
+        UITheme.DrawPanel(rect);
+        _capsStyle.normal.textColor = UITheme.TextDim;
+        var centered = new GUIStyle(_capsStyle) { alignment = TextAnchor.MiddleCenter };
+        GUI.Label(rect, "SPECTATEUR — ZQSD · ESPACE ↑ · CTRL ↓ · SHIFT VITE", centered);
+    }
+
+    // FIN DE PARTIE
 
     private void DrawEndScreen(GameState gameState)
     {
-        // Fond assombri
-        var previousColor = GUI.color;
-        GUI.color = new Color(0f, 0f, 0f, 0.7f);
-        GUI.DrawTexture(new Rect(0f, 0f, Screen.width, Screen.height), Texture2D.whiteTexture);
-        GUI.color = previousColor;
+        GUI.color = UITheme.WithAlpha(UITheme.LobbyDim, 0.75f);
+        GUI.DrawTexture(new Rect(0f, 0f, UITheme.VirtualWidth, UITheme.VirtualHeight), Texture2D.whiteTexture);
+        GUI.color = Color.white;
+
+        float centerX = UITheme.VirtualWidth * 0.5f;
 
         string title;
+        Color titleColor;
         if (gameState.WinnerTeam == (int)Team.Red)
         {
-            string hex = ColorUtility.ToHtmlStringRGB(PlayerProfile.RedTeamColor);
-            title = $"<color=#{hex}>L'ÉQUIPE ROUGE GAGNE !</color>";
+            title = "LE CLAN ROUGE GAGNE !";
+            titleColor = UITheme.TeamRed;
         }
         else if (gameState.WinnerTeam == (int)Team.Blue)
         {
-            string hex = ColorUtility.ToHtmlStringRGB(PlayerProfile.BlueTeamColor);
-            title = $"<color=#{hex}>L'ÉQUIPE BLEUE GAGNE !</color>";
+            title = "LE CLAN BLEU GAGNE !";
+            titleColor = UITheme.TeamBlue;
         }
         else
         {
             title = "ÉGALITÉ !";
+            titleColor = UITheme.Parchment;
         }
 
-        string redHex = ColorUtility.ToHtmlStringRGB(PlayerProfile.RedTeamColor);
-        string blueHex = ColorUtility.ToHtmlStringRGB(PlayerProfile.BlueTeamColor);
-        string subtitle = $"<color=#{redHex}>Rouge {gameState.RedPercent * 100f:0}%</color>" +
-                          $"   —   <color=#{blueHex}>Bleu {gameState.BluePercent * 100f:0}%</color>";
+        _endTitleStyle.normal.textColor = titleColor;
+        GUI.Label(new Rect(0f, 300f, UITheme.VirtualWidth, 150f), title, _endTitleStyle);
 
-        GUI.Label(new Rect(0f, Screen.height * 0.38f, Screen.width, 70f), title, _endTitleStyle);
-        GUI.Label(new Rect(0f, Screen.height * 0.38f + 74f, Screen.width, 40f), subtitle, _endSubtitleStyle);
+        // Jauges finales (spec : 820 px int., h 36)
+        DrawFinalGauge(new Rect(centerX - 410f, 520f, 820f, 36f), Team.Red, gameState.RedPercent);
+        DrawFinalGauge(new Rect(centerX - 410f, 580f, 820f, 36f), Team.Blue, gameState.BluePercent);
     }
 
-    private void DrawWithBackground(Rect rect, string text, GUIStyle style)
+    private void DrawFinalGauge(Rect rect, Team team, float charge)
     {
-        var previousColor = GUI.color;
-        GUI.color = new Color(0f, 0f, 0f, 0.5f);
-        GUI.DrawTexture(rect, Texture2D.whiteTexture);
-        GUI.color = previousColor;
-        GUI.Label(rect, text, style);
+        Color teamColor = PlayerProfile.ColorOfTeam(team);
+        UITheme.DrawGauge(rect, charge, teamColor);
+
+        _endSubtitleStyle.normal.textColor = UITheme.PseudoColor(team);
+        var left = new GUIStyle(_endSubtitleStyle) { alignment = TextAnchor.MiddleLeft };
+        GUI.Label(new Rect(rect.x - 130f, rect.y, 120f, rect.height), team == Team.Red ? "Rouge" : "Bleu",
+            new GUIStyle(left) { alignment = TextAnchor.MiddleRight });
+        GUI.Label(new Rect(rect.xMax + 14f, rect.y, 140f, rect.height), $"{charge * 100f:0} %", left);
     }
 
     private void EnsureStyles()
     {
-        if (_hudStyle != null)
+        if (_timerStyle != null)
             return;
 
-        _hudStyle = new GUIStyle(GUI.skin.label)
-        {
-            fontSize = 16,
-            fontStyle = FontStyle.Bold,
-            richText = true,
-            alignment = TextAnchor.MiddleCenter,
-        };
-
-        _rosterStyle = new GUIStyle(_hudStyle)
-        {
-            fontSize = 13,
-            alignment = TextAnchor.MiddleLeft,
-        };
-
-        _timerStyle = new GUIStyle(_hudStyle) { fontSize = 24 };
-        _endTitleStyle = new GUIStyle(_hudStyle) { fontSize = 44 };
-        _endSubtitleStyle = new GUIStyle(_hudStyle) { fontSize = 24 };
+        _timerStyle = UITheme.Label(UITheme.Display, 46, UITheme.Parchment, TextAnchor.MiddleCenter);
+        _capsStyle = UITheme.Label(UITheme.BodyExtraBold, 14, UITheme.TextDim, TextAnchor.MiddleLeft);
+        _gaugeLabelStyle = UITheme.Label(UITheme.BodyBold, 19, UITheme.Parchment, TextAnchor.MiddleLeft);
+        _zoneLineStyle = UITheme.Label(UITheme.BodyBold, 17, UITheme.TextDim, TextAnchor.MiddleCenter);
+        _rosterStyle = UITheme.Label(UITheme.BodyBold, 16, UITheme.Parchment, TextAnchor.MiddleLeft);
+        _endTitleStyle = UITheme.Label(UITheme.Display, 128, UITheme.Parchment, TextAnchor.MiddleCenter);
+        _endSubtitleStyle = UITheme.Label(UITheme.BodyBold, 24, UITheme.Parchment, TextAnchor.MiddleCenter);
     }
 }
