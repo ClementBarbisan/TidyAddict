@@ -15,6 +15,7 @@ public class LobbyMenu : MonoBehaviour
     private enum Step
     {
         Nickname,
+        Connecting,
         Team,
         Waiting,
         Done,
@@ -24,6 +25,7 @@ public class LobbyMenu : MonoBehaviour
 
     private Step _step = Step.Nickname;
     private string _nickname = "";
+    private string _room = "Test";
     private int _team;
     private bool _profileSent;
     private bool _wantSpectator;
@@ -77,6 +79,12 @@ public class LobbyMenu : MonoBehaviour
             _localProfile.RPC_BecomeSpectator();
             SpectatorController.Activate();
             _step = Step.Done;
+        }
+
+        // Connexion établie et notre joueur spawné : on passe au choix du clan
+        if (_step == Step.Connecting && _runner != null && _runner.IsRunning && _localProfile != null)
+        {
+            _step = Step.Team;
         }
 
         // La partie a été lancée (par l'hôte) : on ferme le menu
@@ -153,6 +161,9 @@ public class LobbyMenu : MonoBehaviour
             case Step.Nickname:
                 DrawNicknameStep();
                 break;
+            case Step.Connecting:
+                DrawConnectingStep();
+                break;
             case Step.Team:
                 DrawTeamStep();
                 break;
@@ -167,24 +178,31 @@ public class LobbyMenu : MonoBehaviour
     private void DrawNicknameStep()
     {
         float centerX = UITheme.VirtualWidth * 0.5f;
-        var panel = new Rect(centerX - 330f, 260f, 660f, 520f);
+        var panel = new Rect(centerX - 330f, 210f, 660f, 640f);
         DrawLobbyPanel(panel);
 
         GUI.Label(new Rect(panel.x, panel.y + 46f, panel.width, 100f), "TidyAddict", _logoStyle);
         GUI.Label(new Rect(panel.x, panel.y + 152f, panel.width, 28f),
             "Gobelins, grimoires et grand bazar.", _subtitleStyle);
 
-        GUI.Label(new Rect(panel.x + 70f, panel.y + 226f, panel.width - 140f, 24f), "TON NOM DE GOBELIN", _labelCapsStyle);
+        GUI.Label(new Rect(panel.x + 70f, panel.y + 216f, panel.width - 140f, 24f), "TON NOM DE GOBELIN", _labelCapsStyle);
 
-        var fieldRect = new Rect(panel.x + 70f, panel.y + 254f, panel.width - 140f, 62f);
+        var fieldRect = new Rect(panel.x + 70f, panel.y + 244f, panel.width - 140f, 62f);
         UITheme.DrawRounded(fieldRect, UITheme.WithAlpha(Color.black, 0.4f), 10f);
         UITheme.DrawBorder(fieldRect, UITheme.WithAlpha(UITheme.Brass, 0.55f), 1.5f, 10f);
         GUI.SetNextControlName("NicknameField");
         _nickname = GUI.TextField(new Rect(fieldRect.x + 20f, fieldRect.y, fieldRect.width - 40f, fieldRect.height), _nickname, 12, _fieldStyle);
-        GUI.FocusControl("NicknameField");
 
-        bool valid = string.IsNullOrWhiteSpace(_nickname) == false && _nickname.Trim().Length >= 3;
-        bool submit = PrimaryButton(new Rect(panel.x + 70f, panel.y + 344f, panel.width - 140f, 64f), "VALIDER", valid);
+        GUI.Label(new Rect(panel.x + 70f, panel.y + 326f, panel.width - 140f, 24f), "NOM DE LA SALLE", _labelCapsStyle);
+
+        var roomRect = new Rect(panel.x + 70f, panel.y + 354f, panel.width - 140f, 62f);
+        UITheme.DrawRounded(roomRect, UITheme.WithAlpha(Color.black, 0.4f), 10f);
+        UITheme.DrawBorder(roomRect, UITheme.WithAlpha(UITheme.Brass, 0.55f), 1.5f, 10f);
+        _room = GUI.TextField(new Rect(roomRect.x + 20f, roomRect.y, roomRect.width - 40f, roomRect.height), _room, 24, _fieldStyle);
+
+        bool valid = string.IsNullOrWhiteSpace(_nickname) == false && _nickname.Trim().Length >= 3 &&
+                     string.IsNullOrWhiteSpace(_room) == false;
+        bool submit = PrimaryButton(new Rect(panel.x + 70f, panel.y + 452f, panel.width - 140f, 64f), "REJOINDRE LA SALLE", valid);
 
         if (valid && Event.current.type == EventType.KeyDown &&
             (Event.current.keyCode == KeyCode.Return || Event.current.keyCode == KeyCode.KeypadEnter))
@@ -192,14 +210,51 @@ public class LobbyMenu : MonoBehaviour
             submit = true;
         }
 
-        GUI.Label(new Rect(panel.x, panel.y + 428f, panel.width, 24f),
-            "3 à 12 caractères  •  Entrée pour valider", _subtitleStyle);
+        GUI.Label(new Rect(panel.x, panel.y + 536f, panel.width, 24f),
+            "Pseudo : 3 à 12 caractères  •  Même salle = même partie  •  Entrée pour valider", _subtitleStyle);
 
         if (submit)
         {
             _nickname = _nickname.Trim();
-            _step = Step.Team;
+            _room = _room.Trim();
+            StartConnection();
         }
+    }
+
+    // Démarre Fusion (AutoHostOrClient) sur la salle choisie — remplace le
+    // démarrage automatique et l'UI de debug FusionBootstrapDebugGUI
+    private void StartConnection()
+    {
+        // Déjà connecté (scène pas encore migrée en StartMode Manual) : on continue
+        if (_runner != null && _runner.IsRunning)
+        {
+            _step = Step.Team;
+            return;
+        }
+
+        var bootstrap = FindFirstObjectByType<Fusion.FusionBootstrap>(FindObjectsInactive.Include);
+        if (bootstrap == null)
+        {
+            Debug.LogError("[LobbyMenu] FusionBootstrap introuvable dans la scène.");
+            return;
+        }
+
+        bootstrap.DefaultRoomName = _room;
+        bootstrap.StartAutoClient();
+        _step = Step.Connecting;
+    }
+
+    private void DrawConnectingStep()
+    {
+        float centerX = UITheme.VirtualWidth * 0.5f;
+        var panel = new Rect(centerX - 330f, 420f, 660f, 220f);
+        DrawLobbyPanel(panel);
+
+        int dots = 1 + (int)(Time.unscaledTime * 2f) % 3;
+        GUI.Label(new Rect(panel.x, panel.y + 60f, panel.width, 60f),
+            $"Connexion{new string('.', dots)}", _titleStyle);
+        GUI.Label(new Rect(panel.x, panel.y + 136f, panel.width, 28f),
+            $"Salle « <b>{_room}</b> »", _subtitleStyle);
     }
 
     // ÉCRAN 2 — CHOIX DU CLAN
