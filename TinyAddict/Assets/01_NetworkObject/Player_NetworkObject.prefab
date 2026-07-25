@@ -251,6 +251,7 @@ MonoBehaviour:
   spawnSpellTransform: {fileID: 3097945645718982202}
   clipPull: {fileID: 8300000, guid: b1d7d2609461e6f44af236d7424b05c1, type: 3}
   clipPush: {fileID: 8300000, guid: ad02ce5dbd7608c4cb767bfba46452ea, type: 3}
+  source: {fileID: 7284159740742169416}
 --- !u!82 &7284159740742169416
 AudioSource:
   m_ObjectHideFlags: 0
@@ -620,7 +621,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6066431044231784134, guid: bebc380d595234047a851e4b53101eaf, type: 3}
       propertyPath: NetworkedBehaviours.Array.size
-      value: 8
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 6066431044231784134, guid: bebc380d595234047a851e4b53101eaf, type: 3}
       propertyPath: 'NetworkedBehaviours.Array.data[0]'
@@ -641,17 +642,25 @@ PrefabInstance:
     - target: {fileID: 6066431044231784134, guid: bebc380d595234047a851e4b53101eaf, type: 3}
       propertyPath: 'NetworkedBehaviours.Array.data[4]'
       value: 
-      objectReference: {fileID: 4624148881878037665}
+      objectReference: {fileID: 4688591329202206926}
     - target: {fileID: 6066431044231784134, guid: bebc380d595234047a851e4b53101eaf, type: 3}
       propertyPath: 'NetworkedBehaviours.Array.data[5]'
       value: 
-      objectReference: {fileID: 8410923494423236203}
+      objectReference: {fileID: 4934383116707179804}
     - target: {fileID: 6066431044231784134, guid: bebc380d595234047a851e4b53101eaf, type: 3}
       propertyPath: 'NetworkedBehaviours.Array.data[6]'
       value: 
-      objectReference: {fileID: 8524957883816088181}
+      objectReference: {fileID: 4624148881878037665}
     - target: {fileID: 6066431044231784134, guid: bebc380d595234047a851e4b53101eaf, type: 3}
       propertyPath: 'NetworkedBehaviours.Array.data[7]'
+      value: 
+      objectReference: {fileID: 8410923494423236203}
+    - target: {fileID: 6066431044231784134, guid: bebc380d595234047a851e4b53101eaf, type: 3}
+      propertyPath: 'NetworkedBehaviours.Array.data[8]'
+      value: 
+      objectReference: {fileID: 8524957883816088181}
+    - target: {fileID: 6066431044231784134, guid: bebc380d595234047a851e4b53101eaf, type: 3}
+      propertyPath: 'NetworkedBehaviours.Array.data[9]'
       value: 
       objectReference: {fileID: 5726396737517724789}
     - target: {fileID: 6066431044231784134, guid: bebc380d595234047a851e4b53101eaf, type: 3}
@@ -719,6 +728,28 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 3170118265349794785, guid: bebc380d595234047a851e4b53101eaf, type: 3}
   m_PrefabInstance: {fileID: 1653629507265466312}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &4688591329202206926 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6333160310831806214, guid: bebc380d595234047a851e4b53101eaf, type: 3}
+  m_PrefabInstance: {fileID: 1653629507265466312}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8233805172249388685}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c49f3eea5f81f8340899d3f8f1cfde8d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ScrollCaster
+--- !u!114 &4934383116707179804 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5947192473664987860, guid: bebc380d595234047a851e4b53101eaf, type: 3}
+  m_PrefabInstance: {fileID: 1653629507265466312}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8233805172249388685}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5e7f512494f25fd45842b69f775c21be, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerSpellEffects
 --- !u!114 &5289060039734560065 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 6887230146135067273, guid: bebc380d595234047a851e4b53101eaf, type: 3}
@@ -795,7 +826,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GrabObject
   grabDistance: 15
   forcePower: 500
-  cooldown: 0.5
+  cooldown: 0.8
   pullAction: {fileID: -4090225696740746782, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   pushAction: {fileID: 3001919216989983466, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   effect: {fileID: 1948467167421519659}

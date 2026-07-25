@@ -456,6 +456,37 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6376dd7fc23b3764483a7349b58502e2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: PhotonVoice.Fusion::Photon.Voice.Fusion.VoiceNetworkObject
+--- !u!1 &6573972332475002407
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2239454316225206753}
+  m_Layer: 0
+  m_Name: HandAnchor
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2239454316225206753
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6573972332475002407}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.3, y: -0.25, z: 0.6}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3170118265349794785}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &6729366823290502798
 GameObject:
   m_ObjectHideFlags: 0
@@ -742,7 +773,8 @@ Transform:
   m_LocalPosition: {x: 0, y: 1.2, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 2239454316225206753}
   m_Father: {fileID: 2403547491983486448}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &7257134546093304133
@@ -760,6 +792,8 @@ GameObject:
   - component: {fileID: 4639397791414330085}
   - component: {fileID: 8539779225907803301}
   - component: {fileID: 6887230146135067273}
+  - component: {fileID: 6333160310831806214}
+  - component: {fileID: 5947192473664987860}
   m_Layer: 0
   m_Name: PlayerBase
   m_TagString: Untagged
@@ -808,6 +842,8 @@ MonoBehaviour:
   - {fileID: 3182121818424250732}
   - {fileID: 4639397791414330085}
   - {fileID: 6887230146135067273}
+  - {fileID: 6333160310831806214}
+  - {fileID: 5947192473664987860}
   - {fileID: 6452215950440311741}
   ForceRemoteRenderTimeframe: 0
 --- !u!114 &4726586567304971162
@@ -918,6 +954,42 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d11ade2c60a4ba3a5c3955af01f52f9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &6333160310831806214
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7257134546093304133}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c49f3eea5f81f8340899d3f8f1cfde8d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ScrollCaster
+  _handAnchor: {fileID: 2239454316225206753}
+  _castOrigin: {fileID: 3170118265349794785}
+  _spellBallPrefab: {fileID: 3033438803795718193, guid: 8acc3df215c96554eb49d3a77b977b7d, type: 3}
+  _iceZonePrefab: {fileID: 4518166319585692027, guid: 564bf2b22fb1d724ba02801071d959de, type: 3}
+  _buffSeconds: 30
+  _minRecordSeconds: 0.3
+  _maxRecordSeconds: 6
+  _errorThreshold: 0.35
+  _HeldScroll: {fileID: 0}
+--- !u!114 &5947192473664987860
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7257134546093304133}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5e7f512494f25fd45842b69f775c21be, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerSpellEffects
+  _slowMultiplier: 0.45
+  _speedBuffMultiplier: 1.6
+  _forceBuffMultiplier: 2.5
 --- !u!1 &7506615589450884436
 GameObject:
   m_ObjectHideFlags: 0

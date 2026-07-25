@@ -109,6 +109,7 @@ public class PlayerGrabbing : NetworkBehaviour
             // NetworkRigidbody se chargera de synchroniser le mouvement chez TOUS les clients
             targetNRB.PhysicsBody.AddForce(force);
             _canApplyForce = false;
+            
         }
     }
 }
