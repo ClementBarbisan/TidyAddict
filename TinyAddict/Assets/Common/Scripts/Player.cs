@@ -52,7 +52,7 @@ namespace Projectiles
             {
                 var scene = Runner.SimulationUnityScene.GetComponent<Scene>();
                 _cameraTransform = Camera.main.transform;
-                if (TeamManager.Instance != null)
+                if (TeamManager.Instance != null && TeamManager.Instance.Object != null && TeamManager.Instance.Object.IsValid)
                     TeamManager.Instance.SetPlayerTeam(GetComponent<NetworkObject>().InputAuthority, Team.None);
                 // Look rotation interpolation is skipped for the local player - it is set manually
                 // in Render from the accumulated (absolute) look rotation for a smooth camera.

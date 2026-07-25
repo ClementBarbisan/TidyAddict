@@ -29,9 +29,15 @@ public class PlayerProfile : NetworkBehaviour
     {
         get
         {
-            if (Object == null || Object.IsValid == false || TeamManager.Instance == null)
+            if (Object == null || Object.IsValid == false)
                 return Team.None;
-            return TeamManager.Instance.GetPlayerTeam(Object.InputAuthority);
+
+            var teamManager = TeamManager.Instance;
+            // Le dictionnaire d'équipes n'est lisible qu'une fois le TeamManager spawné
+            if (teamManager == null || teamManager.Object == null || teamManager.Object.IsValid == false)
+                return Team.None;
+
+            return teamManager.GetPlayerTeam(Object.InputAuthority);
         }
     }
 
