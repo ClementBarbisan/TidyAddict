@@ -22,7 +22,6 @@ namespace Projectiles
         private NetworkButtons _lastButtonsInput { get; set; }
 
         private SimpleKCC _kcc;
-        private WeaponBase _weapon;
         private PlayerInput _input;
         private Transform _cameraTransform;
 
@@ -72,7 +71,6 @@ namespace Projectiles
 
         protected void Awake()
         {
-            _weapon = GetComponentInChildren<WeaponBase>();
             _kcc = GetComponent<SimpleKCC>();
             _input = GetComponent<PlayerInput>();
             _kcc.SetGravity(-20f);
@@ -124,11 +122,6 @@ namespace Projectiles
             // Update fire transform before fire
             Vector2 pitchRotation = _kcc.GetLookRotation(true, false);
             _cameraPivot.localRotation = Quaternion.Euler(pitchRotation);
-
-            if (input.Buttons.WasPressed(_lastButtonsInput, EInputButtons.Fire) && _weapon.isActiveAndEnabled)
-            {
-                _weapon.Fire();
-            }
             
             _lastButtonsInput = input.Buttons;
         }

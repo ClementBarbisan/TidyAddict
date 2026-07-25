@@ -7,10 +7,13 @@ public class PlayerGrabbing : NetworkBehaviour
 {
     [SerializeField] private float grabDistance = 10.0f;
     [SerializeField] private float forcePower = 10f;
+    [SerializeField] private float cooldown = 1f; 
     [SerializeField] private InputActionReference pullAction, pushAction;
 
     private bool _pressedOldPush, _pressedOldPull;
     private Transform _cam;
+    private float _timerCooldown;
+    private bool _canApplyForce = true;
 
     private void Start()
     {
@@ -46,6 +49,19 @@ public class PlayerGrabbing : NetworkBehaviour
         _pressedOldPush = isPushPressed;
     }
 
+    private void Update()
+    {
+        if (!_canApplyForce)
+        {
+            _timerCooldown += Time.deltaTime;
+            if (_timerCooldown > cooldown)
+            {
+                _canApplyForce = true;
+                _timerCooldown = 0f;
+            }
+        }
+    }
+
     private void TryApplyForce(bool isPush)
     {
         Vector3 rayOrigin = _cam != null ? _cam.position : transform.position + Vector3.up;
@@ -78,7 +94,7 @@ public class PlayerGrabbing : NetworkBehaviour
     private void RPC_ApplyForce(NetworkRigidbody targetNRB, Vector3 force)
     {
         Debug.Log("Apply force.");
-        if (targetNRB != null && targetNRB.PhysicsBody != null)
+        if (targetNRB != null && targetNRB.PhysicsBody != null && _canApplyForce)
         {
             // Le serveur applique la force sur le Rigidbody
             // NetworkRigidbody se chargera de synchroniser le mouvement chez TOUS les clients
