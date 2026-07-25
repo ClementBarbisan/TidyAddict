@@ -9,8 +9,6 @@ public class PlayerGrabbing : NetworkBehaviour
     [SerializeField] private float forcePower = 10f;
     [SerializeField] private float cooldown = 1f; 
     [SerializeField] private InputActionReference pullAction, pushAction;
-
-    private bool _pressedOldPush, _pressedOldPull;
     private Transform _cam;
     private float _timerCooldown;
     private bool _canApplyForce = true;
@@ -29,24 +27,7 @@ public class PlayerGrabbing : NetworkBehaviour
     public override void FixedUpdateNetwork()
     {
         // On ne lit les inputs locaux que si l'on a l'autorité sur le joueur (le joueur local)
-        if (!HasInputAuthority) return;
-
-        bool isPullPressed = pullAction != null && pullAction.action.IsPressed();
-        bool isPushPressed = pushAction != null && pushAction.action.IsPressed();
-
-        // Détection de l'appui (KeyDown)
-        if (isPullPressed && !_pressedOldPull)
-        {
-            TryApplyForce(isPush: false);
-        }
-
-        if (isPushPressed && !_pressedOldPush)
-        {
-            TryApplyForce(isPush: true);
-        }
-
-        _pressedOldPull = isPullPressed;
-        _pressedOldPush = isPushPressed;
+       
     }
 
     private void Update()
@@ -59,6 +40,21 @@ public class PlayerGrabbing : NetworkBehaviour
                 _canApplyForce = true;
                 _timerCooldown = 0f;
             }
+        }
+        if (!HasInputAuthority) return;
+
+        bool isPullPressed = pullAction != null && pullAction.action.WasPressedThisFrame();
+        bool isPushPressed = pushAction != null && pushAction.action.WasPressedThisFrame();
+
+        // Détection de l'appui (KeyDown)
+        if (isPullPressed)
+        {
+            TryApplyForce(isPush: false);
+        }
+
+        if (isPushPressed)
+        {
+            TryApplyForce(isPush: true);
         }
     }
 
