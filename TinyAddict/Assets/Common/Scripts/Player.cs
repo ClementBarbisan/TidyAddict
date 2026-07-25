@@ -14,6 +14,11 @@ namespace Projectiles
         [SerializeField]
         private float _jumpImpulse = 6f;
         [SerializeField]
+        private float _gravity = -20f;
+        [Networked]
+        private float _verticalVelocity { get; set; }
+
+        [SerializeField]
         private Transform _cameraPivot;
         [SerializeField]
         private MeshRenderer[] _thirdPersonRenderers;
@@ -105,16 +110,25 @@ namespace Projectiles
         {
             _kcc.SetLookRotation(input.LookRotation, -90f, 90f);
 
-            // Calculate input direction based on recently updated look rotation
+            // Direction horizontale
             Vector3 inputDirection = _kcc.TransformRotation * new Vector3(input.MoveDirection.x, 0f, input.MoveDirection.y);
-            
-            _kcc.Move(inputDirection * _moveSpeed);
-            
-            // Jump - only if grounded and button was pressed this tick
-            if (input.Buttons.WasPressed(_lastButtonsInput, EInputButtons.Jump) && _kcc.IsGrounded)
+            Vector3 moveVelocity = inputDirection * _moveSpeed;
+            float   jumpImpulse  = default;
+            // Gestion du saut/gravité (vélocité verticale gérée manuellement)
+            if (_kcc.IsGrounded)
             {
-                //_kcc.
+                // Reste au sol tant qu'aucun saut n'est demandé
+                _verticalVelocity = 0f;
+                
+                if (input.Buttons.WasPressed(_lastButtonsInput, EInputButtons.Jump))
+                {
+                    jumpImpulse = _jumpImpulse;
+                }
             }
+
+            moveVelocity.y = _verticalVelocity;
+
+            _kcc.Move(moveVelocity, jumpImpulse);
 
             // Update fire transform before fire
             Vector2 pitchRotation = _kcc.GetLookRotation(true, false);
@@ -124,7 +138,7 @@ namespace Projectiles
             {
                 _weapon.Fire();
             }
-
+            
             _lastButtonsInput = input.Buttons;
         }
     }

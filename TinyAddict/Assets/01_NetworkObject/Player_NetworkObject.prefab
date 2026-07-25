@@ -252,7 +252,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4639397791414330085, guid: bebc380d595234047a851e4b53101eaf, type: 3}
       propertyPath: _jumpImpulse
-      value: 100
+      value: 20
       objectReference: {fileID: 0}
     - target: {fileID: 4726586567304971162, guid: bebc380d595234047a851e4b53101eaf, type: 3}
       propertyPath: _settings.ColliderLayer
@@ -421,4 +421,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GrabObject
   _grab: {fileID: 1781555164194001046, guid: 052faaac586de48259a63d0c4782560b, type: 3}
-  _throw: {fileID: 0}
+  _forceThrow: 10
