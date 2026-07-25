@@ -533,11 +533,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -5936404740877256746, guid: 92443e606ce55c448ad35977fc371ebb, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 765083787780579976, guid: 92443e606ce55c448ad35977fc371ebb, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 92443e606ce55c448ad35977fc371ebb, type: 3}
       propertyPath: m_Name
@@ -545,15 +545,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1196823692667286916, guid: 92443e606ce55c448ad35977fc371ebb, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3730190130386908205, guid: 92443e606ce55c448ad35977fc371ebb, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3734385566978687212, guid: 92443e606ce55c448ad35977fc371ebb, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7325787620408136545, guid: 92443e606ce55c448ad35977fc371ebb, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -595,6 +599,11 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!137 &3080324916137604459 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: -6093279092680619257, guid: 92443e606ce55c448ad35977fc371ebb, type: 3}
+  m_PrefabInstance: {fileID: 130553545377169004}
+  m_PrefabAsset: {fileID: 0}
 --- !u!137 &5189166126979374989 stripped
 SkinnedMeshRenderer:
   m_CorrespondingSourceObject: {fileID: 5317711964121063905, guid: 92443e606ce55c448ad35977fc371ebb, type: 3}
@@ -690,7 +699,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4639397791414330085, guid: bebc380d595234047a851e4b53101eaf, type: 3}
       propertyPath: _thirdPersonRenderers.Array.size
-      value: 5
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 4639397791414330085, guid: bebc380d595234047a851e4b53101eaf, type: 3}
       propertyPath: '_thirdPersonRenderers.Array.data[0]'
@@ -712,6 +721,10 @@ PrefabInstance:
       propertyPath: '_thirdPersonRenderers.Array.data[4]'
       value: 
       objectReference: {fileID: 6854006138826951314}
+    - target: {fileID: 4639397791414330085, guid: bebc380d595234047a851e4b53101eaf, type: 3}
+      propertyPath: '_thirdPersonRenderers.Array.data[5]'
+      value: 
+      objectReference: {fileID: 3080324916137604459}
     - target: {fileID: 4726586567304971162, guid: bebc380d595234047a851e4b53101eaf, type: 3}
       propertyPath: _settings.ColliderLayer
       value: 6
