@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using Fusion;
 using UnityEngine;
 
@@ -8,11 +10,12 @@ public class NetworkedColor : NetworkBehaviour
     public Color ObjectColor { get; set; }
 
     private ChangeDetector _changes;
-    [SerializeField] private Renderer _renderer;
+    [SerializeField] private List<Renderer> _renderers = new List<Renderer>();
 
     public override void Spawned()
     {
-        _renderer = GetComponentInChildren<Renderer>();
+        if (_renderers.Count == 0)
+            _renderers = GetComponentsInChildren<Renderer>().ToList();
         // Initialisation du détecteur de changements
         _changes = GetChangeDetector(ChangeDetector.Source.SimulationState);
         
@@ -34,9 +37,12 @@ public class NetworkedColor : NetworkBehaviour
 
     private void ApplyColor(Color newColor)
     {
-        if (_renderer != null)
+        if (_renderers != null && _renderers.Count > 0)
         {
-            _renderer.material.color = newColor;
+            foreach (Renderer render in _renderers)
+            {
+                render.material.color = newColor;
+            }
         }
     }
 

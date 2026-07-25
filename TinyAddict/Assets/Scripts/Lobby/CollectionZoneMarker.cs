@@ -22,33 +22,42 @@ public class CollectionZoneMarker : MonoBehaviour
     [SerializeField] private Material _visualMaterial;
 
     private Transform _visual;
+    private Transform _ground;
 
     public Vector3 Center => transform.position + Vector3.up * (_height * 0.5f);
     public Vector3 HalfExtents => new Vector3(_footprint.x * 0.5f, _height * 0.5f, _footprint.y * 0.5f);
 
     private void Update()
     {
-        EnsureVisual();
+        _visual = EnsureChildBox("Visual", _visual);
+        _ground = EnsureChildBox("Ground", _ground);
 
-        if (_visual == null)
-            return;
+        // Le volume colle toujours exactement à la zone de comptage
+        if (_visual != null)
+        {
+            _visual.localPosition = new Vector3(0f, _height * 0.5f, 0f);
+            _visual.localScale = new Vector3(_footprint.x, _height, _footprint.y);
+        }
 
-        // Le mesh colle toujours exactement au volume de comptage
-        _visual.localPosition = new Vector3(0f, _height * 0.5f, 0f);
-        _visual.localScale = new Vector3(_footprint.x, _height, _footprint.y);
+        // Dalle au sol : reste lisible quand on est à l'intérieur de la zone
+        if (_ground != null)
+        {
+            _ground.localPosition = new Vector3(0f, 0.04f, 0f);
+            _ground.localScale = new Vector3(_footprint.x, 0.08f, _footprint.y);
+        }
     }
 
-    private void EnsureVisual()
+    private Transform EnsureChildBox(string name, Transform cached)
     {
-        if (_visual != null)
-            return;
+        if (cached != null)
+            return cached;
 
-        _visual = transform.Find("Visual");
+        var child = transform.Find(name);
 
-        if (_visual == null)
+        if (child == null)
         {
             var box = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            box.name = "Visual";
+            box.name = name;
             box.transform.SetParent(transform, false);
 
             var collider = box.GetComponent<Collider>();
@@ -57,15 +66,17 @@ public class CollectionZoneMarker : MonoBehaviour
             else
                 DestroyImmediate(collider);
 
-            _visual = box.transform;
+            child = box.transform;
         }
 
         if (_visualMaterial != null)
         {
-            var renderer = _visual.GetComponent<MeshRenderer>();
+            var renderer = child.GetComponent<MeshRenderer>();
             if (renderer != null && renderer.sharedMaterial != _visualMaterial)
                 renderer.sharedMaterial = _visualMaterial;
         }
+
+        return child;
     }
 
     private void OnDrawGizmos()

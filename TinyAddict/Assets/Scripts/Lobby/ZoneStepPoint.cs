@@ -2,16 +2,17 @@ using UnityEngine;
 
 /// <summary>
 /// Étape du parcours d'une zone de collecte : la zone de l'équipe saute sur
-/// le point de l'étape courante (une étape par minute de jeu). Placez 5 points
-/// rouges et 5 points bleus dans la scène et déplacez-les librement.
+/// le point de l'étape courante (le match est découpé en autant de tranches
+/// que d'étapes — 3 par défaut : départ + 2 changements). Placez un point par
+/// étape et par équipe dans la scène et déplacez-les librement.
 /// La scène étant identique chez tous, chaque client déplace localement les
-/// rectangles au même moment (calé sur le chrono réseau).
+/// zones au même moment (calé sur le chrono réseau).
 /// </summary>
 public class ZoneStepPoint : MonoBehaviour
 {
     public Team Team = Team.None;
 
-    [Tooltip("Numéro d'étape : 0 = première minute, 4 = dernière minute")]
+    [Tooltip("Numéro d'étape : 0 = position de départ, puis 1, 2… à chaque changement")]
     public int Step;
 
     private void OnDrawGizmos()

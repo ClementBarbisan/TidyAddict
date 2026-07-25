@@ -161,20 +161,35 @@ public static class SpellSystemSetup
         {
             // Prefab déjà créé par une version précédente du setup : on s'assure
             // qu'il porte bien le TeamManager
-            if (existing.GetComponent<TeamManager>() == null)
+            var contents = PrefabUtility.LoadPrefabContents(GameStatePrefabPath);
+            try
             {
-                var contents = PrefabUtility.LoadPrefabContents(GameStatePrefabPath);
-                try
+                bool dirty = false;
+
+                if (contents.GetComponent<TeamManager>() == null)
                 {
-                    if (contents.GetComponent<TeamManager>() == null)
-                        contents.AddComponent<TeamManager>();
-                    PrefabUtility.SaveAsPrefabAsset(contents, GameStatePrefabPath);
+                    contents.AddComponent<TeamManager>();
+                    dirty = true;
                     Debug.Log("[SpellSystemSetup] TeamManager ajouté au prefab GameState.");
                 }
-                finally
+
+                // Migration : 3 étapes de zones (départ + 2 changements)
+                var gameStateSo = new SerializedObject(contents.GetComponent<GameState>());
+                var stepsProperty = gameStateSo.FindProperty("_zoneSteps");
+                if (stepsProperty != null && stepsProperty.intValue == 5)
                 {
-                    PrefabUtility.UnloadPrefabContents(contents);
+                    stepsProperty.intValue = 3;
+                    gameStateSo.ApplyModifiedPropertiesWithoutUndo();
+                    dirty = true;
+                    Debug.Log("[SpellSystemSetup] GameState : zones passées à 3 étapes.");
                 }
+
+                if (dirty)
+                    PrefabUtility.SaveAsPrefabAsset(contents, GameStatePrefabPath);
+            }
+            finally
+            {
+                PrefabUtility.UnloadPrefabContents(contents);
             }
             return AssetDatabase.LoadAssetAtPath<NetworkObject>(GameStatePrefabPath);
         }
@@ -351,6 +366,25 @@ public static class SpellSystemSetup
             Debug.LogWarning("[SpellSystemSetup] Runner avec Recorder introuvable — lancez d'abord le setup du vocal spatial.");
         }
 
+        // L'UI de debug Fusion fait doublon avec notre lobby : on la retire, et le
+        // démarrage réseau passe en Manual — c'est le LobbyMenu qui le déclenche
+        // avec la salle choisie par le joueur
+        var debugGui = Object.FindFirstObjectByType<FusionBootstrapDebugGUI>(FindObjectsInactive.Include);
+        if (debugGui != null)
+        {
+            Object.DestroyImmediate(debugGui);
+            Debug.Log("[SpellSystemSetup] FusionBootstrapDebugGUI supprimé (remplacé par le LobbyMenu).");
+        }
+
+        var bootstrap = Object.FindFirstObjectByType<FusionBootstrap>(FindObjectsInactive.Include);
+        if (bootstrap != null && bootstrap.StartMode != FusionBootstrap.StartModes.Manual)
+        {
+            var bootstrapSo = new SerializedObject(bootstrap);
+            bootstrapSo.FindProperty("StartMode").enumValueIndex = (int)FusionBootstrap.StartModes.Manual;
+            bootstrapSo.ApplyModifiedPropertiesWithoutUndo();
+            Debug.Log("[SpellSystemSetup] FusionBootstrap passé en StartMode Manual (démarrage via le lobby).");
+        }
+
         // Le TeamManager de scène ne se synchronise pas (objet réseau de scène
         // non attaché) : il vit désormais sur le prefab GameState spawné à
         // l'exécution. On retire la copie de scène, sinon son Awake capture
@@ -430,21 +464,18 @@ public static class SpellSystemSetup
 
         var parent = new GameObject("ZoneSteps").transform;
 
+        // 3 étapes par équipe : position de départ + 2 changements
         var redPositions = new[]
         {
             new Vector3(-12f, 0f, 0f),
             new Vector3(-8f, 0f, 8f),
             new Vector3(-4f, 0f, -8f),
-            new Vector3(-10f, 0f, -6f),
-            new Vector3(-6f, 0f, 4f),
         };
         var bluePositions = new[]
         {
             new Vector3(12f, 0f, 0f),
             new Vector3(8f, 0f, -8f),
             new Vector3(4f, 0f, 8f),
-            new Vector3(10f, 0f, 6f),
-            new Vector3(6f, 0f, -4f),
         };
 
         for (int i = 0; i < redPositions.Length; i++)
@@ -453,7 +484,7 @@ public static class SpellSystemSetup
             CreateStepPoint(parent, Team.Blue, i, bluePositions[i]);
         }
 
-        Debug.Log("[SpellSystemSetup] 10 points d'étapes de zones créés (5 rouges, 5 bleus) — déplacez-les librement.");
+        Debug.Log("[SpellSystemSetup] 6 points d'étapes de zones créés (3 rouges, 3 bleus) — déplacez-les librement.");
     }
 
     private static void CreateStepPoint(Transform parent, Team team, int step, Vector3 position)
@@ -479,7 +510,7 @@ public static class SpellSystemSetup
 
     private static void CreateZoneVisual(string name, Vector3 position, Color color, string materialPath, Team team)
     {
-        var material = GetOrCreateTransparentMaterial(materialPath, color);
+        var material = GetOrCreateZoneXRayMaterial(materialPath, color);
 
         var existingZone = GameObject.Find(name);
         if (existingZone != null)
@@ -533,6 +564,42 @@ public static class SpellSystemSetup
     }
 
     // HELPERS
+
+    // Matériau des zones de collecte : shader X-Ray (visible à travers les murs
+    // en silhouette atténuée, faces intérieures rendues). Recette réappliquée
+    // aux matériaux existants à chaque setup.
+    private static Material GetOrCreateZoneXRayMaterial(string path, Color color)
+    {
+        var shader = Shader.Find("TidyAddict/ZoneXRay");
+        if (shader == null)
+        {
+            Debug.LogWarning("[SpellSystemSetup] Shader TidyAddict/ZoneXRay introuvable — matériau transparent standard utilisé.");
+            return GetOrCreateTransparentMaterial(path, color);
+        }
+
+        var material = AssetDatabase.LoadAssetAtPath<Material>(path);
+        bool isNew = material == null;
+
+        if (isNew)
+        {
+            EnsureFolder("Assets/Materials");
+            material = new Material(shader);
+        }
+        else if (material.shader != shader)
+        {
+            material.shader = shader;
+        }
+
+        material.SetColor("_Color", new Color(color.r, color.g, color.b, 0.3f));
+        material.SetFloat("_OccludedAlpha", 0.12f);
+
+        if (isNew)
+            AssetDatabase.CreateAsset(material, path);
+        else
+            EditorUtility.SetDirty(material);
+
+        return material;
+    }
 
     private static Material GetOrCreateTransparentMaterial(string path, Color color)
     {

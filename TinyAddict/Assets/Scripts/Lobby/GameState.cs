@@ -17,7 +17,8 @@ public class GameState : NetworkBehaviour
 
     [SerializeField] private int _requiredPlayers = 4;
     [SerializeField] private float _matchSeconds = 300f;
-    [SerializeField] private int _zoneSteps = 5;
+    // Position de départ + 2 changements = 3 étapes sur les 5 minutes
+    [SerializeField] private int _zoneSteps = 3;
 
     [Tooltip("Charge apportée par UN objet resté UNE minute dans la zone (0.05 = 5 % → 5 objets × 1 min = 25 %)")]
     [SerializeField] private float _chargePerObjectPerMinute = 0.05f;
