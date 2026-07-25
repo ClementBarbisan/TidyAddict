@@ -146,7 +146,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &3085566571211268124
 Transform:
   m_ObjectHideFlags: 0
@@ -440,7 +440,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GrabObject
   HoldPoint: {fileID: 0}
-  grabDistance: 3
+  grabDistance: 15
   _force: 10
   _pull: {fileID: -4090225696740746782, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   _push: {fileID: 3001919216989983466, guid: 052faaac586de48259a63d0c4782560b, type: 3}

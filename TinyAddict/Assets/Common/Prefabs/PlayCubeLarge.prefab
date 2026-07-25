@@ -14,7 +14,6 @@ GameObject:
   - component: {fileID: 1510690919838717076}
   - component: {fileID: 7405076942553305860}
   - component: {fileID: 8529735268038084206}
-  - component: {fileID: -1768018037321935110}
   m_Layer: 0
   m_Name: PlayCubeLarge
   m_TagString: Grabbable
@@ -53,12 +52,11 @@ MonoBehaviour:
   SortKey: 1920227934
   SendPriority: 1
   EnableInterpolation: 1
-  Flags: 264450
+  Flags: 526594
   NestedObjects: []
   NetworkedBehaviours:
   - {fileID: 7405076942553305860}
   - {fileID: 8529735268038084206}
-  - {fileID: -1768018037321935110}
   ForceRemoteRenderTimeframe: 0
 --- !u!54 &4712466408864022697
 Rigidbody:
@@ -136,18 +134,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7a5f5bfb5b3b990418879bb5c05dc94a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &-1768018037321935110
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2561033736457803393}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4ead685bbed7945f1befa73c7ec22360, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::GrabbableObject
 --- !u!1 &5719718779185829327
 GameObject:
   m_ObjectHideFlags: 0
