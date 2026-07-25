@@ -531,9 +531,29 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -5936404740877256746, guid: 92443e606ce55c448ad35977fc371ebb, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 765083787780579976, guid: 92443e606ce55c448ad35977fc371ebb, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 92443e606ce55c448ad35977fc371ebb, type: 3}
       propertyPath: m_Name
       value: character_anims_01
+      objectReference: {fileID: 0}
+    - target: {fileID: 1196823692667286916, guid: 92443e606ce55c448ad35977fc371ebb, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3730190130386908205, guid: 92443e606ce55c448ad35977fc371ebb, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3734385566978687212, guid: 92443e606ce55c448ad35977fc371ebb, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -575,6 +595,31 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!137 &5189166126979374989 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 5317711964121063905, guid: 92443e606ce55c448ad35977fc371ebb, type: 3}
+  m_PrefabInstance: {fileID: 130553545377169004}
+  m_PrefabAsset: {fileID: 0}
+--- !u!137 &6854006138826951314 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 6832386725164037374, guid: 92443e606ce55c448ad35977fc371ebb, type: 3}
+  m_PrefabInstance: {fileID: 130553545377169004}
+  m_PrefabAsset: {fileID: 0}
+--- !u!137 &7246849863333297289 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 7304322152164885221, guid: 92443e606ce55c448ad35977fc371ebb, type: 3}
+  m_PrefabInstance: {fileID: 130553545377169004}
+  m_PrefabAsset: {fileID: 0}
+--- !u!137 &8151269083588270087 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 8129263174399075947, guid: 92443e606ce55c448ad35977fc371ebb, type: 3}
+  m_PrefabInstance: {fileID: 130553545377169004}
+  m_PrefabAsset: {fileID: 0}
+--- !u!137 &8854562494921795735 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: -347225295460182277, guid: 92443e606ce55c448ad35977fc371ebb, type: 3}
+  m_PrefabInstance: {fileID: 130553545377169004}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1653629507265466312
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -643,6 +688,30 @@ PrefabInstance:
       propertyPath: _jumpImpulse
       value: 6
       objectReference: {fileID: 0}
+    - target: {fileID: 4639397791414330085, guid: bebc380d595234047a851e4b53101eaf, type: 3}
+      propertyPath: _thirdPersonRenderers.Array.size
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4639397791414330085, guid: bebc380d595234047a851e4b53101eaf, type: 3}
+      propertyPath: '_thirdPersonRenderers.Array.data[0]'
+      value: 
+      objectReference: {fileID: 8854562494921795735}
+    - target: {fileID: 4639397791414330085, guid: bebc380d595234047a851e4b53101eaf, type: 3}
+      propertyPath: '_thirdPersonRenderers.Array.data[1]'
+      value: 
+      objectReference: {fileID: 8151269083588270087}
+    - target: {fileID: 4639397791414330085, guid: bebc380d595234047a851e4b53101eaf, type: 3}
+      propertyPath: '_thirdPersonRenderers.Array.data[2]'
+      value: 
+      objectReference: {fileID: 5189166126979374989}
+    - target: {fileID: 4639397791414330085, guid: bebc380d595234047a851e4b53101eaf, type: 3}
+      propertyPath: '_thirdPersonRenderers.Array.data[3]'
+      value: 
+      objectReference: {fileID: 7246849863333297289}
+    - target: {fileID: 4639397791414330085, guid: bebc380d595234047a851e4b53101eaf, type: 3}
+      propertyPath: '_thirdPersonRenderers.Array.data[4]'
+      value: 
+      objectReference: {fileID: 6854006138826951314}
     - target: {fileID: 4726586567304971162, guid: bebc380d595234047a851e4b53101eaf, type: 3}
       propertyPath: _settings.ColliderLayer
       value: 6
