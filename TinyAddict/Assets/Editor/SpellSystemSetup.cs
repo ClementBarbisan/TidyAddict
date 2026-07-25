@@ -21,6 +21,7 @@ public static class SpellSystemSetup
     private const string BallMaterialPath = "Assets/Materials/SpellBallOrb.mat";
     private const string IceZonePrefabPath = "Assets/Prefabs/IceZone.prefab";
     private const string IceMaterialPath = "Assets/Materials/SpellIceZone.mat";
+    private const string GameStatePrefabPath = "Assets/Prefabs/GameState.prefab";
 
     private const string VoskModelFolder = "VoskModel/vosk-model-small-fr-0.22";
 
@@ -36,9 +37,10 @@ public static class SpellSystemSetup
 
         var ballPrefab = CreateSpellBallPrefab();
         var iceZonePrefab = CreateIceZonePrefab();
+        var gameStatePrefab = CreateGameStatePrefab();
         var scrollPrefab = CreateScrollPrefab();
         SetupPlayerPrefab(ballPrefab, iceZonePrefab);
-        SetupScene(scrollPrefab);
+        SetupScene(scrollPrefab, gameStatePrefab);
         AssetDatabase.SaveAssets();
         Debug.Log("[SpellSystemSetup] Terminé : prefabs créés, joueur câblé, scène configurée.");
     }
@@ -152,6 +154,30 @@ public static class SpellSystemSetup
         return AssetDatabase.LoadAssetAtPath<NetworkObject>(IceZonePrefabPath);
     }
 
+    private static NetworkObject CreateGameStatePrefab()
+    {
+        var existing = AssetDatabase.LoadAssetAtPath<NetworkObject>(GameStatePrefabPath);
+        if (existing != null)
+            return existing;
+
+        EnsureFolder("Assets/Prefabs");
+
+        var root = new GameObject("GameState");
+        try
+        {
+            root.AddComponent<NetworkObject>();
+            root.AddComponent<GameState>();
+            PrefabUtility.SaveAsPrefabAsset(root, GameStatePrefabPath);
+        }
+        finally
+        {
+            Object.DestroyImmediate(root);
+        }
+
+        Debug.Log($"[SpellSystemSetup] Prefab créé : {GameStatePrefabPath}");
+        return AssetDatabase.LoadAssetAtPath<NetworkObject>(GameStatePrefabPath);
+    }
+
     private static GameObject CreateScrollPrefab()
     {
         var existing = AssetDatabase.LoadAssetAtPath<GameObject>(ScrollPrefabPath);
@@ -239,6 +265,9 @@ public static class SpellSystemSetup
             if (root.GetComponent<PlayerSpellEffects>() == null)
                 root.AddComponent<PlayerSpellEffects>();
 
+            if (root.GetComponent<PlayerProfile>() == null)
+                root.AddComponent<PlayerProfile>();
+
             var so = new SerializedObject(caster);
             so.FindProperty("_handAnchor").objectReferenceValue = handAnchor;
             so.FindProperty("_castOrigin").objectReferenceValue = cameraPivot;
@@ -257,7 +286,7 @@ public static class SpellSystemSetup
 
     // SCÈNE
 
-    private static void SetupScene(GameObject scrollPrefab)
+    private static void SetupScene(GameObject scrollPrefab, NetworkObject gameStatePrefab)
     {
         var scene = EditorSceneManager.GetActiveScene();
         if (scene.path != ScenePath)
@@ -285,6 +314,15 @@ public static class SpellSystemSetup
             var spawnerSo = new SerializedObject(spawner);
             spawnerSo.FindProperty("_scrollPrefab").objectReferenceValue = scrollPrefab.GetComponent<NetworkObject>();
             spawnerSo.ApplyModifiedPropertiesWithoutUndo();
+
+            // État de partie (lobby) : spawné par le serveur au démarrage de session
+            var gameStateSpawner = runner.GetComponent<GameStateSpawner>();
+            if (gameStateSpawner == null)
+                gameStateSpawner = runner.gameObject.AddComponent<GameStateSpawner>();
+
+            var gameStateSo = new SerializedObject(gameStateSpawner);
+            gameStateSo.FindProperty("_gameStatePrefab").objectReferenceValue = gameStatePrefab;
+            gameStateSo.ApplyModifiedPropertiesWithoutUndo();
         }
         else
         {

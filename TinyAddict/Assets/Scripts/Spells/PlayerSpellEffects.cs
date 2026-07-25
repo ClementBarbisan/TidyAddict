@@ -16,6 +16,8 @@ public class PlayerSpellEffects : NetworkBehaviour
     [SerializeField] private float _shrinkForceMultiplier = 0.3f;
     [SerializeField] private float _shrinkScale = 0.4f;
     [SerializeField] private float _shrinkVoicePitch = 1.6f;
+    [SerializeField] private float _growScale = 1.5f;
+    [SerializeField] private float _growVoicePitch = 0.7f;
 
     [Networked] private TickTimer SlowTimer { get; set; }
     [Networked] private TickTimer SpeedBuffTimer { get; set; }
@@ -26,6 +28,7 @@ public class PlayerSpellEffects : NetworkBehaviour
     [Networked] private float KnockbackSeconds { get; set; }
     [Networked] private TickTimer ConfusionTimer { get; set; }
     [Networked] private TickTimer ShrinkTimer { get; set; }
+    [Networked] private TickTimer StunTimer { get; set; }
 
     private Renderer[] _renderers;
     private AudioSource _voiceSource;
@@ -39,6 +42,7 @@ public class PlayerSpellEffects : NetworkBehaviour
     public bool IsInvisible => Object != null && Object.IsValid && InvisibilityTimer.ExpiredOrNotRunning(Runner) == false;
     public bool IsConfused => Object != null && Object.IsValid && ConfusionTimer.ExpiredOrNotRunning(Runner) == false;
     public bool IsShrunk => Object != null && Object.IsValid && ShrinkTimer.ExpiredOrNotRunning(Runner) == false;
+    public bool IsStunned => Object != null && Object.IsValid && StunTimer.ExpiredOrNotRunning(Runner) == false;
 
     public float SpeedMultiplier
     {
@@ -104,6 +108,11 @@ public class PlayerSpellEffects : NetworkBehaviour
         ConfusionTimer = TickTimer.CreateFromSeconds(Runner, seconds);
     }
 
+    public void ApplyStun(float seconds)
+    {
+        StunTimer = TickTimer.CreateFromSeconds(Runner, seconds);
+    }
+
     public void ApplyShrink(float seconds)
     {
         ShrinkTimer = TickTimer.CreateFromSeconds(Runner, seconds);
@@ -128,9 +137,14 @@ public class PlayerSpellEffects : NetworkBehaviour
 
     public override void Render()
     {
-        // Rétrécissement (minima) : appliqué chez tout le monde, y compris le
-        // joueur touché (sa caméra descend avec le pivot, effet immersif)
-        float targetScale = IsShrunk ? _shrinkScale : 1f;
+        // Taille : minima rétrécit, maximus grandit (cumulables), appliqué chez
+        // tout le monde y compris le joueur touché (sa caméra suit, effet immersif)
+        float targetScale = 1f;
+        if (IsShrunk)
+            targetScale *= _shrinkScale;
+        if (HasForceBuff)
+            targetScale *= _growScale;
+
         float currentScale = transform.localScale.x;
         if (Mathf.Abs(currentScale - targetScale) > 0.001f)
         {
@@ -150,7 +164,13 @@ public class PlayerSpellEffects : NetworkBehaviour
 
         if (_voiceSource != null)
         {
-            float targetPitch = IsShrunk ? _shrinkVoicePitch : 1f;
+            // minima → aigu, maximus → grave (cumulables)
+            float targetPitch = 1f;
+            if (IsShrunk)
+                targetPitch *= _shrinkVoicePitch;
+            if (HasForceBuff)
+                targetPitch *= _growVoicePitch;
+
             if (Mathf.Abs(_voiceSource.pitch - targetPitch) > 0.01f)
                 _voiceSource.pitch = targetPitch;
         }
@@ -198,6 +218,7 @@ public class PlayerSpellEffects : NetworkBehaviour
         AppendStatus(_statusLines, InvisibilityTimer, "Invisible", "#CCE6F2");
         AppendStatus(_statusLines, ConfusionTimer, "Confusion", "#FF59BF");
         AppendStatus(_statusLines, ShrinkTimer, "Rétréci", "#59FFA6");
+        AppendStatus(_statusLines, StunTimer, "Électrifié", "#FFF233");
 
         if (_statusLines.Count == 0)
             return;

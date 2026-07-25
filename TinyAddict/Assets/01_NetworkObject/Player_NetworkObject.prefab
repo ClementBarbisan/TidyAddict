@@ -561,7 +561,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6066431044231784134, guid: bebc380d595234047a851e4b53101eaf, type: 3}
       propertyPath: NetworkedBehaviours.Array.size
-      value: 10
+      value: 11
       objectReference: {fileID: 0}
     - target: {fileID: 6066431044231784134, guid: bebc380d595234047a851e4b53101eaf, type: 3}
       propertyPath: 'NetworkedBehaviours.Array.data[0]'
@@ -594,13 +594,17 @@ PrefabInstance:
     - target: {fileID: 6066431044231784134, guid: bebc380d595234047a851e4b53101eaf, type: 3}
       propertyPath: 'NetworkedBehaviours.Array.data[7]'
       value: 
-      objectReference: {fileID: 8410923494423236203}
+      objectReference: {fileID: 2451985089587934349}
     - target: {fileID: 6066431044231784134, guid: bebc380d595234047a851e4b53101eaf, type: 3}
       propertyPath: 'NetworkedBehaviours.Array.data[8]'
       value: 
-      objectReference: {fileID: 8524957883816088181}
+      objectReference: {fileID: 8410923494423236203}
     - target: {fileID: 6066431044231784134, guid: bebc380d595234047a851e4b53101eaf, type: 3}
       propertyPath: 'NetworkedBehaviours.Array.data[9]'
+      value: 
+      objectReference: {fileID: 8524957883816088181}
+    - target: {fileID: 6066431044231784134, guid: bebc380d595234047a851e4b53101eaf, type: 3}
+      propertyPath: 'NetworkedBehaviours.Array.data[10]'
       value: 
       objectReference: {fileID: 5726396737517724789}
     - target: {fileID: 6066431044231784134, guid: bebc380d595234047a851e4b53101eaf, type: 3}
@@ -614,6 +618,14 @@ PrefabInstance:
     - target: {fileID: 7257134546093304133, guid: bebc380d595234047a851e4b53101eaf, type: 3}
       propertyPath: m_Name
       value: Player_NetworkObject
+      objectReference: {fileID: 0}
+    - target: {fileID: 7257134546093304133, guid: bebc380d595234047a851e4b53101eaf, type: 3}
+      propertyPath: m_TagString
+      value: Player
+      objectReference: {fileID: 0}
+    - target: {fileID: 8539779225907803301, guid: bebc380d595234047a851e4b53101eaf, type: 3}
+      propertyPath: m_Constraints
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8539779225907803301, guid: bebc380d595234047a851e4b53101eaf, type: 3}
       propertyPath: m_IsKinematic
@@ -641,6 +653,12 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 7257134546093304133, guid: bebc380d595234047a851e4b53101eaf, type: 3}
       insertIndex: -1
       addedObject: {fileID: 4624148881878037665}
+    - targetCorrespondingSourceObject: {fileID: 7257134546093304133, guid: bebc380d595234047a851e4b53101eaf, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1334200424837641389}
+    - targetCorrespondingSourceObject: {fileID: 7257134546093304133, guid: bebc380d595234047a851e4b53101eaf, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2451985089587934349}
   m_SourcePrefab: {fileID: 100100000, guid: bebc380d595234047a851e4b53101eaf, type: 3}
 --- !u!4 &3710417707384006004 stripped
 Transform:
@@ -770,3 +788,40 @@ MonoBehaviour:
   pullAction: {fileID: -4090225696740746782, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   pushAction: {fileID: 3001919216989983466, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   effect: {fileID: 1948467167421519659}
+--- !u!136 &1334200424837641389
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8233805172249388685}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.5
+  m_Height: 1
+  m_Direction: 1
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &2451985089587934349
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8233805172249388685}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: df36fc4ccce27496b811559d23073df1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NetworkedColor
+  _ObjectColor: {r: 0.6320754, g: 0.6320754, b: 0.6320754, a: 1}
+  _renderer: {fileID: 0}

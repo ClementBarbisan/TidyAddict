@@ -8,7 +8,7 @@ public class NetworkedColor : NetworkBehaviour
     public Color ObjectColor { get; set; }
 
     private ChangeDetector _changes;
-    private Renderer _renderer;
+    [SerializeField] private Renderer _renderer;
 
     public override void Spawned()
     {
