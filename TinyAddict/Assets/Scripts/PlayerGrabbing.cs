@@ -2,6 +2,7 @@ using Fusion;
 using Fusion.Addons.Physics;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.TextCore.Text;
 
 public class PlayerGrabbing : NetworkBehaviour
 {
@@ -9,6 +10,9 @@ public class PlayerGrabbing : NetworkBehaviour
     [SerializeField] private float forcePower = 10f;
     [SerializeField] private float cooldown = 1f; 
     [SerializeField] private InputActionReference pullAction, pushAction;
+    [SerializeField] private LineRenderer lineRenderer;
+    [SerializeField] private Gradient pushColor, pullColor;
+    [SerializeField] private Transform spawnSpellTransform;
     private Transform _cam;
     private ScrollCaster _scrollCaster;
     private float _timerCooldown;
@@ -26,11 +30,19 @@ public class PlayerGrabbing : NetworkBehaviour
             _cam = Camera.main.transform;
         }
     }
-
-    public override void FixedUpdateNetwork()
+    
+    private void ShowBeam(Vector3 start, Vector3 end, bool push)
     {
-        // On ne lit les inputs locaux que si l'on a l'autorité sur le joueur (le joueur local)
+        lineRenderer.SetPosition(0, start);
+        lineRenderer.SetPosition(1, end);
+        lineRenderer.colorGradient = push ? pushColor : pullColor;
+        lineRenderer.enabled = true;
+        //Invoke(nameof(ResetLineRenderer), .2f);
+    }
 
+    private void ResetLineRenderer()
+    {
+        lineRenderer.enabled = false;
     }
 
     private void Update()
@@ -90,6 +102,7 @@ public class PlayerGrabbing : NetworkBehaviour
 
                 // Envoie l'ordre d'appliquer la force sur le Serveur
                 RPC_ApplyForce(nrb, appliedForce);
+                ShowBeam(spawnSpellTransform.position, _cam.position + Vector3.forward * grabDistance, isPush);
             }
         }
     }
