@@ -10,9 +10,8 @@ public class PlayerGrabbing : NetworkBehaviour
     [SerializeField] private float forcePower = 10f;
     [SerializeField] private float cooldown = 1f; 
     [SerializeField] private InputActionReference pullAction, pushAction;
-    [SerializeField] private LineRenderer lineRenderer;
-    [SerializeField] private Gradient pushColor, pullColor;
-    [SerializeField] private Transform spawnSpellTransform;
+    [SerializeField] private EffectPullPush effect;
+
     private Transform _cam;
     private ScrollCaster _scrollCaster;
     private float _timerCooldown;
@@ -31,20 +30,6 @@ public class PlayerGrabbing : NetworkBehaviour
         }
     }
     
-    private void ShowBeam(Vector3 start, Vector3 end, bool push)
-    {
-        lineRenderer.SetPosition(0, start);
-        lineRenderer.SetPosition(1, end);
-        lineRenderer.colorGradient = push ? pushColor : pullColor;
-        lineRenderer.enabled = true;
-        //Invoke(nameof(ResetLineRenderer), .2f);
-    }
-
-    private void ResetLineRenderer()
-    {
-        lineRenderer.enabled = false;
-    }
-
     private void Update()
     {
         if (!_canApplyForce)
@@ -102,7 +87,7 @@ public class PlayerGrabbing : NetworkBehaviour
 
                 // Envoie l'ordre d'appliquer la force sur le Serveur
                 RPC_ApplyForce(nrb, appliedForce);
-                ShowBeam(spawnSpellTransform.position, _cam.position + Vector3.forward * grabDistance, isPush);
+                effect.ShowBeam(_cam.position + _cam.forward * grabDistance, isPush);
             }
         }
     }
