@@ -735,7 +735,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 340163728}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 986da21dd34724168a0416278e909cb7, type: 3}
+  m_Script: {fileID: 11500000, guid: 3593759816fb4e24693a9f1e001ed349, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameStateSpawner
   _gameStatePrefab: {fileID: 7773495907340052561, guid: 2a81fe269d7be4b97a797cbc97d29850, type: 3}

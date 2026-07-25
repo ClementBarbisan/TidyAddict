@@ -127,7 +127,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6066431044231784134, guid: bebc380d595234047a851e4b53101eaf, type: 3}
       propertyPath: NetworkedBehaviours.Array.size
-      value: 9
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 6066431044231784134, guid: bebc380d595234047a851e4b53101eaf, type: 3}
       propertyPath: 'NetworkedBehaviours.Array.data[0]'
@@ -156,15 +156,15 @@ PrefabInstance:
     - target: {fileID: 6066431044231784134, guid: bebc380d595234047a851e4b53101eaf, type: 3}
       propertyPath: 'NetworkedBehaviours.Array.data[6]'
       value: 
-      objectReference: {fileID: 7127769946897538268}
+      objectReference: {fileID: 2664065239672973866}
     - target: {fileID: 6066431044231784134, guid: bebc380d595234047a851e4b53101eaf, type: 3}
       propertyPath: 'NetworkedBehaviours.Array.data[7]'
       value: 
-      objectReference: {fileID: 2830444044803174116}
+      objectReference: {fileID: 7127769946897538268}
     - target: {fileID: 6066431044231784134, guid: bebc380d595234047a851e4b53101eaf, type: 3}
       propertyPath: 'NetworkedBehaviours.Array.data[8]'
       value: 
-      objectReference: {fileID: 5792455659365800879}
+      objectReference: {fileID: 2830444044803174116}
     - target: {fileID: 6066431044231784134, guid: bebc380d595234047a851e4b53101eaf, type: 3}
       propertyPath: 'NetworkedBehaviours.Array.data[9]'
       value: 
@@ -194,6 +194,17 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 3170118265349794785, guid: bebc380d595234047a851e4b53101eaf, type: 3}
   m_PrefabInstance: {fileID: 713837597287886866}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &2664065239672973866 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3247278654505736760, guid: bebc380d595234047a851e4b53101eaf, type: 3}
+  m_PrefabInstance: {fileID: 713837597287886866}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 67001cc3647a6a546a19ff361cbf842e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerProfile
 --- !u!114 &2720496796074451326 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 3182121818424250732, guid: bebc380d595234047a851e4b53101eaf, type: 3}
