@@ -214,10 +214,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: PlayCubeSmall (3)
       objectReference: {fileID: 0}
-    - target: {fileID: 7119359598460323759, guid: 254021f35cc07364f9cf4a715fe915e2, type: 3}
-      propertyPath: m_TagString
-      value: Grabbable
-      objectReference: {fileID: 0}
     - target: {fileID: 7693420052337579624, guid: 254021f35cc07364f9cf4a715fe915e2, type: 3}
       propertyPath: m_LocalPosition.x
       value: -5.455988
@@ -320,10 +316,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: PlayCubeLarge (1)
       objectReference: {fileID: 0}
-    - target: {fileID: 2561033736457803393, guid: 9d4cf92a9761ef34a871be7c303a0ffb, type: 3}
-      propertyPath: m_TagString
-      value: Grabbable
-      objectReference: {fileID: 0}
     - target: {fileID: 6872117801838454134, guid: 9d4cf92a9761ef34a871be7c303a0ffb, type: 3}
       propertyPath: SortKey
       value: 1549701352
@@ -347,16 +339,16 @@ PrefabInstance:
     m_TransformParent: {fileID: 2111973621}
     m_Modifications:
     - target: {fileID: 4394116666436281940, guid: 254021f35cc07364f9cf4a715fe915e2, type: 3}
+      propertyPath: Flags
+      value: 526594
+      objectReference: {fileID: 0}
+    - target: {fileID: 4394116666436281940, guid: 254021f35cc07364f9cf4a715fe915e2, type: 3}
       propertyPath: SortKey
       value: 3396831747
       objectReference: {fileID: 0}
     - target: {fileID: 7119359598460323759, guid: 254021f35cc07364f9cf4a715fe915e2, type: 3}
       propertyPath: m_Name
       value: PlayCubeSmall (4)
-      objectReference: {fileID: 0}
-    - target: {fileID: 7119359598460323759, guid: 254021f35cc07364f9cf4a715fe915e2, type: 3}
-      propertyPath: m_TagString
-      value: Grabbable
       objectReference: {fileID: 0}
     - target: {fileID: 7693420052337579624, guid: 254021f35cc07364f9cf4a715fe915e2, type: 3}
       propertyPath: m_LocalPosition.x
@@ -421,6 +413,8 @@ GameObject:
   - component: {fileID: 340163729}
   - component: {fileID: 340163733}
   - component: {fileID: 340163734}
+  - component: {fileID: 340163736}
+  - component: {fileID: 340163735}
   m_Layer: 0
   m_Name: Prototype Runner
   m_TagString: Untagged
@@ -548,6 +542,93 @@ MonoBehaviour:
   _playerPrefab: {fileID: 4810571876067698958, guid: f4350330e71868442926937725a045cc, type: 3}
   _playerOffset: {x: 2, y: 0, z: 0}
   _playerRotation: {x: 90, y: 0, z: 0}
+--- !u!114 &340163735
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 340163728}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 33a38d73a8571ce438052dd31e09df5b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: PhotonVoice.Fusion::Photon.Voice.Fusion.FusionVoiceClient
+  Id: 
+  DisconnectAfterKeepAlive: 0
+  KeepAliveInBackground: 60000
+  runInBackground: 1
+  statsResetInterval: 1000
+  speakerPrefab: {fileID: 0}
+  primaryRecorder: {fileID: 340163736}
+  usePrimaryRecorder: 0
+  cppCompatibilityMode: 0
+  Settings:
+    AppIdRealtime: 
+    AppIdFusion: 
+    AppIdQuantum: 
+    AppIdChat: 
+    AppIdVoice: 
+    AppVersion: 
+    UseNameServer: 1
+    FixedRegion: 
+    Server: 
+    Port: 0
+    ProxyServer: 
+    Protocol: 0
+    EnableProtocolFallback: 1
+    AuthMode: 2
+    EnableLobbyStatistics: 0
+    NetworkLogging: 1
+    ClientLogging: 2
+  ShowSettings: 1
+  ApplyDontDestroyOnLoad: 1
+  AutoConnectAndJoin: 1
+  UseFusionAppSettings: 1
+  UseFusionAuthValues: 1
+--- !u!114 &340163736
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 340163728}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 91175dcc15224463780e01a8a98b1b60, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: PhotonVoice::Photon.Voice.Unity.Recorder
+  voiceDetection: 1
+  voiceDetectionThreshold: 0.01
+  voiceDetectionDelayMs: 500
+  interestGroup: 0
+  useTargetPlayers: 0
+  targetPlayers: 
+  debugEchoMode: 0
+  reliableMode: 0
+  encrypt: 0
+  transmitEnabled: 1
+  samplingRate: 24000
+  frameDuration: 40000
+  bitrate: 30000
+  sourceType: 0
+  microphoneType: 0
+  audioClip: {fileID: 0}
+  loopAudioClip: 1
+  recordingEnabled: 1
+  audioSessionParameters:
+    Category: 4
+    Mode: 1
+    CategoryOptions: 0800000004000000
+  editorAudioSessionPreset: 1
+  androidMicrophoneSettings:
+    EnableAEC: 1
+    EnableAGC: 1
+    EnableNS: 1
+  stopRecordingWhenPaused: 0
+  useOnAudioFilterRead: 0
+  useMicrophoneTypeFallback: 1
+  recordWhenJoined: 1
 --- !u!1 &410087039
 GameObject:
   m_ObjectHideFlags: 0
@@ -708,10 +789,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: PlayCubeSmall (1)
       objectReference: {fileID: 0}
-    - target: {fileID: 7119359598460323759, guid: 254021f35cc07364f9cf4a715fe915e2, type: 3}
-      propertyPath: m_TagString
-      value: Grabbable
-      objectReference: {fileID: 0}
     - target: {fileID: 7693420052337579624, guid: 254021f35cc07364f9cf4a715fe915e2, type: 3}
       propertyPath: m_LocalPosition.x
       value: 6.2078323
@@ -813,10 +890,6 @@ PrefabInstance:
     - target: {fileID: 2561033736457803393, guid: 9d4cf92a9761ef34a871be7c303a0ffb, type: 3}
       propertyPath: m_Name
       value: PlayCubeLarge
-      objectReference: {fileID: 0}
-    - target: {fileID: 2561033736457803393, guid: 9d4cf92a9761ef34a871be7c303a0ffb, type: 3}
-      propertyPath: m_TagString
-      value: Grabbable
       objectReference: {fileID: 0}
     - target: {fileID: 6872117801838454134, guid: 9d4cf92a9761ef34a871be7c303a0ffb, type: 3}
       propertyPath: SortKey
@@ -1070,15 +1143,16 @@ PrefabInstance:
       propertyPath: m_Name
       value: PlayCubeLarge
       objectReference: {fileID: 0}
-    - target: {fileID: 2561033736457803393, guid: 9d4cf92a9761ef34a871be7c303a0ffb, type: 3}
-      propertyPath: m_TagString
-      value: Grabbable
-      objectReference: {fileID: 0}
     - target: {fileID: 6872117801838454134, guid: 9d4cf92a9761ef34a871be7c303a0ffb, type: 3}
       propertyPath: SortKey
       value: 2239326465
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    - target: {fileID: 6872117801838454134, guid: 9d4cf92a9761ef34a871be7c303a0ffb, type: 3}
+      propertyPath: 'NetworkedBehaviours.Array.data[2]'
+      value: 
+      objectReference: {fileID: 0}
+    m_RemovedComponents:
+    - {fileID: -1768018037321935110, guid: 9d4cf92a9761ef34a871be7c303a0ffb, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
@@ -1283,13 +1357,17 @@ PrefabInstance:
       propertyPath: SortKey
       value: 234393362
       objectReference: {fileID: 0}
+    - target: {fileID: 4394116666436281940, guid: 254021f35cc07364f9cf4a715fe915e2, type: 3}
+      propertyPath: NetworkedBehaviours.Array.size
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 4394116666436281940, guid: 254021f35cc07364f9cf4a715fe915e2, type: 3}
+      propertyPath: 'NetworkedBehaviours.Array.data[2]'
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 7119359598460323759, guid: 254021f35cc07364f9cf4a715fe915e2, type: 3}
       propertyPath: m_Name
       value: PlayCubeSmall
-      objectReference: {fileID: 0}
-    - target: {fileID: 7119359598460323759, guid: 254021f35cc07364f9cf4a715fe915e2, type: 3}
-      propertyPath: m_TagString
-      value: Grabbable
       objectReference: {fileID: 0}
     - target: {fileID: 7693420052337579624, guid: 254021f35cc07364f9cf4a715fe915e2, type: 3}
       propertyPath: m_LocalPosition.x
@@ -1581,10 +1659,6 @@ PrefabInstance:
     - target: {fileID: 7119359598460323759, guid: 254021f35cc07364f9cf4a715fe915e2, type: 3}
       propertyPath: m_Name
       value: PlayCubeSmall (2)
-      objectReference: {fileID: 0}
-    - target: {fileID: 7119359598460323759, guid: 254021f35cc07364f9cf4a715fe915e2, type: 3}
-      propertyPath: m_TagString
-      value: Grabbable
       objectReference: {fileID: 0}
     - target: {fileID: 7693420052337579624, guid: 254021f35cc07364f9cf4a715fe915e2, type: 3}
       propertyPath: m_LocalPosition.x

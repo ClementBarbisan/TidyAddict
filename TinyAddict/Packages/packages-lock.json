@@ -14,6 +14,13 @@
       "dependencies": {},
       "hash": "d90dc4eed907a467abf0597c90210aed57fcccff"
     },
+    "com.photonengine.voice-fusion": {
+      "version": "https://github.com/Photon-Server/Photon-UPM.git#fusion/v2/voice-for-fusion",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "1b93daae7984009cedc51f761a198d145fcf44ad"
+    },
     "com.unity.ai.navigation": {
       "version": "2.0.13",
       "depth": 0,

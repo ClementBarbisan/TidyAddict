@@ -272,7 +272,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6066431044231784134, guid: bebc380d595234047a851e4b53101eaf, type: 3}
       propertyPath: NetworkedBehaviours.Array.size
-      value: 7
+      value: 8
       objectReference: {fileID: 0}
     - target: {fileID: 6066431044231784134, guid: bebc380d595234047a851e4b53101eaf, type: 3}
       propertyPath: 'NetworkedBehaviours.Array.data[0]'
@@ -302,6 +302,10 @@ PrefabInstance:
       propertyPath: 'NetworkedBehaviours.Array.data[6]'
       value: 
       objectReference: {fileID: 8524957883816088181}
+    - target: {fileID: 6066431044231784134, guid: bebc380d595234047a851e4b53101eaf, type: 3}
+      propertyPath: 'NetworkedBehaviours.Array.data[7]'
+      value: 
+      objectReference: {fileID: 5726396737517724789}
     - target: {fileID: 6066431044231784134, guid: bebc380d595234047a851e4b53101eaf, type: 3}
       propertyPath: 'NetworkGuid.RawGuidValue.Array.data[0]'
       value: 4929217173379036660
@@ -372,6 +376,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d11ade2c60a4ba3a5c3955af01f52f9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &5726396737517724789 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6452215950440311741, guid: bebc380d595234047a851e4b53101eaf, type: 3}
+  m_PrefabInstance: {fileID: 1653629507265466312}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6376dd7fc23b3764483a7349b58502e2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: PhotonVoice.Fusion::Photon.Voice.Fusion.VoiceNetworkObject
 --- !u!114 &6237675645637373229 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 4639397791414330085, guid: bebc380d595234047a851e4b53101eaf, type: 3}
@@ -424,5 +439,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f513a7ec9e69d454fada3dbdcc8391f2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GrabObject
-  _grab: {fileID: 1781555164194001046, guid: 052faaac586de48259a63d0c4782560b, type: 3}
-  _forceThrow: 10
+  HoldPoint: {fileID: 0}
+  grabDistance: 3
+  _force: 10
+  _pull: {fileID: -4090225696740746782, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  _push: {fileID: 3001919216989983466, guid: 052faaac586de48259a63d0c4782560b, type: 3}
