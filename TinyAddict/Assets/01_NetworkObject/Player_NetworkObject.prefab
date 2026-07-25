@@ -441,5 +441,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GrabObject
   grabDistance: 15
   forcePower: 500
+  cooldown: 0.5
   pullAction: {fileID: -4090225696740746782, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   pushAction: {fileID: 3001919216989983466, guid: 052faaac586de48259a63d0c4782560b, type: 3}
