@@ -1,35 +1,70 @@
 using UnityEngine;
 
 /// <summary>
-/// Marqueur de zone de collecte, posé sur le rectangle coloré de la scène.
-/// GameState lit position et taille directement ici : déplacer/redimensionner
-/// le rectangle dans l'éditeur déplace la vraie zone de comptage.
-/// La scène étant identique chez tous les joueurs, pas besoin de réseau.
+/// Marqueur de zone de collecte : source de vérité de la position ET de la
+/// taille de la zone. Génère et maintient lui-même une box mesh translucide
+/// aux dimensions exactes du volume de comptage (empreinte × hauteur), dans
+/// l'éditeur comme en jeu. Déplacer l'objet déplace la zone ; changer
+/// Footprint/Height redimensionne le mesh et le comptage ensemble.
 /// </summary>
+[ExecuteAlways]
 public class CollectionZoneMarker : MonoBehaviour
 {
     public Team Team = Team.None;
 
-    [Tooltip("Hauteur de la boîte de comptage (pour attraper les objets lancés)")]
+    [Tooltip("Emprise au sol de la zone (X × Z, en mètres)")]
+    [SerializeField] private Vector2 _footprint = new Vector2(8f, 8f);
+
+    [Tooltip("Hauteur de la zone (pour attraper les objets lancés)")]
     [SerializeField] private float _height = 4f;
 
-    public Vector3 Center => transform.position + Vector3.up * (_height * 0.5f);
+    [Tooltip("Matériau translucide du mesh (assigné par le setup)")]
+    [SerializeField] private Material _visualMaterial;
 
-    public Vector3 HalfExtents
+    private Transform _visual;
+
+    public Vector3 Center => transform.position + Vector3.up * (_height * 0.5f);
+    public Vector3 HalfExtents => new Vector3(_footprint.x * 0.5f, _height * 0.5f, _footprint.y * 0.5f);
+
+    private void Update()
     {
-        get
+        EnsureVisual();
+
+        if (_visual == null)
+            return;
+
+        // Le mesh colle toujours exactement au volume de comptage
+        _visual.localPosition = new Vector3(0f, _height * 0.5f, 0f);
+        _visual.localScale = new Vector3(_footprint.x, _height, _footprint.y);
+    }
+
+    private void EnsureVisual()
+    {
+        if (_visual != null)
+            return;
+
+        _visual = transform.Find("Visual");
+
+        if (_visual == null)
         {
-            // Emprise au sol lue sur le visuel enfant : redimensionner le
-            // rectangle redimensionne la zone
-            float x = 4f;
-            float z = 4f;
-            var visual = transform.Find("Visual");
-            if (visual != null)
-            {
-                x = Mathf.Abs(visual.lossyScale.x) * 0.5f;
-                z = Mathf.Abs(visual.lossyScale.z) * 0.5f;
-            }
-            return new Vector3(x, _height * 0.5f, z);
+            var box = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            box.name = "Visual";
+            box.transform.SetParent(transform, false);
+
+            var collider = box.GetComponent<Collider>();
+            if (Application.isPlaying)
+                Destroy(collider);
+            else
+                DestroyImmediate(collider);
+
+            _visual = box.transform;
+        }
+
+        if (_visualMaterial != null)
+        {
+            var renderer = _visual.GetComponent<MeshRenderer>();
+            if (renderer != null && renderer.sharedMaterial != _visualMaterial)
+                renderer.sharedMaterial = _visualMaterial;
         }
     }
 
