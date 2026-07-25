@@ -977,6 +977,8 @@ MonoBehaviour:
   _stunSeconds: 10
   _minRecordSeconds: 0.3
   _maxRecordSeconds: 6
+  source: {fileID: 0}
+  clips: []
   _errorThreshold: 0.35
   _HeldScroll: {fileID: 0}
 --- !u!114 &5947192473664987860
