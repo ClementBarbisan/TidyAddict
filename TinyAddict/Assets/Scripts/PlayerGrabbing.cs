@@ -1,5 +1,6 @@
 using System;
 using Fusion;
+using Fusion.Addons.Physics;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -40,9 +41,9 @@ public class PlayerGrabbing : NetworkBehaviour
         // Raycast pour détecter l'objet devant soi
         if (Physics.Raycast(transform.position + Vector3.up, transform.forward, out RaycastHit hit, grabDistance))
         {
-            if (hit.collider.CompareTag("Grabbable") && hit.collider.TryGetComponent<Rigidbody>(out var rb))
+            if (hit.collider.CompareTag("Grabbable") && hit.collider.TryGetComponent<NetworkRigidbody>(out var rb))
             {
-                rb.AddForce((_cam.position - rb.transform.position) * _force, ForceMode.Impulse);
+                rb.PhysicsBody.AddForce((_cam.position - rb.transform.position) * _force);
             }
         }
     }
@@ -52,9 +53,9 @@ public class PlayerGrabbing : NetworkBehaviour
         // Raycast pour détecter l'objet devant soi
         if (Physics.Raycast(transform.position + Vector3.up, transform.forward, out RaycastHit hit, grabDistance))
         {
-            if (hit.collider.CompareTag("Grabbable") && hit.collider.TryGetComponent<Rigidbody>(out var rb))
+            if (hit.collider.CompareTag("Grabbable") && hit.collider.TryGetComponent<NetworkRigidbody>(out var rb))
             {
-                rb.AddForce((rb.position - _cam.position) * _force, ForceMode.Impulse);
+                rb.PhysicsBody.AddForce((_cam.position - rb.transform.position) * _force);
             }
         }
     }
