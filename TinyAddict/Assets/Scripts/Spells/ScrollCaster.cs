@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Fusion;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Random = UnityEngine.Random;
 
 /// <summary>
 /// Côté joueur : porte le parchemin et gère l'incantation. Clic gauche maintenu =
@@ -395,8 +396,8 @@ public class ScrollCaster : NetworkBehaviour
                         {
                             if (networkRigidbody.PhysicsBody != null)
                             {
-                                networkRigidbody.PhysicsBody.linearVelocity = Vector3.zero;
-                                networkRigidbody.PhysicsBody.angularVelocity = Vector3.zero;
+                                networkRigidbody.PhysicsBody.LinearVelocity = Vector3.zero;
+                                networkRigidbody.PhysicsBody.AngularVelocity = Vector3.zero;
                             }
                             networkRigidbody.Teleport(destination);
                         }
