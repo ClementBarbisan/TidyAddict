@@ -401,15 +401,12 @@ public class ScrollCaster : NetworkBehaviour
 
                         var networkRigidbody = item.GetComponent<Fusion.Addons.Physics.NetworkRigidbody>();
                         if (networkRigidbody != null)
-<<<<<<< HEAD
-=======
                         {
                             if (networkRigidbody.PhysicsBody != null)
                             {
                                 networkRigidbody.PhysicsBody.LinearVelocity = Vector3.zero;
                                 networkRigidbody.PhysicsBody.AngularVelocity = Vector3.zero;
                             }
->>>>>>> 156253328b405a67f779cb85d74842f6a606548a
                             networkRigidbody.Teleport(destination);
                         else
                             item.transform.position = destination;
