@@ -1,9 +1,11 @@
+using System.Numerics;
 using Fusion;
 using Fusion.Addons.Physics;
 using Projectiles;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.TextCore.Text;
+using Vector3 = UnityEngine.Vector3;
 
 public class PlayerGrabbing : NetworkBehaviour
 {
@@ -83,7 +85,7 @@ private void TryApplyForce(bool isPush)
             }
             else
             {
-                direction *= 2f;
+                direction += Vector3.up;
             }
 
             float forceMultiplier = 1f;
