@@ -148,7 +148,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e413328486e1b41f98bfed9236a35288, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ValueCollectible
-  Value: 3
+  Value: 2
   Type: 4
 --- !u!1 &5719718779185829327
 GameObject:

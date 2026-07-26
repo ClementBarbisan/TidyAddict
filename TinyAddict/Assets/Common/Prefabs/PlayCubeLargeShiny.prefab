@@ -149,7 +149,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ValueCollectible
   Value: 5
-  Type: 5
+  Type: 8
 --- !u!1 &5719718779185829327
 GameObject:
   m_ObjectHideFlags: 0
