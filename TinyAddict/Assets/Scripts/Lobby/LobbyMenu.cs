@@ -28,6 +28,8 @@ public class LobbyMenu : MonoBehaviour
     private string _nickname = "";
     private string _room = "";
     private int _team;
+    private int _playersPerTeam = 2;   // format choisi à la création : 2v2 / 3v3 / 4v4
+    private bool _formatApplied;
     private bool _profileSent;
     private bool _wantSpectator;
     private bool _spectatorStarted;
@@ -93,6 +95,15 @@ public class LobbyMenu : MonoBehaviour
         if (_step == Step.Connecting && _runner != null && _runner.IsRunning && _localProfile != null)
         {
             _step = Step.Nickname;
+        }
+
+        // Si on a créé la salle (= on est l'hôte), on applique le format choisi ;
+        // en rejoignant une salle existante, le sélecteur est simplement ignoré
+        if (_formatApplied == false && _runner != null && _runner.IsRunning && _runner.IsServer &&
+            GameState.Instance != null && GameState.Instance.Object != null && GameState.Instance.Object.IsValid)
+        {
+            _formatApplied = true;
+            GameState.Instance.SetRequiredPlayers(_playersPerTeam * 2);
         }
 
         // La partie a été lancée (par l'hôte) : on ferme le menu
@@ -200,7 +211,7 @@ public class LobbyMenu : MonoBehaviour
     private void DrawRoomStep()
     {
         float centerX = UITheme.VirtualWidth * 0.5f;
-        var panel = new Rect(centerX - 330f, 170f, 660f, 700f);
+        var panel = new Rect(centerX - 330f, 150f, 660f, 770f);
         DrawLobbyPanel(panel);
 
         // Logo « Spick & Spells » (image), fallback texte si introuvable
@@ -218,9 +229,9 @@ public class LobbyMenu : MonoBehaviour
         }
 
         GUI.Label(new Rect(panel.x, panel.y + 306f, panel.width, 28f),
-            "Gobelins, grimoires et grand bazar.", _subtitleStyle);
+            "Goblins, grimoires and glorious mayhem.", _subtitleStyle);
 
-        GUI.Label(new Rect(panel.x + 70f, panel.y + 366f, panel.width - 140f, 24f), "CODE DE LA SALLE", _labelCapsStyle);
+        GUI.Label(new Rect(panel.x + 70f, panel.y + 366f, panel.width - 140f, 24f), "ROOM CODE", _labelCapsStyle);
 
         var roomRect = new Rect(panel.x + 70f, panel.y + 394f, panel.width - 140f, 62f);
         UITheme.DrawRounded(roomRect, UITheme.WithAlpha(Color.black, 0.4f), 10f);
@@ -229,8 +240,20 @@ public class LobbyMenu : MonoBehaviour
         _room = GUI.TextField(new Rect(roomRect.x + 20f, roomRect.y, roomRect.width - 40f, roomRect.height), _room, 24, _fieldStyle);
         GUI.FocusControl("RoomField");
 
+        // Format de la partie (appliqué si on crée la salle)
+        GUI.Label(new Rect(panel.x + 70f, panel.y + 478f, panel.width - 140f, 24f), "MATCH FORMAT", _labelCapsStyle);
+
+        float toggleWidth = (panel.width - 140f - 24f) / 3f;
+        for (int i = 0; i < 3; i++)
+        {
+            int perTeam = i + 2;
+            var toggleRect = new Rect(panel.x + 70f + i * (toggleWidth + 12f), panel.y + 506f, toggleWidth, 48f);
+            if (FormatToggle(toggleRect, $"{perTeam} vs {perTeam}", _playersPerTeam == perTeam))
+                _playersPerTeam = perTeam;
+        }
+
         bool valid = string.IsNullOrWhiteSpace(_room) == false;
-        bool submit = PrimaryButton(new Rect(panel.x + 70f, panel.y + 492f, panel.width - 140f, 64f), "REJOINDRE LA SALLE", valid);
+        bool submit = PrimaryButton(new Rect(panel.x + 70f, panel.y + 582f, panel.width - 140f, 64f), "JOIN ROOM", valid);
 
         if (valid && Event.current.type == EventType.KeyDown &&
             (Event.current.keyCode == KeyCode.Return || Event.current.keyCode == KeyCode.KeypadEnter))
@@ -238,8 +261,8 @@ public class LobbyMenu : MonoBehaviour
             submit = true;
         }
 
-        GUI.Label(new Rect(panel.x, panel.y + 588f, panel.width, 48f),
-            "Le premier arrivé crée la salle, les autres la rejoignent avec le même code.\nPartagez ce code à vos amis  •  Entrée pour valider", _subtitleStyle);
+        GUI.Label(new Rect(panel.x, panel.y + 672f, panel.width, 72f),
+            "First player in creates the room (and sets the format), everyone else joins\nwith the same code.  Share it with your friends  •  Enter to confirm", _subtitleStyle);
 
         if (submit)
         {
@@ -256,11 +279,11 @@ public class LobbyMenu : MonoBehaviour
         var panel = new Rect(centerX - 330f, 280f, 660f, 480f);
         DrawLobbyPanel(panel);
 
-        GUI.Label(new Rect(panel.x, panel.y + 42f, panel.width, 80f), "Bienvenue, gobelin", _titleStyle);
+        GUI.Label(new Rect(panel.x, panel.y + 42f, panel.width, 80f), "Welcome, goblin", _titleStyle);
         GUI.Label(new Rect(panel.x, panel.y + 126f, panel.width, 28f),
             $"Salle <color=#{ColorUtility.ToHtmlStringRGB(UITheme.Gold)}><b>{_room}</b></color>", _subtitleStyle);
 
-        GUI.Label(new Rect(panel.x + 70f, panel.y + 186f, panel.width - 140f, 24f), "TON NOM DE GOBELIN", _labelCapsStyle);
+        GUI.Label(new Rect(panel.x + 70f, panel.y + 186f, panel.width - 140f, 24f), "YOUR GOBLIN NAME", _labelCapsStyle);
 
         var fieldRect = new Rect(panel.x + 70f, panel.y + 214f, panel.width - 140f, 62f);
         UITheme.DrawRounded(fieldRect, UITheme.WithAlpha(Color.black, 0.4f), 10f);
@@ -270,7 +293,7 @@ public class LobbyMenu : MonoBehaviour
         GUI.FocusControl("NicknameField");
 
         bool valid = string.IsNullOrWhiteSpace(_nickname) == false && _nickname.Trim().Length >= 3;
-        bool submit = PrimaryButton(new Rect(panel.x + 70f, panel.y + 312f, panel.width - 140f, 64f), "VALIDER", valid);
+        bool submit = PrimaryButton(new Rect(panel.x + 70f, panel.y + 312f, panel.width - 140f, 64f), "CONFIRM", valid);
 
         if (valid && Event.current.type == EventType.KeyDown &&
             (Event.current.keyCode == KeyCode.Return || Event.current.keyCode == KeyCode.KeypadEnter))
@@ -279,7 +302,7 @@ public class LobbyMenu : MonoBehaviour
         }
 
         GUI.Label(new Rect(panel.x, panel.y + 400f, panel.width, 24f),
-            "3 à 12 caractères  •  Entrée pour valider", _subtitleStyle);
+            "3 to 12 characters  •  Enter to confirm", _subtitleStyle);
 
         if (submit)
         {
@@ -319,9 +342,9 @@ public class LobbyMenu : MonoBehaviour
 
         int dots = 1 + (int)(Time.unscaledTime * 2f) % 3;
         GUI.Label(new Rect(panel.x, panel.y + 60f, panel.width, 60f),
-            $"Connexion{new string('.', dots)}", _titleStyle);
+            $"Connecting{new string('.', dots)}", _titleStyle);
         GUI.Label(new Rect(panel.x, panel.y + 136f, panel.width, 28f),
-            $"Salle « <b>{_room}</b> »", _subtitleStyle);
+            $"Room <b>{_room}</b>", _subtitleStyle);
     }
 
     // ÉCRAN 2 — CHOIX DU CLAN
@@ -340,18 +363,18 @@ public class LobbyMenu : MonoBehaviour
         var panel = new Rect(centerX - 520f, 540f - panelHeight * 0.5f, 1040f, panelHeight);
         DrawLobbyPanel(panel);
 
-        GUI.Label(new Rect(panel.x, panel.y + 42f, panel.width, 80f), "Choisis ton clan", _titleStyle);
+        GUI.Label(new Rect(panel.x, panel.y + 42f, panel.width, 80f), "Choose your clan", _titleStyle);
 
         float cardsY = panel.y + 160f;
-        DrawTeamCard(new Rect(centerX - 460f, cardsY, 440f, 360f), Team.Red, "ROUGE", redCount, maxPerTeam, redFull);
-        DrawTeamCard(new Rect(centerX + 20f, cardsY, 440f, 360f), Team.Blue, "BLEU", blueCount, maxPerTeam, blueFull);
+        DrawTeamCard(new Rect(centerX - 460f, cardsY, 440f, 360f), Team.Red, "RED", redCount, maxPerTeam, redFull);
+        DrawTeamCard(new Rect(centerX + 20f, cardsY, 440f, 360f), Team.Blue, "BLUE", blueCount, maxPerTeam, blueFull);
 
         GUI.Label(new Rect(panel.x, cardsY + 380f, panel.width, 26f),
-            $"Connecté en tant que <b>{_nickname}</b>", _subtitleStyle);
+            $"Playing as <b>{_nickname}</b>", _subtitleStyle);
 
         if (bothFull)
         {
-            if (GhostButton(new Rect(centerX - 260f, cardsY + 420f, 520f, 64f), "REGARDER EN SPECTATEUR (FANTÔME)"))
+            if (GhostButton(new Rect(centerX - 260f, cardsY + 420f, 520f, 64f), "WATCH AS A SPECTATOR (GHOST)"))
                 _wantSpectator = true;
         }
     }
@@ -371,7 +394,7 @@ public class LobbyMenu : MonoBehaviour
             _cardCountStyle.normal.textColor = UITheme.WithAlpha(UITheme.Parchment, 0.4f);
             GUI.Label(new Rect(rect.x, rect.y + 180f, rect.width, 40f), $"{count} / {max}", _cardCountStyle);
             _cardHintStyle.normal.textColor = UITheme.WithAlpha(UITheme.Parchment, 0.35f);
-            GUI.Label(new Rect(rect.x, rect.y + 244f, rect.width, 26f), "COMPLET", _cardHintStyle);
+            GUI.Label(new Rect(rect.x, rect.y + 244f, rect.width, 26f), "FULL", _cardHintStyle);
             return;
         }
 
@@ -384,7 +407,7 @@ public class LobbyMenu : MonoBehaviour
         _cardCountStyle.normal.textColor = Color.white;
         GUI.Label(new Rect(rect.x, rect.y + 180f, rect.width, 40f), $"{count} / {max}", _cardCountStyle);
         _cardHintStyle.normal.textColor = UITheme.WithAlpha(Color.white, 0.8f);
-        GUI.Label(new Rect(rect.x, rect.y + 244f, rect.width, 26f), "CLIQUE POUR REJOINDRE", _cardHintStyle);
+        GUI.Label(new Rect(rect.x, rect.y + 244f, rect.width, 26f), "CLICK TO JOIN", _cardHintStyle);
 
         if (GUI.Button(rect, GUIContent.none, GUIStyle.none))
         {
@@ -408,7 +431,7 @@ public class LobbyMenu : MonoBehaviour
             DrawLobbyPanel(countPanel);
 
             GUI.Label(new Rect(countPanel.x, countPanel.y + 36f, countPanel.width, 60f),
-                "La partie commence dans", _titleStyle);
+                "Game starting in", _titleStyle);
 
             var numberStyle = new GUIStyle(_logoStyle) { fontSize = 128 };
             numberStyle.normal.textColor = seconds <= 2 ? UITheme.Danger : UITheme.Gold;
@@ -416,7 +439,7 @@ public class LobbyMenu : MonoBehaviour
                 seconds.ToString(), numberStyle);
 
             GUI.Label(new Rect(countPanel.x, countPanel.yMax - 50f, countPanel.width, 26f),
-                "Préparez vos grimoires !", _subtitleStyle);
+                "Ready your grimoires!", _subtitleStyle);
             return;
         }
         int connected = gameState != null ? gameState.ConnectedPlayers : 0;
@@ -426,9 +449,9 @@ public class LobbyMenu : MonoBehaviour
         var panel = new Rect(centerX - 330f, 200f, 660f, 680f);
         DrawLobbyPanel(panel);
 
-        GUI.Label(new Rect(panel.x, panel.y + 42f, panel.width, 80f), "Salle d'attente", _titleStyle);
+        GUI.Label(new Rect(panel.x, panel.y + 42f, panel.width, 80f), "Waiting room", _titleStyle);
         GUI.Label(new Rect(panel.x, panel.y + 124f, panel.width, 28f),
-            $"Salle <color=#{ColorUtility.ToHtmlStringRGB(UITheme.Gold)}><b>{_room}</b></color>  •  Joueurs connectés : <b>{connected}/{required}</b>", _subtitleStyle);
+            $"Room <color=#{ColorUtility.ToHtmlStringRGB(UITheme.Gold)}><b>{_room}</b></color>  •  Players: <b>{connected}/{required}</b>", _subtitleStyle);
 
         // Lignes joueurs (pseudos teintés) + emplacements vides
         float rowY = panel.y + 190f;
@@ -451,7 +474,7 @@ public class LobbyMenu : MonoBehaviour
             {
                 var badge = new Rect(rowRect.xMax - 88f, rowRect.y + 12f, 70f, 28f);
                 UITheme.DrawBorder(badge, UITheme.WithAlpha(UITheme.Gold, 0.7f), 1.5f, 8f);
-                GUI.Label(badge, "HÔTE", _labelCapsGoldCentered ?? _labelCapsStyle);
+                GUI.Label(badge, "HOST", _labelCapsGoldCentered ?? _labelCapsStyle);
             }
 
             rowY += 60f;
@@ -463,24 +486,24 @@ public class LobbyMenu : MonoBehaviour
             var rowRect = new Rect(panel.x + 70f, rowY, panel.width - 140f, 52f);
             UITheme.DrawBorder(rowRect, UITheme.WithAlpha(UITheme.Brass, 0.3f), 1.5f, 10f);
             _bodyStyle.normal.textColor = UITheme.WithAlpha(UITheme.TextDim, 0.6f);
-            GUI.Label(new Rect(rowRect.x + 24f, rowRect.y, rowRect.width - 40f, rowRect.height), "En attente d'un gobelin…", _bodyStyle);
+            GUI.Label(new Rect(rowRect.x + 24f, rowRect.y, rowRect.width - 40f, rowRect.height), "Waiting for a goblin...", _bodyStyle);
             rowY += 60f;
         }
 
         if (isHost && gameState != null)
         {
             bool canStart = gameState.CanStart;
-            string label = canStart ? "LANCER LA PARTIE" : $"LANCER LA PARTIE — {required} JOUEURS REQUIS";
+            string label = canStart ? "START GAME" : $"START GAME ({required} PLAYERS REQUIRED)";
             if (PrimaryButton(new Rect(panel.x + 70f, panel.yMax - 160f, panel.width - 140f, 64f), label, canStart))
                 gameState.StartGame();
 
-            if (DebugButton(new Rect(panel.x + 70f, panel.yMax - 82f, panel.width - 140f, 44f), "⚑  LANCER MAINTENANT (DEBUG)"))
+            if (DebugButton(new Rect(panel.x + 70f, panel.yMax - 82f, panel.width - 140f, 44f), "⚑  START NOW (DEBUG)"))
                 gameState.StartGame();
         }
         else
         {
             GUI.Label(new Rect(panel.x, panel.yMax - 120f, panel.width, 28f),
-                "En attente du lancement par l'hôte…", _subtitleStyle);
+                "Waiting for the host to start...", _subtitleStyle);
         }
     }
 
@@ -510,6 +533,28 @@ public class LobbyMenu : MonoBehaviour
 
         GUI.Label(drawRect, label, _buttonTextStyle);
         return enabled && GUI.Button(rect, GUIContent.none, GUIStyle.none);
+    }
+
+    // Toggle de format (2v2/3v3/4v4) : sélectionné = plein, sinon fantôme
+    private bool FormatToggle(Rect rect, string label, bool selected)
+    {
+        bool hover = rect.Contains(Event.current.mousePosition);
+        var drawRect = hover && selected == false ? new Rect(rect.x, rect.y - 2f, rect.width, rect.height) : rect;
+
+        if (selected)
+        {
+            UITheme.DrawRounded(drawRect, Color.white, 12f);
+            _buttonTextStyle.normal.textColor = UITheme.Hex("#22114D");
+        }
+        else
+        {
+            UITheme.DrawRounded(drawRect, UITheme.WithAlpha(Color.white, 0.07f), 12f);
+            UITheme.DrawBorder(drawRect, UITheme.WithAlpha(UITheme.Brass, 0.5f), 1.5f, 12f);
+            _buttonTextStyle.normal.textColor = UITheme.TextDim;
+        }
+
+        GUI.Label(drawRect, label, _buttonTextStyle);
+        return GUI.Button(rect, GUIContent.none, GUIStyle.none);
     }
 
     private bool GhostButton(Rect rect, string label)

@@ -22,7 +22,14 @@ public class PlayerSpellEffects : NetworkBehaviour
     [SerializeField] private float _chargeBumpUpImpulse = 5f;
     [SerializeField] private float _chargeBumpRadius = 2.5f;
     [SerializeField] private float _squashSeconds = 2f;
+    [Tooltip("Rayon d'écrasement : passer à cette distance d'un joueur plus petit l'aplatit (multiplié par la taille du géant)")]
+    [SerializeField] private float _crushRadius = 2f;
     [SerializeField] private float _iceControlAccel = 8f;
+
+    [Tooltip("Son joué chez la VICTIME quand elle se fait confondre (vertigo)")]
+    [SerializeField] private AudioClip _confusionOwnClip;
+
+    private bool _wasConfused;
 
     [Networked] private TickTimer SlowTimer { get; set; }
     [Networked] private TickTimer SpeedBuffTimer { get; set; }
@@ -257,10 +264,11 @@ public class PlayerSpellEffects : NetworkBehaviour
             Vector3 delta = transform.position - other.transform.position;
             float horizontal = new Vector2(delta.x, delta.z).magnitude;
             float victimHeight = 1.8f * Mathf.Max(0.2f, other.transform.localScale.y);
-            float crushRadius = 0.8f * Mathf.Max(1f, transform.localScale.x);
+            float crushRadius = _crushRadius * Mathf.Max(1f, transform.localScale.x);
 
-            // On est au-dessus de la victime, dans son emprise : écrasé
-            if (horizontal < crushRadius && delta.y > victimHeight * 0.3f && delta.y < victimHeight + 1.5f)
+            // Zone de proximité : passer à côté (ou dessus) d'un plus petit l'écrase,
+            // pas besoin de contact direct — juste être à peu près au même niveau
+            if (horizontal < crushRadius && delta.y > -1.5f && delta.y < victimHeight + 2f)
                 other.ApplySquash(_squashSeconds);
         }
     }
@@ -284,6 +292,15 @@ public class PlayerSpellEffects : NetworkBehaviour
 
     public override void Render()
     {
+        // Vertigo : son local chez la victime au moment où la confusion démarre
+        if (HasInputAuthority)
+        {
+            bool confusedNow = IsConfused;
+            if (confusedNow && _wasConfused == false && _confusionOwnClip != null && Camera.main != null)
+                AudioSource.PlayClipAtPoint(_confusionOwnClip, Camera.main.transform.position, 0.9f);
+            _wasConfused = confusedNow;
+        }
+
         // Taille : minima rétrécit, maximus grandit (cumulables), appliqué chez
         // tout le monde y compris le joueur touché (sa caméra suit, effet immersif).
         // Écrasé : aplati au sol (la caméra descend avec le pivot, puis remonte).
@@ -362,14 +379,14 @@ public class PlayerSpellEffects : NetworkBehaviour
             _statusStyle = UITheme.Label(UITheme.BodyBold, 17, UITheme.Parchment, TextAnchor.MiddleLeft);
 
         _statusBadges.Clear();
-        AppendStatus(SlowTimer, "Ralenti", SpellWords.ColorOf(0));          // polaris
-        AppendStatus(SpeedBuffTimer, "Vitesse +", SpellWords.ColorOf(2));   // aurora
-        AppendStatus(ForceBuffTimer, "Force +", SpellWords.ColorOf(3));     // maximus
+        AppendStatus(SlowTimer, "Slowed", SpellWords.ColorOf(0));          // polaris
+        AppendStatus(SpeedBuffTimer, "Speed +", SpellWords.ColorOf(2));   // aurora
+        AppendStatus(ForceBuffTimer, "Strength +", SpellWords.ColorOf(3));     // maximus
         AppendStatus(InvisibilityTimer, "Invisible", SpellWords.ColorOf(4)); // anima
-        AppendStatus(ConfusionTimer, "Confusion", SpellWords.ColorOf(5));   // vertigo
-        AppendStatus(ShrinkTimer, "Rétréci", SpellWords.ColorOf(6));        // minima
-        AppendStatus(StunTimer, "Électrifié", SpellWords.ColorOf(7));       // electra
-        AppendStatus(SquashTimer, "Écrasé", SpellWords.ColorOf(8));        // gris pierre
+        AppendStatus(ConfusionTimer, "Confused", SpellWords.ColorOf(5));   // vertigo
+        AppendStatus(ShrinkTimer, "Shrunk", SpellWords.ColorOf(6));        // minima
+        AppendStatus(StunTimer, "Shocked", SpellWords.ColorOf(7));       // electra
+        AppendStatus(SquashTimer, "Squashed", SpellWords.ColorOf(8));        // gris pierre
 
         if (_statusBadges.Count == 0)
             return;

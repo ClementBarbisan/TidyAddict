@@ -112,9 +112,11 @@ MonoBehaviour:
   _speed: 18
   _lifeSeconds: 5
   _hitImpulse: 10
+  _hitUpImpulse: 8
   _SpellIndex: 0
   _explosionRadius: 4
   _explosionForce: 12
+  _impactClip: {fileID: 8300000, guid: f10fd2598c45341a0bb70de04b465cd6, type: 3}
 --- !u!1 &8963490713273174022
 GameObject:
   m_ObjectHideFlags: 0

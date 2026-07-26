@@ -180,7 +180,7 @@ namespace Projectiles
             var tap = IncantationRecorder.Instance;
             if (tap == null)
             {
-                ShowFeedback("Micro indisponible");
+                ShowFeedback("Microphone unavailable");
                 return;
             }
 
@@ -213,7 +213,7 @@ namespace Projectiles
 
             if (duration < _minRecordSeconds)
             {
-                ShowFeedback("Trop court : maintenez le clic et dites le mot");
+                ShowFeedback("Too short: hold click and say the word");
                 return;
             }
 
@@ -257,15 +257,15 @@ namespace Projectiles
 
                 if (bestError <= _errorThreshold)
                 {
-                    ShowFeedback($"◆  <b>{expectedWord.ToUpperInvariant()}</b> — sort lancé !", 2.5f, isError: false,
+                    ShowFeedback($"◆  <b>{expectedWord.ToUpperInvariant()}</b> cast!", 2.5f, isError: false,
                         SpellWords.ColorOf(HeldScroll.WordIndex));
                     RPC_CastSpell();
                 }
                 else
                 {
                     ShowFeedback(bestHeard == null
-                        ? "✗  Mot non reconnu — réessayez en articulant"
-                        : $"✗  Raté… j'ai entendu <i>« {bestHeard} »</i>", 2.5f, isError: true, default);
+                        ? "✗  Word not recognized, try again"
+                        : $"✗  Missed... heard <i>\"{bestHeard}\"</i>", 2.5f, isError: true, default);
                 }
             }
             finally
@@ -302,8 +302,24 @@ namespace Projectiles
         }
 
         // Exécuté côté serveur : chaque mot déclenche toujours le même sort
+        // Son du sort chez TOUS les clients (spatial : l'AudioSource est sur le
+        // joueur). Le tableau clips est indexé par sort (0 = polaris … 11 = taurus),
+        // câblé automatiquement par le setup.
+        [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+        private void RPC_PlaySpellSound(int spellIndex)
+        {
+            if (source == null || clips == null || spellIndex < 0 || spellIndex >= clips.Length)
+                return;
+
+            var clip = clips[spellIndex];
+            if (clip != null)
+                source.PlayOneShot(clip);
+        }
+
         private void CastSpell(int spellIndex)
         {
+            RPC_PlaySpellSound(spellIndex);
+
             var effects = GetComponent<PlayerSpellEffects>();
 
             RPC_TriggerThrowEffect(spellIndex);
@@ -312,7 +328,6 @@ namespace Projectiles
             {
                 case SpellType.Fire:
                 {
-                    source.clip = clips[0];
                     Vector3 direction = _castOrigin != null ? _castOrigin.forward : transform.forward;
                     Vector3 origin = (_castOrigin != null ? _castOrigin.position : transform.position + Vector3.up) +
                                      direction * 0.8f;
@@ -324,7 +339,6 @@ namespace Projectiles
                 {
                     if (_iceZonePrefab != null)
                     {
-                        source.clip = clips[1];
                         var casterRef = Object.InputAuthority;
                         Vector3 ground = new Vector3(transform.position.x, 0.02f, transform.position.z);
                         Runner.Spawn(_iceZonePrefab, ground, Quaternion.identity, casterRef,
@@ -336,7 +350,6 @@ namespace Projectiles
                 case SpellType.SpeedBuff:
                     if (effects != null)
                     {
-                        source.clip = clips[2];
                         effects.ApplySpeedBuff(_buffSeconds);
                     }
 
@@ -345,7 +358,6 @@ namespace Projectiles
                 case SpellType.ForceBuff:
                     if (effects != null)
                     {
-                        source.clip = clips[3];
                         effects.ApplyForceBuff(_buffSeconds);
                     }
 
@@ -354,7 +366,6 @@ namespace Projectiles
                 case SpellType.Invisibility:
                     if (effects != null)
                     {
-                        source.clip = clips[4];
                         effects.ApplyInvisibility(_buffSeconds);
                     }
 
@@ -365,7 +376,6 @@ namespace Projectiles
                     var target = FindTargetPlayer();
                     if (target != null)
                     {
-                        source.clip = clips[4];
                         target.ApplyConfusion(_buffSeconds);
                     }
 
@@ -376,7 +386,6 @@ namespace Projectiles
                     var target = FindTargetPlayer();
                     if (target != null)
                     {
-                        source.clip = clips[5];
                         target.ApplyShrink(_buffSeconds);
                     }
 
@@ -387,7 +396,6 @@ namespace Projectiles
                     var target = FindTargetPlayer();
                     if (target != null)
                     {
-                        source.clip = clips[6];
                         target.ApplyStun(_stunSeconds);
                     }
 
@@ -484,7 +492,6 @@ namespace Projectiles
                 }
             }
 
-            source.Play();
         }
 
         // Cible du sort fortuna : l'objet Grabbable visé (spherecast depuis la caméra)
@@ -603,21 +610,21 @@ namespace Projectiles
                         UITheme.WithAlpha(UITheme.Danger, pulse), 8f);
 
                     _wordListenStyle.normal.textColor = spellColor;
-                    GUI.Label(new Rect(band.x + 66f, band.y + 12f, band.width - 100f, 56f), $"Dites :  {word}",
+                    GUI.Label(new Rect(band.x + 66f, band.y + 12f, band.width - 100f, 56f), $"Say:  {word}",
                         _wordListenStyle);
                     _hintStyle.normal.textColor = UITheme.TextDim;
-                    GUI.Label(new Rect(band.x, band.y + 70f, band.width, 24f), "RELÂCHEZ POUR VALIDER", _hintStyle);
+                    GUI.Label(new Rect(band.x, band.y + 70f, band.width, 24f), "RELEASE TO CAST", _hintStyle);
                 }
                 else
                 {
                     _wordStyle.normal.textColor = spellColor;
                     GUI.Label(new Rect(band.x + 32f, band.y + 12f, band.width - 64f, 42f),
-                        $"◆  Parchemin :  {word}", _wordStyle);
+                        $"◆  Scroll:  {word}", _wordStyle);
                     _descStyle.normal.textColor = UITheme.Parchment;
                     GUI.Label(new Rect(band.x + 32f, band.y + 52f, band.width - 64f, 24f), description, _descStyle);
                     _hintStyle.normal.textColor = UITheme.TextDim;
                     GUI.Label(new Rect(band.x + 32f, band.y + 78f, band.width - 64f, 22f),
-                        "MAINTENEZ CLIC GAUCHE ET DITES LE MOT  •  G POUR REPOSER", _hintStyle);
+                        "HOLD LEFT CLICK AND SAY THE WORD  •  G TO DROP", _hintStyle);
                 }
             }
 

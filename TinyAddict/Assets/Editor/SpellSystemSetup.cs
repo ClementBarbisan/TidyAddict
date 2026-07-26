@@ -94,7 +94,23 @@ namespace Projectiles
         {
             var existing = AssetDatabase.LoadAssetAtPath<NetworkObject>(BallPrefabPath);
             if (existing != null)
+            {
+                // Migration : câble le son d'impact s'il manque
+                var ball = existing.GetComponent<SpellBall>();
+                if (ball != null)
+                {
+                    var ballSo = new SerializedObject(ball);
+                    var impactProperty = ballSo.FindProperty("_impactClip");
+                    if (impactProperty != null && impactProperty.objectReferenceValue == null)
+                    {
+                        impactProperty.objectReferenceValue = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/fireball_impact.mp3");
+                        ballSo.ApplyModifiedPropertiesWithoutUndo();
+                        EditorUtility.SetDirty(existing);
+                        Debug.Log("[SpellSystemSetup] SpellBall : son d'impact câblé.");
+                    }
+                }
                 return existing;
+            }
 
             EnsureFolder("Assets/Prefabs");
 
@@ -230,10 +246,11 @@ namespace Projectiles
 
         private static NetworkObject CreateSpellWallPrefab()
         {
-            // Déjà construit avec le modèle Mur_Axel : rien à faire.
-            // (Un ancien prefab au cube est reconstruit — même chemin, même GUID.)
+            // Déjà construit au nouveau format (conteneur VisualRoot) : rien à faire.
+            // Les anciens formats (cube ou modèle mal centré) sont reconstruits,
+            // même chemin donc même GUID : le câblage sur le joueur est conservé.
             var existing = AssetDatabase.LoadAssetAtPath<NetworkObject>(WallPrefabPath);
-            if (existing != null && existing.transform.Find("Mur_Axel") != null)
+            if (existing != null && existing.transform.Find("VisualRoot") != null)
                 return existing;
 
             EnsureFolder("Assets/Prefabs");
@@ -248,30 +265,39 @@ namespace Projectiles
                 var model = AssetDatabase.LoadAssetAtPath<GameObject>(WallModelPath);
                 if (model != null)
                 {
+                    // Conteneur pivot : le modèle est centré dedans une seule fois
+                    // (bounds lus AVANT toute transformation, pas de re-lecture fragile),
+                    // puis échelle/rotation s'appliquent au conteneur
+                    var container = new GameObject("VisualRoot");
+                    container.transform.SetParent(root.transform, false);
+
                     var visual = (GameObject)PrefabUtility.InstantiatePrefab(model);
                     visual.name = "Mur_Axel";
-                    visual.transform.SetParent(root.transform, false);
+                    visual.transform.SetParent(container.transform, false);
 
-                    // Normalisation : hauteur du mur = WallHeight, base posée au sol,
-                    // centré sur le root, face large perpendiculaire à l'axe Z (regard)
                     var bounds = ComputeRendererBounds(visual);
-                    if (bounds.size.y > 0.001f)
-                    {
-                        float scale = WallHeight / bounds.size.y;
-                        visual.transform.localScale = Vector3.one * scale;
+                    Vector3 size = bounds.size;
 
-                        bounds = ComputeRendererBounds(visual);
-                        visual.transform.localPosition = new Vector3(
-                            -bounds.center.x,
-                            -bounds.min.y,
-                            -bounds.center.z);
-                    }
+                    // Recentre le mesh sur le pivot du conteneur (le pivot du FBX est très excentré)
+                    visual.transform.localPosition = -bounds.center;
 
-                    // Le FBX n'a pas de collider : une box ajustée aux dimensions bloque
-                    bounds = ComputeRendererBounds(visual);
+                    float scale = size.y > 0.001f ? WallHeight / size.y : 1f;
+                    container.transform.localScale = Vector3.one * scale;
+
+                    // Face large vers le joueur : si le côté long est sur Z, on tourne de 90°
+                    bool rotated = size.z > size.x;
+                    if (rotated)
+                        container.transform.localRotation = Quaternion.Euler(0f, 90f, 0f);
+
+                    // Base posée au sol : le mesh est centré, il s'étend de ±hauteur/2
+                    container.transform.localPosition = new Vector3(0f, WallHeight * 0.5f, 0f);
+
+                    // Le FBX n'a pas de collider : box aux dimensions finales
+                    float width = (rotated ? size.z : size.x) * scale;
+                    float depth = (rotated ? size.x : size.z) * scale;
                     var collider = root.AddComponent<BoxCollider>();
-                    collider.center = new Vector3(0f, bounds.size.y * 0.5f, 0f);
-                    collider.size = bounds.size;
+                    collider.center = new Vector3(0f, WallHeight * 0.5f, 0f);
+                    collider.size = new Vector3(width, WallHeight, depth);
                 }
                 else
                 {
@@ -377,6 +403,16 @@ namespace Projectiles
                         gameStateSo.ApplyModifiedPropertiesWithoutUndo();
                         dirty = true;
                         Debug.Log("[SpellSystemSetup] GameState : zones passées à 3 étapes.");
+                    }
+
+                    // Son de déplacement des zones
+                    var zoneMoveProperty = gameStateSo.FindProperty("_zoneMoveClip");
+                    if (zoneMoveProperty != null && zoneMoveProperty.objectReferenceValue == null)
+                    {
+                        zoneMoveProperty.objectReferenceValue = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/zones.mp3");
+                        gameStateSo.ApplyModifiedPropertiesWithoutUndo();
+                        dirty = true;
+                        Debug.Log("[SpellSystemSetup] GameState : son de déplacement des zones câblé.");
                     }
 
                     if (dirty)
@@ -510,7 +546,47 @@ namespace Projectiles
                 so.FindProperty("_iceZonePrefab").objectReferenceValue = iceZonePrefab;
                 so.FindProperty("_wallPrefab").objectReferenceValue = wallPrefab;
                 so.FindProperty("_blackHolePrefab").objectReferenceValue = blackHolePrefab;
+
+                // Sons des sorts : tableau clips indexé par sort (0 = polaris … 11 = taurus)
+                var spellClipPaths = new[]
+                {
+                    "Assets/Audio/ice.mp3",                    // 0  polaris
+                    "Assets/Audio/Spell/firespell.mp3",        // 1  inferno
+                    "Assets/Audio/speed.mp3",                  // 2  aurora
+                    "Assets/Audio/Spell/maximusSpell.mp3",     // 3  maximus
+                    "Assets/Audio/invisible.mp3",              // 4  anima
+                    "Assets/Audio/confusionspell.mp3",         // 5  vertigo
+                    "Assets/Audio/minima.mp3",                 // 6  minima
+                    "Assets/Audio/Spell/electricSpell.mp3",    // 7  electra
+                    "Assets/Audio/wall.mp3",                   // 8  petra
+                    "Assets/Audio/voidspell.mp3",              // 9  pluto
+                    "Assets/Audio/teleportation.mp3",          // 10 fortuna
+                    "Assets/Audio/taurus.mp3",                 // 11 taurus
+                };
+
+                var clipsProperty = so.FindProperty("clips");
+                if (clipsProperty != null)
+                {
+                    clipsProperty.arraySize = spellClipPaths.Length;
+                    for (int i = 0; i < spellClipPaths.Length; i++)
+                    {
+                        var clip = AssetDatabase.LoadAssetAtPath<AudioClip>(spellClipPaths[i]);
+                        if (clip == null)
+                            Debug.LogWarning($"[SpellSystemSetup] Son introuvable : {spellClipPaths[i]}");
+                        clipsProperty.GetArrayElementAtIndex(i).objectReferenceValue = clip;
+                    }
+                }
+
                 so.ApplyModifiedPropertiesWithoutUndo();
+
+                // Son « confusion » côté victime (vertigo)
+                var effectsSo = new SerializedObject(root.GetComponent<PlayerSpellEffects>());
+                var confusionOwnProperty = effectsSo.FindProperty("_confusionOwnClip");
+                if (confusionOwnProperty != null)
+                {
+                    confusionOwnProperty.objectReferenceValue = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/confusionown.mp3");
+                    effectsSo.ApplyModifiedPropertiesWithoutUndo();
+                }
 
                 PrefabUtility.SaveAsPrefabAsset(root, PlayerPrefabPath);
                 Debug.Log($"[SpellSystemSetup] ScrollCaster câblé sur {PlayerPrefabPath}");
@@ -801,6 +877,15 @@ namespace Projectiles
                 var visual = existingZone.transform.Find("Visual");
                 if (visual != null)
                     visual.GetComponent<MeshRenderer>().sharedMaterial = material;
+
+                // Migration : libellé de zone en anglais
+                var existingLabel = existingZone.transform.Find("Label");
+                if (existingLabel != null)
+                {
+                    var labelText = existingLabel.GetComponent<TextMesh>();
+                    if (labelText != null)
+                        labelText.text = name == "ZoneCollecteRouge" ? "RED ZONE" : "BLUE ZONE";
+                }
                 return;
             }
 
@@ -826,7 +911,7 @@ namespace Projectiles
             label.alignment = TextAlignment.Center;
             label.fontStyle = FontStyle.Bold;
             label.color = new Color(color.r, color.g, color.b, 1f);
-            label.text = name == "ZoneCollecteRouge" ? "ZONE ROUGE" : "ZONE BLEUE";
+            label.text = name == "ZoneCollecteRouge" ? "RED ZONE" : "BLUE ZONE";
             labelObject.GetComponent<MeshRenderer>().sharedMaterial = font.material;
 
             Debug.Log($"[SpellSystemSetup] Zone de collecte créée : {name} à {position}");

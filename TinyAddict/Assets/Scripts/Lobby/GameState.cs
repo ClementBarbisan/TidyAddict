@@ -39,6 +39,9 @@ public class GameState : NetworkBehaviour
     [Tooltip("Charge apportée par UN objet resté UNE minute dans la zone (0.05 = 5 % → 5 objets × 1 min = 25 %)")]
     [SerializeField] private float _chargePerObjectPerMinute = 0.05f;
 
+    [Tooltip("Son joué chez tous quand les zones changent d'étape")]
+    [SerializeField] private AudioClip _zoneMoveClip;
+
     // Position/taille de secours si aucun CollectionZoneMarker n'est trouvé
     [SerializeField] private Vector3 _redZoneCenter = new Vector3(-12f, 1f, 0f);
     [SerializeField] private Vector3 _blueZoneCenter = new Vector3(12f, 1f, 0f);
@@ -50,6 +53,7 @@ public class GameState : NetworkBehaviour
     private int _appliedStep = -1;
     private int _lastConsumedStep;   // serveur : dernière étape dont les objets ont été consommés
 
+    [Networked] public int RequiredPlayersNetworked { get; set; }
     [Networked] public NetworkBool GameStarted { get; set; }
     [Networked] public NetworkBool GameEnded { get; set; }
     [Networked] public NetworkBool LaunchCountdownStarted { get; set; }
@@ -62,8 +66,28 @@ public class GameState : NetworkBehaviour
     [Networked] public MyDataTuple RedCollected { get; set; }
     [Networked] public MyDataTuple BlueCollected { get; set; }
 
-    public int RequiredPlayers => _requiredPlayers;
-    public int MaxPlayersPerTeam => Mathf.Max(1, _requiredPlayers / 2);
+    // Format choisi par l'hôte à la création de la salle (2v2/3v3/4v4),
+    // synchronisé chez tous ; la valeur sérialisée sert de défaut
+    public int RequiredPlayers
+    {
+        get
+        {
+            if (Object != null && Object.IsValid && RequiredPlayersNetworked > 0)
+                return RequiredPlayersNetworked;
+            return _requiredPlayers;
+        }
+    }
+
+    public int MaxPlayersPerTeam => Mathf.Max(1, RequiredPlayers / 2);
+
+    /// <summary>Choix du format par l'hôte, uniquement avant le lancement.</summary>
+    public void SetRequiredPlayers(int count)
+    {
+        if (Object.HasStateAuthority == false || GameStarted || LaunchCountdownStarted)
+            return;
+
+        RequiredPlayersNetworked = Mathf.Clamp(count, 2, 8);
+    }
 
     public bool IsStarted => Object != null && Object.IsValid && GameStarted;
     public bool IsEnded => Object != null && Object.IsValid && GameEnded;
@@ -128,6 +152,9 @@ public class GameState : NetworkBehaviour
     public override void Spawned()
     {
         Instance = this;
+
+        if (Object.HasStateAuthority && RequiredPlayersNetworked == 0)
+            RequiredPlayersNetworked = _requiredPlayers;
     }
 
     public override void Despawned(NetworkRunner runner, bool hasState)
@@ -337,7 +364,14 @@ public class GameState : NetworkBehaviour
         bool blueMoved = TryMoveZone(_blueZoneMarker, Team.Blue, step);
 
         if (redMoved && blueMoved)
+        {
+            // Son de déplacement (chaque client exécute ce code au même moment)
+            bool isStepChange = _appliedStep >= 0 && step != _appliedStep;
+            if (isStepChange && _zoneMoveClip != null && Camera.main != null)
+                AudioSource.PlayClipAtPoint(_zoneMoveClip, Camera.main.transform.position, 0.8f);
+
             _appliedStep = step;
+        }
     }
 
     private bool TryMoveZone(CollectionZoneMarker marker, Team team, int step)

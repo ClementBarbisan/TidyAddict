@@ -83,7 +83,7 @@ public class MicMuteControl : MonoBehaviour
             _labelStyle = UITheme.Label(UITheme.BodyExtraBold, 14, UITheme.Parchment, TextAnchor.MiddleLeft);
 
         // Pill micro (design system : r999, dot 12 px vert = actif / rouge = coupé)
-        string text = IsMuted ? "MICRO COUPÉ" : "MICRO ACTIVÉ";
+        string text = IsMuted ? "MIC MUTED" : "MIC ON";
         Color dotColor = IsMuted ? UITheme.Danger : UITheme.Success;
 
         var content = new GUIContent(text);

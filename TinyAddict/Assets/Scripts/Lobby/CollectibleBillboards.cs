@@ -121,7 +121,7 @@ public class CollectibleBillboards : MonoBehaviour
         }
 
         billboard.gameObject.SetActive(true);
-        billboard.text = "À RAMENER\n" + _builder;
+        billboard.text = "DELIVER\n" + _builder;
         billboard.color = UITheme.PseudoColor(marker.Team);
     }
 
@@ -174,11 +174,11 @@ public class CollectibleBillboards : MonoBehaviour
         switch (type)
         {
             case ValueCollectible.TypeObj.potion: return "POTION";
-            case ValueCollectible.TypeObj.potionGreen: return "POTION VERTE";
-            case ValueCollectible.TypeObj.potionRed: return "POTION ROUGE";
-            case ValueCollectible.TypeObj.potionBlue: return "POTION BLEUE";
-            case ValueCollectible.TypeObj.cauldron: return "CHAUDRON";
-            case ValueCollectible.TypeObj.cauldronShiny: return "CHAUDRON BRILLANT";
+            case ValueCollectible.TypeObj.potionGreen: return "GREEN POTION";
+            case ValueCollectible.TypeObj.potionRed: return "RED POTION";
+            case ValueCollectible.TypeObj.potionBlue: return "BLUE POTION";
+            case ValueCollectible.TypeObj.cauldron: return "CAULDRON";
+            case ValueCollectible.TypeObj.cauldronShiny: return "SHINY CAULDRON";
             default: return type.ToString().ToUpperInvariant();
         }
     }

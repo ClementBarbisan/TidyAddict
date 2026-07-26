@@ -77,18 +77,18 @@ public static class SpellWords
     // Affiché sur le parchemin pour savoir ce que fait le sort avant de le lancer
     public static readonly string[] Descriptions =
     {
-        "Gèle le sol : ralentit les joueurs proches (sauf vous)",
-        "Boule de feu explosive : projette tout à l'impact",
-        "Vitesse augmentée pendant 30 s",
-        "Vous grandissez : grab et poussée renforcés pendant 30 s",
-        "Invisibilité pendant 30 s",
-        "Inverse les touches du joueur visé pendant 30 s",
-        "Rétrécit le joueur visé : force réduite pendant 30 s",
-        "Électrifie le joueur visé : paralysé pendant 10 s",
-        "Fait surgir un mur de pierre devant vous pendant 30 s",
-        "Trou noir : aspire joueurs et objets vers son centre pendant 4 s",
-        "Visez un objet : il se téléporte dans votre zone de collecte",
-        "Charge en avant : percute et éjecte tout sur votre passage",
+        "Freezes the ground: slows nearby players (not you)",
+        "Explosive fireball: blasts everything on impact",
+        "Speed boost for 30s",
+        "You grow huge: stronger grab and push for 30s",
+        "Invisibility for 30s",
+        "Inverts the target's movement keys for 30s",
+        "Shrinks the target: weaker push and grab for 30s",
+        "Electrifies the target: paralyzed for 10s",
+        "Raises a stone wall in front of you for 30s",
+        "Black hole: pulls players and objects in for 4s",
+        "Aim at an item: it teleports into your collection zone",
+        "Charge forward: rams and knocks back everything",
     };
 
     public static SpellType TypeOf(int wordIndex)

@@ -47,6 +47,14 @@ public class SpellBall : NetworkBehaviour
 
     [SerializeField] private float _explosionRadius = 4f;
     [SerializeField] private float _explosionForce = 12f;
+    [SerializeField] private AudioClip _impactClip;
+
+    // Despawned s'exécute chez TOUS les clients : le son d'impact joue partout
+    public override void Despawned(NetworkRunner runner, bool hasState)
+    {
+        if (_impactClip != null)
+            AudioSource.PlayClipAtPoint(_impactClip, transform.position, 0.9f);
+    }
 
     public override void FixedUpdateNetwork()
     {
