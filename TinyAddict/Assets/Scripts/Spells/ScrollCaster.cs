@@ -391,25 +391,21 @@ public class ScrollCaster : NetworkBehaviour
                             + Vector3.up * 1.5f
                             + new Vector3(Random.Range(-1.2f, 1.2f), 0f, Random.Range(-1.2f, 1.2f));
 
-                        // Stoppe l'élan avant la téléportation
-                        var rigidbody = item.GetComponent<Rigidbody>();
-                        if (rigidbody != null)
-                        {
-                            rigidbody.linearVelocity = Vector3.zero;
-                            rigidbody.angularVelocity = Vector3.zero;
-                        }
-
                         var networkRigidbody = item.GetComponent<Fusion.Addons.Physics.NetworkRigidbody>();
                         if (networkRigidbody != null)
                         {
+                            // Stoppe l'élan avant la téléportation
                             if (networkRigidbody.PhysicsBody != null)
                             {
                                 networkRigidbody.PhysicsBody.LinearVelocity = Vector3.zero;
                                 networkRigidbody.PhysicsBody.AngularVelocity = Vector3.zero;
                             }
                             networkRigidbody.Teleport(destination);
+                        }
                         else
+                        {
                             item.transform.position = destination;
+                        }
                     }
                 }
                 break;
