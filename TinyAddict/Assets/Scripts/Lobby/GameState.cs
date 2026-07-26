@@ -419,7 +419,7 @@ public class GameState : NetworkBehaviour
             if (rigidbody != null && _draggedObjects.ContainsKey(rigidbody) == false)
             {
                 _draggedObjects[rigidbody] = rigidbody.linearDamping;
-                rigidbody.linearDamping = 1f;
+                rigidbody.linearDamping = 1.5f;
             }
         }
 
