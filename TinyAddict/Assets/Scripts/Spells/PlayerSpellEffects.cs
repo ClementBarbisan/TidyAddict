@@ -297,7 +297,7 @@ public class PlayerSpellEffects : NetworkBehaviour
         {
             bool confusedNow = IsConfused;
             if (confusedNow && _wasConfused == false && _confusionOwnClip != null && Camera.main != null)
-                AudioSource.PlayClipAtPoint(_confusionOwnClip, Camera.main.transform.position, 0.9f);
+                AudioSource.PlayClipAtPoint(_confusionOwnClip, Camera.main.transform.position, 0.5f);
             _wasConfused = confusedNow;
         }
 

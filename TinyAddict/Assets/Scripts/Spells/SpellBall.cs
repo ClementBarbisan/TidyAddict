@@ -53,7 +53,7 @@ public class SpellBall : NetworkBehaviour
     public override void Despawned(NetworkRunner runner, bool hasState)
     {
         if (_impactClip != null)
-            AudioSource.PlayClipAtPoint(_impactClip, transform.position, 0.9f);
+            AudioSource.PlayClipAtPoint(_impactClip, transform.position, 0.5f);
     }
 
     public override void FixedUpdateNetwork()

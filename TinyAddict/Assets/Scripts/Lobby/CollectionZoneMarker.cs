@@ -1,6 +1,3 @@
-using System;
-using Fusion;
-using Fusion.Addons.Physics;
 using UnityEngine;
 
 /// <summary>
@@ -82,23 +79,10 @@ public class CollectionZoneMarker : MonoBehaviour
         return child;
     }
 
-    private void OnTriggerEnter(Collider other)
-    {
-        if (other.CompareTag("Grabbable") && other.TryGetComponent<NetworkRigidbody>(out var nrb))
-        {
-            RPC_ApplyDrag(nrb);
-        }
-    }
+    // NOTE : le freinage des objets en zone (drag) est géré côté serveur par
+    // GameState.UpdateZoneDrag — un MonoBehaviour ne peut pas porter de [Rpc],
+    // et les visuels de zone n'ont pas de collider pour déclencher OnTriggerEnter.
 
-    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
-    private void RPC_ApplyDrag(NetworkRigidbody targetNRB)
-    {
-        if (targetNRB != null && targetNRB.PhysicsBody != null)
-        {
-            targetNRB.PhysicsBody.Drag = 1f;
-        }
-    }
-    
     private void OnDrawGizmos()
     {
         Gizmos.color = Team == Team.Red

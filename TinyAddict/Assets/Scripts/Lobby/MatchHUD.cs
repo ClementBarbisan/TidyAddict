@@ -84,8 +84,77 @@ public class MatchHUD : MonoBehaviour
 
         DrawTopCenter(gameState);
         DrawRoomCode();
-        DrawTeamRosters();
+        float rosterBottom = DrawTeamRosters();
+        DrawObjectives(gameState, rosterBottom);
         DrawSpectatorHint();
+    }
+
+    // Liste des objets à ramener (sous le roster) : besoins de MON équipe à
+    // l'étape courante, avec progression ; complété = coche verte
+    private void DrawObjectives(GameState gameState, float topY)
+    {
+        Team myTeam = _localProfile != null ? _localProfile.Team : Team.None;
+        if (myTeam == Team.None)
+            return;
+
+        ZoneStepPoint myStepPoint = null;
+        foreach (var point in FindObjectsByType<ZoneStepPoint>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+        {
+            if (point != null && point.Team == myTeam && point.Step == gameState.CurrentStep)
+            {
+                myStepPoint = point;
+                break;
+            }
+        }
+
+        if (myStepPoint == null || myStepPoint.ListObj.Count == 0)
+            return;
+
+        CollectionZoneMarker myZone = null;
+        foreach (var marker in FindObjectsByType<CollectionZoneMarker>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+        {
+            if (marker.Team == myTeam)
+            {
+                myZone = marker;
+                break;
+            }
+        }
+
+        var lines = new System.Collections.Generic.List<(string text, Color color)>
+        {
+            ("DELIVER", UITheme.Gold),
+        };
+
+        foreach (var requirement in myStepPoint.ListObj)
+        {
+            if (requirement.NbObj <= 0)
+                continue;
+
+            int present = CollectibleBillboards.CountInMyZone(myZone, requirement.Type);
+            bool done = present >= requirement.NbObj;
+            string label = CollectibleBillboards.LabelOf(requirement.Type);
+
+            lines.Add(done
+                ? ($"✓ {label}  {requirement.NbObj}/{requirement.NbObj}", UITheme.Success)
+                : ($"• {label}  {present}/{requirement.NbObj}", UITheme.Parchment));
+        }
+
+        if (lines.Count <= 1)
+            return;
+
+        const float rowHeight = 26f;
+        float panelWidth = 200f;
+        float panelHeight = lines.Count * rowHeight + 18f;
+        var panel = new Rect(UITheme.VirtualWidth - panelWidth - 32f, topY + 10f, panelWidth, panelHeight);
+        UITheme.DrawPanel(panel);
+
+        float y = panel.y + 9f;
+        foreach (var (text, color) in lines)
+        {
+            _rosterStyle.normal.textColor = color;
+            GUI.Label(new Rect(panel.x + 16f, y, panelWidth - 32f, rowHeight), text, _rosterStyle);
+            y += rowHeight;
+        }
     }
 
     // Code de la salle en haut à gauche (au-dessus des badges d'effets)
@@ -182,7 +251,7 @@ public class MatchHUD : MonoBehaviour
 
     // HAUT-DROITE : roster des deux équipes (sous le pill micro)
 
-    private void DrawTeamRosters()
+    private float DrawTeamRosters()
     {
         var lines = new System.Collections.Generic.List<(string text, Color color)>();
 
@@ -202,6 +271,8 @@ public class MatchHUD : MonoBehaviour
             GUI.Label(new Rect(panel.x + 16f, y, panelWidth - 32f, rowHeight), text, _rosterStyle);
             y += rowHeight;
         }
+
+        return panel.yMax;
     }
 
     private void AppendTeam(System.Collections.Generic.List<(string, Color)> lines, Team team, string header)

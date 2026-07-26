@@ -32,6 +32,9 @@ namespace Projectiles
         [SerializeField] private float _maxRecordSeconds = 6f;
         [SerializeField] private AudioSource source;
         [SerializeField] private AudioClip[] clips;
+        [SerializeField, Range(0f, 1f)]
+        [Tooltip("Volume des sons de sorts")]
+        private float _spellVolume = 0.45f;
 
         [SerializeField, Range(0f, 1f)]
         [Tooltip("Marge d'erreur tolérée entre le mot entendu et le mot attendu (0 = strict, 1 = tout accepté)")]
@@ -313,7 +316,7 @@ namespace Projectiles
 
             var clip = clips[spellIndex];
             if (clip != null)
-                source.PlayOneShot(clip);
+                source.PlayOneShot(clip, _spellVolume);
         }
 
         private void CastSpell(int spellIndex)
