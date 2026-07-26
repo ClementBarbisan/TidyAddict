@@ -450,7 +450,11 @@ namespace Projectiles
         private const string ParchmentModelPath = "Assets/Prefabs/Parchemin/Parchment.fbx";
         private const string ParchmentOpenMaterialPath = "Assets/Materials/SpellParchmentOpen.mat";
 
-        // Textures du parchemin ouvert, ordonnées par sort (0 = polaris … 11 = taurus)
+        // Parchemin ouvert en main : 1,5× la taille de base, un peu plus bas et à gauche
+        private const float OpenParchmentSize = 0.55f * 1.5f;
+        private static readonly Vector3 OpenParchmentOffset = new Vector3(-0.15f, 0.10f, 0f);
+
+        // Textures du parchemin ouvert, ordonnées par sort (0 = polaris … 10 = taurus)
         private static readonly string[] ParchmentTexturePaths =
         {
             "Assets/Prefabs/Parchemin/POLARIS.png",
@@ -461,7 +465,6 @@ namespace Projectiles
             "Assets/Prefabs/Parchemin/VERTIGO.png",
             "Assets/Prefabs/Parchemin/MINIMA.png",
             "Assets/Prefabs/Parchemin/ELECTRA.png",
-            "Assets/Prefabs/Parchemin/PETRA.png",
             "Assets/Prefabs/Parchemin/PLUTO.png",
             "Assets/Prefabs/Parchemin/FORTUNA.png",
             "Assets/Prefabs/Parchemin/TAURUS.png",
@@ -531,7 +534,7 @@ namespace Projectiles
 
         // Ajoute le parchemin OUVERT (modèle Parchment.fbx + image du sort) au
         // prefab du parchemin : montré en main, le rouleau plié restant au sol.
-        // Câble aussi les 12 textures. Idempotent.
+        // Câble aussi les 11 textures. Idempotent.
         private static void UpgradeScrollPrefabVisuals()
         {
             var contents = PrefabUtility.LoadPrefabContents(ScrollPrefabPath);
@@ -543,6 +546,14 @@ namespace Projectiles
                     return;
 
                 var openRoot = contents.transform.Find("OpenParchment");
+
+                // Ancien format (taille/position d'origine) : reconstruit avec les réglages actuels
+                if (openRoot != null && (openRoot.localPosition - OpenParchmentOffset).sqrMagnitude > 1e-6f)
+                {
+                    Object.DestroyImmediate(openRoot.gameObject);
+                    openRoot = null;
+                }
+
                 if (openRoot == null)
                 {
                     var model = AssetDatabase.LoadAssetAtPath<GameObject>(ParchmentModelPath);
@@ -564,9 +575,9 @@ namespace Projectiles
                     visual.transform.localPosition = -bounds.center;
 
                     float maxSize = Mathf.Max(bounds.size.x, bounds.size.y, bounds.size.z);
-                    float scale = maxSize > 0.001f ? 0.55f / maxSize : 1f;
+                    float scale = maxSize > 0.001f ? OpenParchmentSize / maxSize : 1f;
                     container.transform.localScale = Vector3.one * scale;
-                    container.transform.localPosition = new Vector3(0f, 0.25f, 0f);
+                    container.transform.localPosition = OpenParchmentOffset;
 
                     // Invisible par défaut : SpellScroll l'active quand le parchemin est tenu
                     container.SetActive(false);
@@ -632,7 +643,7 @@ namespace Projectiles
                 {
                     scrollSo.ApplyModifiedPropertiesWithoutUndo();
                     PrefabUtility.SaveAsPrefabAsset(contents, ScrollPrefabPath);
-                    Debug.Log("[SpellSystemSetup] SpellScroll : visuels ouverts + textures des 12 sorts câblés.");
+                    Debug.Log("[SpellSystemSetup] SpellScroll : visuels ouverts + textures des 11 sorts câblés.");
                 }
             }
             finally
@@ -646,9 +657,21 @@ namespace Projectiles
         // en runtime par MaterialPropertyBlock, celle par défaut sert d'aperçu.
         private static Material GetOrCreateParchmentOpenMaterial()
         {
+            var flipScale = new Vector2(-1f, -1f);
+            var flipOffset = new Vector2(1f, 1f);
+
             var material = AssetDatabase.LoadAssetAtPath<Material>(ParchmentOpenMaterialPath);
             if (material != null)
+            {
+                // Matériau d'une version précédente : applique le retournement 180°
+                if (material.GetTextureScale("_BaseMap") != flipScale)
+                {
+                    material.SetTextureScale("_BaseMap", flipScale);
+                    material.SetTextureOffset("_BaseMap", flipOffset);
+                    EditorUtility.SetDirty(material);
+                }
                 return material;
+            }
 
             EnsureFolder("Assets/Materials");
 
@@ -657,6 +680,10 @@ namespace Projectiles
             material.doubleSidedGI = true;
             material.SetTexture("_BaseMap",
                 AssetDatabase.LoadAssetAtPath<Texture2D>(ParchmentTexturePaths[0]));
+
+            // Les UV du FBX sont à l'envers : tiling -1/-1 pour retourner l'image de 180°
+            material.SetTextureScale("_BaseMap", flipScale);
+            material.SetTextureOffset("_BaseMap", flipOffset);
 
             AssetDatabase.CreateAsset(material, ParchmentOpenMaterialPath);
             return material;
@@ -704,7 +731,7 @@ namespace Projectiles
                 so.FindProperty("_wallPrefab").objectReferenceValue = wallPrefab;
                 so.FindProperty("_blackHolePrefab").objectReferenceValue = blackHolePrefab;
 
-                // Sons des sorts : tableau clips indexé par sort (0 = polaris … 11 = taurus)
+                // Sons des sorts : tableau clips indexé par sort (0 = polaris … 10 = taurus)
                 var spellClipPaths = new[]
                 {
                     "Assets/Audio/ice.mp3",                    // 0  polaris
@@ -715,10 +742,9 @@ namespace Projectiles
                     "Assets/Audio/confusionspell.mp3",         // 5  vertigo
                     "Assets/Audio/minima.mp3",                 // 6  minima
                     "Assets/Audio/Spell/electricSpell.mp3",    // 7  electra
-                    "Assets/Audio/wall.mp3",                   // 8  petra
-                    "Assets/Audio/voidspell.mp3",              // 9  pluto
-                    "Assets/Audio/teleportation.mp3",          // 10 fortuna
-                    "Assets/Audio/taurus.mp3",                 // 11 taurus
+                    "Assets/Audio/voidspell.mp3",              // 8  pluto
+                    "Assets/Audio/teleportation.mp3",          // 9  fortuna
+                    "Assets/Audio/taurus.mp3",                 // 10 taurus
                 };
 
                 var clipsProperty = so.FindProperty("clips");

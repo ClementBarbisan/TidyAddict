@@ -18,9 +18,9 @@ public enum SpellType
 }
 
 /// <summary>
-/// Table des sorts : 5 mots latins, chaque mot déclenche TOUJOURS le même sort.
+/// Table des sorts : 11 mots latins, chaque mot déclenche TOUJOURS le même sort.
 /// Contrainte Vosk : chaque mot doit exister dans le lexique du modèle français —
-/// ces 5 mots ont été vérifiés présents dans vosk-model-small-fr-0.22
+/// ces mots ont été vérifiés présents dans vosk-model-small-fr-0.22
 /// (n'ajoutez pas de mot inventé, il serait ignoré par la reconnaissance).
 /// </summary>
 public static class SpellWords
@@ -35,10 +35,9 @@ public static class SpellWords
         "vertigo",  // 5 - confusion : touches inversées de la cible 30 s
         "minima",   // 6 - réduction : la cible rapetisse et perd sa force 30 s
         "electra",  // 7 - électrification : la cible est paralysée 10 s
-        "petra",    // 8 - mur de pierre devant soi pendant 30 s
-        "pluto",    // 9 - trou noir : aspire joueurs et objets 4 s
-        "fortuna",  // 10 - l'objet visé se téléporte dans notre zone de collecte
-        "taurus",   // 11 - charge en avant qui percute tout
+        "pluto",    // 8 - trou noir : aspire joueurs et objets 4 s
+        "fortuna",  // 9 - l'objet visé se téléporte dans notre zone de collecte
+        "taurus",   // 10 - charge en avant qui percute tout
     };
 
     public static readonly SpellType[] Types =
@@ -51,7 +50,6 @@ public static class SpellWords
         SpellType.Confusion,
         SpellType.Shrink,
         SpellType.Stun,
-        SpellType.Wall,
         SpellType.BlackHole,
         SpellType.Loot,
         SpellType.Charge,
@@ -68,7 +66,6 @@ public static class SpellWords
         new Color32(0xFF, 0x6B, 0xD6, 0xFF), // vertigo - #FF6BD6
         new Color32(0x6B, 0xFF, 0xB8, 0xFF), // minima  - #6BFFB8
         new Color32(0xFF, 0xEE, 0x4D, 0xFF), // electra - #FFEE4D
-        new Color32(0xAD, 0xB9, 0xC6, 0xFF), // petra   - #ADB9C6 gris pierre
         new Color32(0x6B, 0x5A, 0xE0, 0xFF), // pluto   - #6B5AE0 indigo profond
         new Color32(0x57, 0xD9, 0x41, 0xFF), // fortuna - #57D941 vert trèfle
         new Color32(0xC9, 0x79, 0x3B, 0xFF), // taurus  - #C9793B brun taureau
@@ -85,7 +82,6 @@ public static class SpellWords
         "Inverts the target's movement keys for 30s",
         "Shrinks the target: weaker push and grab for 30s",
         "Electrifies the target: paralyzed for 10s",
-        "Raises a stone wall in front of you for 30s",
         "Black hole: pulls players and objects in for 4s",
         "Aim at an item: it teleports into your collection zone",
         "Charge forward: rams and knocks back everything",

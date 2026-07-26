@@ -19,7 +19,7 @@ namespace Projectiles
         [SerializeField] private GameObject _rollVisual;
         [SerializeField] private GameObject _openVisual;
         [SerializeField] private Renderer _openRenderer;
-        [Tooltip("Textures du parchemin ouvert, indexées par sort (0 = polaris … 11 = taurus)")]
+        [Tooltip("Textures du parchemin ouvert, indexées par sort (0 = polaris … 10 = taurus)")]
         [SerializeField] private Texture2D[] _spellTextures;
 
         private MaterialPropertyBlock _textureBlock;
