@@ -448,11 +448,14 @@ namespace Projectiles
         }
 
         private const string ParchmentModelPath = "Assets/Prefabs/Parchemin/Parchment.fbx";
+        private const string FoldedScrollModelPath = "Assets/Models/Props/scroll.fbx";
         private const string ParchmentOpenMaterialPath = "Assets/Materials/SpellParchmentOpen.mat";
 
         // Parchemin ouvert en main : 1,5× la taille de base, un peu plus bas et à gauche
         private const float OpenParchmentSize = 0.55f * 1.5f;
         private static readonly Vector3 OpenParchmentOffset = new Vector3(-0.15f, 0.10f, 0f);
+        // Placement de la première version, à migrer vers les réglages ci-dessus
+        private static readonly Vector3 OldOpenParchmentPosition = new Vector3(0f, 0.25f, 0f);
 
         // Textures du parchemin ouvert, ordonnées par sort (0 = polaris … 10 = taurus)
         private static readonly string[] ParchmentTexturePaths =
@@ -547,11 +550,21 @@ namespace Projectiles
 
                 var openRoot = contents.transform.Find("OpenParchment");
 
-                // Ancien format (taille/position d'origine) : reconstruit avec les réglages actuels
-                if (openRoot != null && (openRoot.localPosition - OpenParchmentOffset).sqrMagnitude > 1e-6f)
+                // Migration de l'ancien placement : 1,5× plus grand, plus bas et plus à
+                // gauche, image retournée de 180° (les noms étaient à l'envers). Fait en
+                // place pour conserver les réglages posés à la main dans le prefab.
+                if (openRoot != null &&
+                    (openRoot.localPosition - OldOpenParchmentPosition).sqrMagnitude < 1e-6f)
                 {
-                    Object.DestroyImmediate(openRoot.gameObject);
-                    openRoot = null;
+                    openRoot.localPosition = OpenParchmentOffset;
+                    openRoot.localScale *= 1.5f;
+
+                    var meshNode = openRoot.GetComponentInChildren<Renderer>(true);
+                    if (meshNode != null)
+                        meshNode.transform.localRotation *= Quaternion.Euler(0f, 0f, 180f);
+
+                    dirty = true;
+                    Debug.Log("[SpellSystemSetup] Parchemin ouvert : nouveau placement + image retournée.");
                 }
 
                 if (openRoot == null)
@@ -570,6 +583,10 @@ namespace Projectiles
                     var visual = (GameObject)PrefabUtility.InstantiatePrefab(model);
                     visual.name = "Parchment";
                     visual.transform.SetParent(container.transform, false);
+
+                    // Les noms sont à l'envers dans le FBX : 180° autour de la normale
+                    // du plan (Z local, mesh Blender) pour retourner l'image
+                    visual.transform.localRotation *= Quaternion.Euler(0f, 0f, 180f);
 
                     var bounds = ComputeRendererBounds(visual);
                     visual.transform.localPosition = -bounds.center;
@@ -603,9 +620,40 @@ namespace Projectiles
 
                 var scrollSo = new SerializedObject(scroll);
 
+                // Visuel plié au sol : le modèle scroll.fbx (le cylindre "Roll" d'origine
+                // restait câblé alors qu'il est désactivé, donc le rouleau ne se cachait
+                // jamais en main). Ajouté s'il manque, avec le placement réglé à la main.
+                var rollChild = contents.transform.Find("scroll");
+                if (rollChild == null)
+                {
+                    var foldedModel = AssetDatabase.LoadAssetAtPath<GameObject>(FoldedScrollModelPath);
+                    if (foldedModel != null)
+                    {
+                        var folded = (GameObject)PrefabUtility.InstantiatePrefab(foldedModel);
+                        folded.name = "scroll";
+                        folded.transform.SetParent(contents.transform, false);
+                        folded.transform.localPosition = new Vector3(0f, 0.087f, 0f);
+                        folded.transform.localRotation = new Quaternion(0.5f, 0.5f, 0.5f, 0.5f);
+                        folded.transform.localScale = Vector3.one * 6f;
+                        rollChild = folded.transform;
+                        dirty = true;
+                        Debug.Log("[SpellSystemSetup] Rouleau plié scroll.fbx ajouté au prefab SpellScroll.");
+                    }
+                }
+
+                // L'ancien cylindre ne doit plus jamais s'afficher
+                var legacyRoll = contents.transform.Find("Roll");
+                if (legacyRoll != null && rollChild != null && legacyRoll.gameObject.activeSelf)
+                {
+                    legacyRoll.gameObject.SetActive(false);
+                    dirty = true;
+                }
+
+                if (rollChild == null)
+                    rollChild = legacyRoll;
+
                 var rollProperty = scrollSo.FindProperty("_rollVisual");
-                var rollChild = contents.transform.Find("Roll");
-                if (rollProperty.objectReferenceValue == null && rollChild != null)
+                if (rollChild != null && rollProperty.objectReferenceValue != rollChild.gameObject)
                 {
                     rollProperty.objectReferenceValue = rollChild.gameObject;
                     dirty = true;
@@ -657,17 +705,15 @@ namespace Projectiles
         // en runtime par MaterialPropertyBlock, celle par défaut sert d'aperçu.
         private static Material GetOrCreateParchmentOpenMaterial()
         {
-            var flipScale = new Vector2(-1f, -1f);
-            var flipOffset = new Vector2(1f, 1f);
-
             var material = AssetDatabase.LoadAssetAtPath<Material>(ParchmentOpenMaterialPath);
             if (material != null)
             {
-                // Matériau d'une version précédente : applique le retournement 180°
-                if (material.GetTextureScale("_BaseMap") != flipScale)
+                // Répare un éventuel retournement de texture d'une version précédente :
+                // c'est le modèle 3D qui est retourné de 180°, pas la texture
+                if (material.GetTextureScale("_BaseMap") != Vector2.one)
                 {
-                    material.SetTextureScale("_BaseMap", flipScale);
-                    material.SetTextureOffset("_BaseMap", flipOffset);
+                    material.SetTextureScale("_BaseMap", Vector2.one);
+                    material.SetTextureOffset("_BaseMap", Vector2.zero);
                     EditorUtility.SetDirty(material);
                 }
                 return material;
@@ -680,10 +726,6 @@ namespace Projectiles
             material.doubleSidedGI = true;
             material.SetTexture("_BaseMap",
                 AssetDatabase.LoadAssetAtPath<Texture2D>(ParchmentTexturePaths[0]));
-
-            // Les UV du FBX sont à l'envers : tiling -1/-1 pour retourner l'image de 180°
-            material.SetTextureScale("_BaseMap", flipScale);
-            material.SetTextureOffset("_BaseMap", flipOffset);
 
             AssetDatabase.CreateAsset(material, ParchmentOpenMaterialPath);
             return material;
