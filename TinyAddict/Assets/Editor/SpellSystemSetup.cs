@@ -94,7 +94,23 @@ namespace Projectiles
         {
             var existing = AssetDatabase.LoadAssetAtPath<NetworkObject>(BallPrefabPath);
             if (existing != null)
+            {
+                // Migration : câble le son d'impact s'il manque
+                var ball = existing.GetComponent<SpellBall>();
+                if (ball != null)
+                {
+                    var ballSo = new SerializedObject(ball);
+                    var impactProperty = ballSo.FindProperty("_impactClip");
+                    if (impactProperty != null && impactProperty.objectReferenceValue == null)
+                    {
+                        impactProperty.objectReferenceValue = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/fireball_impact.mp3");
+                        ballSo.ApplyModifiedPropertiesWithoutUndo();
+                        EditorUtility.SetDirty(existing);
+                        Debug.Log("[SpellSystemSetup] SpellBall : son d'impact câblé.");
+                    }
+                }
                 return existing;
+            }
 
             EnsureFolder("Assets/Prefabs");
 
@@ -379,6 +395,16 @@ namespace Projectiles
                         Debug.Log("[SpellSystemSetup] GameState : zones passées à 3 étapes.");
                     }
 
+                    // Son de déplacement des zones
+                    var zoneMoveProperty = gameStateSo.FindProperty("_zoneMoveClip");
+                    if (zoneMoveProperty != null && zoneMoveProperty.objectReferenceValue == null)
+                    {
+                        zoneMoveProperty.objectReferenceValue = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/zones.mp3");
+                        gameStateSo.ApplyModifiedPropertiesWithoutUndo();
+                        dirty = true;
+                        Debug.Log("[SpellSystemSetup] GameState : son de déplacement des zones câblé.");
+                    }
+
                     if (dirty)
                         PrefabUtility.SaveAsPrefabAsset(contents, GameStatePrefabPath);
                 }
@@ -510,7 +536,47 @@ namespace Projectiles
                 so.FindProperty("_iceZonePrefab").objectReferenceValue = iceZonePrefab;
                 so.FindProperty("_wallPrefab").objectReferenceValue = wallPrefab;
                 so.FindProperty("_blackHolePrefab").objectReferenceValue = blackHolePrefab;
+
+                // Sons des sorts : tableau clips indexé par sort (0 = polaris … 11 = taurus)
+                var spellClipPaths = new[]
+                {
+                    "Assets/Audio/ice.mp3",                    // 0  polaris
+                    "Assets/Audio/Spell/firespell.mp3",        // 1  inferno
+                    "Assets/Audio/speed.mp3",                  // 2  aurora
+                    "Assets/Audio/Spell/maximusSpell.mp3",     // 3  maximus
+                    "Assets/Audio/invisible.mp3",              // 4  anima
+                    "Assets/Audio/confusionspell.mp3",         // 5  vertigo
+                    "Assets/Audio/minima.mp3",                 // 6  minima
+                    "Assets/Audio/Spell/electricSpell.mp3",    // 7  electra
+                    "Assets/Audio/wall.mp3",                   // 8  petra
+                    "Assets/Audio/voidspell.mp3",              // 9  pluto
+                    "Assets/Audio/teleportation.mp3",          // 10 fortuna
+                    "Assets/Audio/taurus.mp3",                 // 11 taurus
+                };
+
+                var clipsProperty = so.FindProperty("clips");
+                if (clipsProperty != null)
+                {
+                    clipsProperty.arraySize = spellClipPaths.Length;
+                    for (int i = 0; i < spellClipPaths.Length; i++)
+                    {
+                        var clip = AssetDatabase.LoadAssetAtPath<AudioClip>(spellClipPaths[i]);
+                        if (clip == null)
+                            Debug.LogWarning($"[SpellSystemSetup] Son introuvable : {spellClipPaths[i]}");
+                        clipsProperty.GetArrayElementAtIndex(i).objectReferenceValue = clip;
+                    }
+                }
+
                 so.ApplyModifiedPropertiesWithoutUndo();
+
+                // Son « confusion » côté victime (vertigo)
+                var effectsSo = new SerializedObject(root.GetComponent<PlayerSpellEffects>());
+                var confusionOwnProperty = effectsSo.FindProperty("_confusionOwnClip");
+                if (confusionOwnProperty != null)
+                {
+                    confusionOwnProperty.objectReferenceValue = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/confusionown.mp3");
+                    effectsSo.ApplyModifiedPropertiesWithoutUndo();
+                }
 
                 PrefabUtility.SaveAsPrefabAsset(root, PlayerPrefabPath);
                 Debug.Log($"[SpellSystemSetup] ScrollCaster câblé sur {PlayerPrefabPath}");

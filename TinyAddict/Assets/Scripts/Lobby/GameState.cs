@@ -39,6 +39,9 @@ public class GameState : NetworkBehaviour
     [Tooltip("Charge apportée par UN objet resté UNE minute dans la zone (0.05 = 5 % → 5 objets × 1 min = 25 %)")]
     [SerializeField] private float _chargePerObjectPerMinute = 0.05f;
 
+    [Tooltip("Son joué chez tous quand les zones changent d'étape")]
+    [SerializeField] private AudioClip _zoneMoveClip;
+
     // Position/taille de secours si aucun CollectionZoneMarker n'est trouvé
     [SerializeField] private Vector3 _redZoneCenter = new Vector3(-12f, 1f, 0f);
     [SerializeField] private Vector3 _blueZoneCenter = new Vector3(12f, 1f, 0f);
@@ -337,7 +340,14 @@ public class GameState : NetworkBehaviour
         bool blueMoved = TryMoveZone(_blueZoneMarker, Team.Blue, step);
 
         if (redMoved && blueMoved)
+        {
+            // Son de déplacement (chaque client exécute ce code au même moment)
+            bool isStepChange = _appliedStep >= 0 && step != _appliedStep;
+            if (isStepChange && _zoneMoveClip != null && Camera.main != null)
+                AudioSource.PlayClipAtPoint(_zoneMoveClip, Camera.main.transform.position, 0.8f);
+
             _appliedStep = step;
+        }
     }
 
     private bool TryMoveZone(CollectionZoneMarker marker, Team team, int step)

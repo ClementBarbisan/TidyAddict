@@ -24,6 +24,11 @@ public class PlayerSpellEffects : NetworkBehaviour
     [SerializeField] private float _squashSeconds = 2f;
     [SerializeField] private float _iceControlAccel = 8f;
 
+    [Tooltip("Son joué chez la VICTIME quand elle se fait confondre (vertigo)")]
+    [SerializeField] private AudioClip _confusionOwnClip;
+
+    private bool _wasConfused;
+
     [Networked] private TickTimer SlowTimer { get; set; }
     [Networked] private TickTimer SpeedBuffTimer { get; set; }
     [Networked] private TickTimer ForceBuffTimer { get; set; }
@@ -284,6 +289,15 @@ public class PlayerSpellEffects : NetworkBehaviour
 
     public override void Render()
     {
+        // Vertigo : son local chez la victime au moment où la confusion démarre
+        if (HasInputAuthority)
+        {
+            bool confusedNow = IsConfused;
+            if (confusedNow && _wasConfused == false && _confusionOwnClip != null && Camera.main != null)
+                AudioSource.PlayClipAtPoint(_confusionOwnClip, Camera.main.transform.position, 0.9f);
+            _wasConfused = confusedNow;
+        }
+
         // Taille : minima rétrécit, maximus grandit (cumulables), appliqué chez
         // tout le monde y compris le joueur touché (sa caméra suit, effet immersif).
         // Écrasé : aplati au sol (la caméra descend avec le pivot, puis remonte).
