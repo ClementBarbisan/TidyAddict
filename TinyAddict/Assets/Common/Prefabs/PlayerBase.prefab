@@ -980,7 +980,19 @@ MonoBehaviour:
   _minRecordSeconds: 0.3
   _maxRecordSeconds: 6
   source: {fileID: 0}
-  clips: []
+  clips:
+  - {fileID: 8300000, guid: 1dfd019eceb1c4bdb95fa7cef1d407ce, type: 3}
+  - {fileID: 8300000, guid: 3db6d91cf64a6f04f8b7f699f1691944, type: 3}
+  - {fileID: 8300000, guid: 12eb3e7b67cd640b1bf42d1ad4cd3b19, type: 3}
+  - {fileID: 8300000, guid: 99d2c1a453454a248b0d2ec84d898682, type: 3}
+  - {fileID: 8300000, guid: 215b6bc508df14a878dc30d7f66951ac, type: 3}
+  - {fileID: 8300000, guid: 0425b62d9909e40efb0cc8c99381deea, type: 3}
+  - {fileID: 8300000, guid: 7d0faa5d2bdec4a908cb18e450bde5b7, type: 3}
+  - {fileID: 8300000, guid: 40fcd6a115895ba429a7f5daf9e5e1ec, type: 3}
+  - {fileID: 8300000, guid: baedc23ffd7d6485cbcdf9ab60eea758, type: 3}
+  - {fileID: 8300000, guid: a8e53b805496d442b9bc2ab2fc82b3fa, type: 3}
+  - {fileID: 8300000, guid: c960f8d57d45a4d0f990961603615f91, type: 3}
+  - {fileID: 8300000, guid: 17db3751f181448c88e301f5841f472f, type: 3}
   _errorThreshold: 0.35
   _HeldScroll: {fileID: 0}
 --- !u!114 &5947192473664987860
@@ -1005,8 +1017,10 @@ MonoBehaviour:
   _growVoicePitch: 0.7
   _chargeBumpImpulse: 12
   _chargeBumpUpImpulse: 5
+  _chargeBumpRadius: 2.5
   _squashSeconds: 2
   _iceControlAccel: 8
+  _confusionOwnClip: {fileID: 8300000, guid: 2561578e7c5b7458a9c95b70e1f1d904, type: 3}
 --- !u!114 &3247278654505736760
 MonoBehaviour:
   m_ObjectHideFlags: 0

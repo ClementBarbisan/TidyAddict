@@ -69,6 +69,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GameState
   _requiredPlayers: 4
   _matchSeconds: 300
+  _launchCountdownSeconds: 5
+  _returnToLobbySeconds: 15
+  _zoneSteps: 3
+  _chargePerObjectPerMinute: 0.05
+  _zoneMoveClip: {fileID: 8300000, guid: dc2068e7d19574995bf882df8b836639, type: 3}
   _redZoneCenter: {x: -12, y: 1, z: 0}
   _blueZoneCenter: {x: 12, y: 1, z: 0}
   _zoneHalfExtents: {x: 4, y: 2, z: 4}
@@ -76,10 +81,11 @@ MonoBehaviour:
     RawValue: 0
   _GameEnded:
     RawValue: 0
+  _LaunchCountdownStarted:
+    RawValue: 0
   _WinnerTeam: 0
-  _TotalCollectibles: 0
-  _RedCollected: 0
-  _BlueCollected: 0
+  _RedCharge: 0
+  _BlueCharge: 0
 --- !u!114 &1462729614615727756
 MonoBehaviour:
   m_ObjectHideFlags: 0
