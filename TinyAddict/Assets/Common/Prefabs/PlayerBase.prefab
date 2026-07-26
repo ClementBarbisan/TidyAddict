@@ -973,6 +973,8 @@ MonoBehaviour:
   _castOrigin: {fileID: 3170118265349794785}
   _spellBallPrefab: {fileID: 3044970036757127736, guid: 8acc3df215c96554eb49d3a77b977b7d, type: 3}
   _iceZonePrefab: {fileID: 1184266125318369186, guid: 564bf2b22fb1d724ba02801071d959de, type: 3}
+  _wallPrefab: {fileID: 6650451840099175134, guid: ebb5ce72280033f4bb4b172ed4db32c3, type: 3}
+  _blackHolePrefab: {fileID: 3385715818187735994, guid: 47b832273a6de8f49a9c3e5df8a0fa27, type: 3}
   _buffSeconds: 30
   _stunSeconds: 10
   _minRecordSeconds: 0.3
@@ -1001,6 +1003,10 @@ MonoBehaviour:
   _shrinkVoicePitch: 1.6
   _growScale: 1.5
   _growVoicePitch: 0.7
+  _chargeBumpImpulse: 12
+  _chargeBumpUpImpulse: 5
+  _squashSeconds: 2
+  _iceControlAccel: 8
 --- !u!114 &3247278654505736760
 MonoBehaviour:
   m_ObjectHideFlags: 0
