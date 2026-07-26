@@ -63,6 +63,11 @@ namespace Projectiles
                 _input.SetLookRotation(_kcc.GetLookRotation(true, true));
             }
         }
+        
+        public void TriggerThrowAnimation()
+        {
+            _throwTriggerCount++;
+        }
 
         public override void FixedUpdateNetwork()
         {
