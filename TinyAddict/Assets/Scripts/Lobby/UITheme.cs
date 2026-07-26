@@ -42,6 +42,23 @@ public static class UITheme
         return team == Team.Red ? PseudoRed : team == Team.Blue ? PseudoBlue : Parchment;
     }
 
+    // LOGO « Spick & Spells » (Resources/UI/Logo.png, version avec halo)
+    private static Texture2D _logo;
+    private static bool _logoSearched;
+
+    public static Texture2D Logo
+    {
+        get
+        {
+            if (_logoSearched == false)
+            {
+                _logoSearched = true;
+                _logo = Resources.Load<Texture2D>("UI/Logo");
+            }
+            return _logo;
+        }
+    }
+
     // POLICES (chargées depuis Resources/Fonts, fallback police système)
     private static Font _display;
     private static Font _body;
