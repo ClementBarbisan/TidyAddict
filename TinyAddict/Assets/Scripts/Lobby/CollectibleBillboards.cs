@@ -173,14 +173,13 @@ public class CollectibleBillboards : MonoBehaviour
     {
         switch (type)
         {
-            case ValueCollectible.TypeObj.potion: return "Potion";
-            case ValueCollectible.TypeObj.potionGreen: return "Potion verte";
-            case ValueCollectible.TypeObj.potionRed: return "Potion rouge";
-            case ValueCollectible.TypeObj.potionBlue: return "Potion bleue";
-            case ValueCollectible.TypeObj.cauldron: return "Chaudron";
-            case ValueCollectible.TypeObj.cauldronBlack: return "Chaudron noir";
-            case ValueCollectible.TypeObj.cauldronShiny: return "Chaudron brillant";
-            default: return type.ToString();
+            case ValueCollectible.TypeObj.potion: return "POTION";
+            case ValueCollectible.TypeObj.potionGreen: return "POTION VERTE";
+            case ValueCollectible.TypeObj.potionRed: return "POTION ROUGE";
+            case ValueCollectible.TypeObj.potionBlue: return "POTION BLEUE";
+            case ValueCollectible.TypeObj.cauldron: return "CHAUDRON";
+            case ValueCollectible.TypeObj.cauldronShiny: return "CHAUDRON BRILLANT";
+            default: return type.ToString().ToUpperInvariant();
         }
     }
 }
