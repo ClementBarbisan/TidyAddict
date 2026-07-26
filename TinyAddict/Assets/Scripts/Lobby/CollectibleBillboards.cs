@@ -190,7 +190,6 @@ public class CollectibleBillboards : MonoBehaviour
             case ValueCollectible.TypeObj.potionRed: return "POTION ROUGE";
             case ValueCollectible.TypeObj.potionBlue: return "POTION BLEUE";
             case ValueCollectible.TypeObj.cauldron: return "CHAUDRON";
-            case ValueCollectible.TypeObj.cauldronBlack: return "CHAUDRON NOIR";
             case ValueCollectible.TypeObj.cauldronShiny: return "CHAUDRON BRILLANT";
             default: return type.ToString().ToUpperInvariant();
         }
