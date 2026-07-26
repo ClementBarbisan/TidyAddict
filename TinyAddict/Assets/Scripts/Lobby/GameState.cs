@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Fusion;
 using UnityEngine;
 
@@ -161,8 +162,8 @@ public class GameState : NetworkBehaviour
         if (Runner.Tick % 16 == 0)
         {
             RefreshZoneMarkers();
-            RedCollected = CountCollectiblesInZone(_redZoneMarker, _redZoneCenter);
-            BlueCollected = CountCollectiblesInZone(_blueZoneMarker, _blueZoneCenter);
+            RedCollected = CountCollectiblesInZone(_redZoneMarker, _redZoneCenter, Team.Red, CurrentStep);
+            BlueCollected = CountCollectiblesInZone(_blueZoneMarker, _blueZoneCenter, Team.Blue, CurrentStep);
         }
 
         // Les jauges chargent en continu : chaque objet présent dans la zone
@@ -356,32 +357,56 @@ public class GameState : NetworkBehaviour
         }
     }
 
-    private int CountCollectiblesInZone(CollectionZoneMarker marker, Vector3 fallbackCenter)
+    private int CountCollectiblesInZone(CollectionZoneMarker marker, Vector3 fallbackCenter, Team team, int step)
     {
         Vector3 center = marker != null ? marker.Center : fallbackCenter;
         Vector3 halfExtents = marker != null ? marker.HalfExtents : _zoneHalfExtents;
 
-        var counted = new HashSet<GameObject>();
+        var counted = new HashSet<int>();
         var hits = Physics.OverlapBox(center, halfExtents, Quaternion.identity, ~0, QueryTriggerInteraction.Ignore);
-
-        foreach (var hit in hits)
+        foreach (var point in _stepPoints)
         {
-            var root = hit.attachedRigidbody != null ? hit.attachedRigidbody.gameObject : hit.gameObject;
-            if (root.CompareTag("Grabbable"))
+            if (point == null || point.Team != team || point.Step != step)
+                continue;
+            foreach (var hit in hits)
             {
-                ValueCollectible val = root.GetComponent<ValueCollectible>();
-                if (val)
+                var root = hit.attachedRigidbody != null ? hit.attachedRigidbody.gameObject : hit.gameObject;
+                List<TupleTypeObj> objs = new List<TupleTypeObj>();
+                if (root.CompareTag("Grabbable"))
                 {
-                    for (int i = 0; i < val.Value; i++)
-                        counted.Add(root);
-                }
-                else
-                {
-                    counted.Add(root);
+                    ValueCollectible val = root.GetComponent<ValueCollectible>();
+                    int maxObj = _stepPoints[step].SearchTypeObj(val.Type);
+                    if (maxObj > 0)
+                    {
+                        int nbObj = SearchTypeObj(val.Type, objs);
+                        if (nbObj > 0 && nbObj < maxObj)
+                        {
+                            if (val)
+                            {
+                                counted.Add(val.Value);
+                            }
+                            else
+                            {
+                                counted.Add(1);
+                            }
+                        }
+                    }
                 }
             }
         }
 
-        return counted.Count;
+        return counted.Sum();
     }
+    private int SearchTypeObj(ValueCollectible.TypeObj type, List<TupleTypeObj> list)
+    {
+        foreach (var tuple in list)
+        {
+            if (tuple.Type == type)
+            {
+                return (tuple.NbObj);
+            }
+        }
+        return (0);
+    }
+    
 }
