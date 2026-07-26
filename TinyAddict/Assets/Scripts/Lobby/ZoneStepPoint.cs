@@ -1,4 +1,15 @@
+using System;
+using System.Collections.Generic;
+using Fusion;
 using UnityEngine;
+using Random = UnityEngine.Random;
+
+[Serializable]
+public struct TupleTypeObj
+{
+    public ValueCollectible.TypeObj Type;
+    public int NbObj;
+} 
 
 /// <summary>
 /// Étape du parcours d'une zone de collecte : la zone de l'équipe saute sur
@@ -10,10 +21,14 @@ using UnityEngine;
 /// </summary>
 public class ZoneStepPoint : MonoBehaviour
 {
+    public List<TupleTypeObj> ListObj
+        = new List<TupleTypeObj>();
     public Team Team = Team.None;
 
     [Tooltip("Numéro d'étape : 0 = position de départ, puis 1, 2… à chaque changement")]
     public int Step;
+
+   
 
     private void OnDrawGizmos()
     {
@@ -27,5 +42,17 @@ public class ZoneStepPoint : MonoBehaviour
         UnityEditor.Handles.Label(transform.position + Vector3.up * 0.8f,
             $"{(Team == Team.Red ? "R" : "B")}{Step + 1}");
 #endif
+    }
+
+    public int SearchTypeObj(ValueCollectible.TypeObj type)
+    {
+        foreach (var tuple in ListObj)
+        {
+            if (tuple.Type == type)
+            {
+                return (tuple.NbObj);
+            }
+        }
+        return (0);
     }
 }
