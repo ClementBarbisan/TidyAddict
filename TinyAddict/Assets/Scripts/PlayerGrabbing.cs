@@ -64,55 +64,65 @@ public class PlayerGrabbing : NetworkBehaviour
         }
     }
 
-    private void TryApplyForce(bool isPush)
+private void TryApplyForce(bool isPush)
+{
+    if (!_canApplyForce)
+        return;
+
+    Vector3 rayOrigin = _cam != null ? _cam.position : transform.position + Vector3.up;
+    Vector3 rayDirection = _cam != null ? _cam.forward : transform.forward;
+
+    if (Physics.Raycast(rayOrigin, rayDirection, out RaycastHit hit, grabDistance))
     {
-        if (!_canApplyForce)
-            return;
-        
-        Vector3 rayOrigin = _cam != null ? _cam.position : transform.position + Vector3.up;
-        Vector3 rayDirection = _cam != null ? _cam.forward : transform.forward;
-        
-        // Raycast pour détecter l'objet devant soi
-        if (Physics.Raycast(rayOrigin, rayDirection, out RaycastHit hit, grabDistance))
+        if (hit.collider.CompareTag("Grabbable") && hit.collider.TryGetComponent<NetworkRigidbody>(out var nrb))
         {
-            if (hit.collider.CompareTag("Grabbable") && hit.collider.TryGetComponent<NetworkRigidbody>(out var nrb))
+            Vector3 direction = (nrb.transform.position - rayOrigin).normalized;
+            if (!isPush)
             {
-                // Calcul du vecteur de force
-                Vector3 direction = (nrb.transform.position - rayOrigin).normalized;
-                // Si on tire (Pull), on inverse la direction
-                if (!isPush)
-                {
-                    direction = -direction;
-                }
-
-                // Sort maximus : force démultipliée pendant la durée du buff
-                float forceMultiplier = 1f;
-                var spellEffects = GetComponent<PlayerSpellEffects>();
-                if (spellEffects != null)
-                    forceMultiplier = spellEffects.ForceMultiplier;
-
-                Vector3 appliedForce = direction * forcePower * forceMultiplier;
-
-                // Envoie l'ordre d'appliquer la force sur le Serveur
-                RPC_ApplyForce(nrb, appliedForce, _cam.position + _cam.forward * grabDistance, isPush);
-                effect.ShowBeam(isPush);
-                _player.TriggerThrowAnimation();
+                direction = -direction;
             }
-        }
-    }
 
-    // Le RPC est envoyé de l'Input Authority (le client) vers la State Authority (le serveur)
-    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
-    private void RPC_ApplyForce(NetworkRigidbody targetNRB, Vector3 force, Vector3 hitPoint, bool isPush)
-    {
-        if (targetNRB != null && targetNRB.PhysicsBody != null)
-        {
-            // Le serveur applique la force sur le Rigidbody
-            // NetworkRigidbody se chargera de synchroniser le mouvement chez TOUS les clients
-            targetNRB.PhysicsBody.AddForce(force);
-            effect.ShowBeam(isPush);
-            _player.TriggerThrowAnimation();
+            float forceMultiplier = 1f;
+            var spellEffects = GetComponent<PlayerSpellEffects>();
+            if (spellEffects != null)
+                forceMultiplier = spellEffects.ForceMultiplier;
+
+            Vector3 appliedForce = direction * forcePower * forceMultiplier;
+
+            // Envoie l'ordre au serveur - PAS d'appel local direct à effect/anim ici,
+            // le serveur se chargera de les propager à tout le monde.
+            RPC_ApplyForce(nrb, appliedForce, isPush);
+
+            // Petit gate client-side pour l'UX (évite le spam visuel avant la réponse du serveur)
             _canApplyForce = false;
         }
     }
+}
+
+// Le RPC est envoyé de l'Input Authority (le client) vers la State Authority (le serveur)
+[Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+private void RPC_ApplyForce(NetworkRigidbody targetNRB, Vector3 force, bool isPush)
+{
+    // Le serveur est la seule source de vérité pour le cooldown - évite la triche
+    if (!_canApplyForce)
+        return;
+
+    if (targetNRB != null && targetNRB.PhysicsBody != null)
+    {
+        targetNRB.PhysicsBody.AddForce(force);
+
+        _canApplyForce = false;
+        _timerCooldown = 0f;
+
+        // Propage l'effet visuel + l'animation à TOUS les clients (y compris le lanceur)
+        RPC_ShowSpellEffect(isPush);
+    }
+}
+
+[Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+private void RPC_ShowSpellEffect(NetworkBool isPush)
+{
+    effect.ShowBeam(isPush);
+    _player.TriggerThrowAnimation();
+}
 }
