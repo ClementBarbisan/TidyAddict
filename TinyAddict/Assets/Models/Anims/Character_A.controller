@@ -91,13 +91,13 @@ AnimatorStateMachine:
     m_Position: {x: 410, y: -10, z: 0}
   - serializedVersion: 1
     m_State: {fileID: 6332955997086358396}
-    m_Position: {x: 810, y: -30, z: 0}
+    m_Position: {x: 750, y: -30, z: 0}
   - serializedVersion: 1
     m_State: {fileID: 5449785946325490821}
-    m_Position: {x: 740, y: 60, z: 0}
+    m_Position: {x: 750, y: 30, z: 0}
   - serializedVersion: 1
     m_State: {fileID: 9169696077180265893}
-    m_Position: {x: 720, y: 140, z: 0}
+    m_Position: {x: 750, y: 90, z: 0}
   - serializedVersion: 1
     m_State: {fileID: -958106666976175007}
     m_Position: {x: 700, y: -210, z: 0}
@@ -318,7 +318,7 @@ AnimatorState:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: JumpStart
-  m_Speed: 1
+  m_Speed: 2
   m_CycleOffset: 0
   m_Transitions:
   - {fileID: 2193541843024971746}
