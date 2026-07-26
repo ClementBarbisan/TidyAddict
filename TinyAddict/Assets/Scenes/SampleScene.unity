@@ -4626,6 +4626,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 696f3530328fc12469a223adeebb0cbd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ZoneStepPoint
+  ListObj:
+  - Type: 0
+    NbObj: 5
+  - Type: 4
+    NbObj: 2
   Team: 1
   Step: 2
 --- !u!1001 &141033457
@@ -11117,6 +11122,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 696f3530328fc12469a223adeebb0cbd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ZoneStepPoint
+  ListObj:
+  - Type: 0
+    NbObj: 5
+  - Type: 4
+    NbObj: 2
   Team: 1
   Step: 0
 --- !u!64 &522068437
@@ -16551,6 +16561,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 696f3530328fc12469a223adeebb0cbd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ZoneStepPoint
+  ListObj:
+  - Type: 0
+    NbObj: 5
+  - Type: 4
+    NbObj: 2
   Team: 1
   Step: 3
 --- !u!64 &911533159
@@ -17480,6 +17495,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 696f3530328fc12469a223adeebb0cbd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ZoneStepPoint
+  ListObj:
+  - Type: 0
+    NbObj: 5
+  - Type: 4
+    NbObj: 2
   Team: 2
   Step: 3
 --- !u!1 &972293101
@@ -19205,6 +19225,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 696f3530328fc12469a223adeebb0cbd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ZoneStepPoint
+  ListObj:
+  - Type: 0
+    NbObj: 5
+  - Type: 4
+    NbObj: 2
   Team: 2
   Step: 1
 --- !u!64 &1076710139
@@ -19789,6 +19814,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 696f3530328fc12469a223adeebb0cbd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ZoneStepPoint
+  ListObj:
+  - Type: 0
+    NbObj: 5
+  - Type: 4
+    NbObj: 2
   Team: 1
   Step: 4
 --- !u!1001 &1121183830
@@ -21300,6 +21330,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 696f3530328fc12469a223adeebb0cbd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ZoneStepPoint
+  ListObj:
+  - Type: 0
+    NbObj: 5
+  - Type: 4
+    NbObj: 2
   Team: 2
   Step: 0
 --- !u!33 &1195574837
@@ -26180,6 +26215,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 696f3530328fc12469a223adeebb0cbd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ZoneStepPoint
+  ListObj:
+  - Type: 0
+    NbObj: 5
+  - Type: 4
+    NbObj: 2
   Team: 2
   Step: 2
 --- !u!64 &1511935413
@@ -27188,6 +27228,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 696f3530328fc12469a223adeebb0cbd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ZoneStepPoint
+  ListObj:
+  - Type: 0
+    NbObj: 5
+  - Type: 4
+    NbObj: 2
   Team: 1
   Step: 1
 --- !u!1 &1606774918
@@ -31775,6 +31820,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 696f3530328fc12469a223adeebb0cbd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ZoneStepPoint
+  ListObj:
+  - Type: 0
+    NbObj: 5
+  - Type: 4
+    NbObj: 2
   Team: 2
   Step: 4
 --- !u!1 &1879338338
