@@ -1404,7 +1404,7 @@ TextMesh:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 400722350}
-  m_Text: ZONE BLEUE
+  m_Text: BLUE ZONE
   m_OffsetZ: 0
   m_CharacterSize: 0.12
   m_LineSpacing: 1
@@ -5422,7 +5422,7 @@ TextMesh:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1474721398}
-  m_Text: ZONE ROUGE
+  m_Text: RED ZONE
   m_OffsetZ: 0
   m_CharacterSize: 0.12
   m_LineSpacing: 1
