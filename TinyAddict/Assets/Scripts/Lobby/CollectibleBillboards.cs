@@ -82,7 +82,7 @@ public class CollectibleBillboards : MonoBehaviour
             RefreshReferences();
         }
 
-        UpdateHighlights();
+        //UpdateHighlights();
     }
 
     private void RefreshReferences()
@@ -159,11 +159,11 @@ public class CollectibleBillboards : MonoBehaviour
         _clearBlock ??= new MaterialPropertyBlock();
 
         bool gameRunning = GameState.Instance != null && GameState.Instance.IsStarted && GameState.Instance.IsEnded == false;
-        Color teamColor = _localProfile != null ? PlayerProfile.ColorOfTeam(_localProfile.Team) : Color.white;
+        Color colorBase = _block.GetColor("_BaseColor");;
 
         // Pulsation de la surbrillance
         float pulse = 0.2f + Mathf.PingPong(Time.time * 0.9f, 0.35f);
-        Color tint = Color.Lerp(Color.white, teamColor, pulse);
+        Color tint = Color.Lerp(Color.white, colorBase, pulse);
         _block.Clear();
         _block.SetColor("_BaseColor", tint);
 
