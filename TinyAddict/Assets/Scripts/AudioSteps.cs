@@ -4,18 +4,24 @@ using UnityEngine;
 public class AudioSteps : MonoBehaviour
 {
     private SimpleKCC _kcc;
-    [SerializeField] private AudioSource audio;
+    [SerializeField] private AudioSource _audioSource;
+
     private void Awake()
     {
         _kcc = GetComponent<SimpleKCC>();
     }
-    void LateUpdate()
+
+    private void LateUpdate()
     {
-        if (_kcc.IsGrounded && _kcc.RealVelocity.magnitude > 3f && !audio.isPlaying)
+        bool isMoving = _kcc.IsGrounded && _kcc.RealVelocity.magnitude > 3f;
+
+        if (isMoving && _audioSource.isPlaying == false)
         {
-            audio.Play();
+            _audioSource.Play();
         }
-        else if(audio.isPlaying)
-            audio.Stop();
+        else if (isMoving == false && _audioSource.isPlaying)
+        {
+            _audioSource.Stop();
+        }
     }
 }
