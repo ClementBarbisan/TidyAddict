@@ -163,7 +163,7 @@ public class MatchHUD : MonoBehaviour
 
         Color teamColor = PlayerProfile.ColorOfTeam(team);
         float charge = team == Team.Red ? gameState.RedPercent : gameState.BluePercent;
-        int objects = team == Team.Red ? gameState.RedCollected : gameState.BlueCollected;
+        int objects = team == Team.Red ? gameState.RedCollected.Count : gameState.BlueCollected.Count;
         string name = team == Team.Red ? "Rouge" : "Bleu";
 
         _gaugeLabelStyle.normal.textColor = UITheme.PseudoColor(team);
