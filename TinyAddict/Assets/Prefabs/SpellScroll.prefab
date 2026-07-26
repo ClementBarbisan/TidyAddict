@@ -218,7 +218,7 @@ MonoBehaviour:
   _pickupRadius: 0.9
   _wordText: {fileID: 6251501311609958152}
   _pickupCollider: {fileID: 0}
-  _rollVisual: {fileID: 2491707288218912042}
+  _rollVisual: {fileID: 2797240952626964436}
   _openVisual: {fileID: 7549194438070543897}
   _openRenderer: {fileID: 3607906359919049936}
   _spellTextures:
@@ -501,6 +501,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: baf0600edc17d41d09bc1a5518e0c3d0, type: 3}
+--- !u!1 &2797240952626964436 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: baf0600edc17d41d09bc1a5518e0c3d0, type: 3}
+  m_PrefabInstance: {fileID: 3031100681119095429}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &3285969114391199086 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: baf0600edc17d41d09bc1a5518e0c3d0, type: 3}
