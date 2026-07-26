@@ -1,3 +1,6 @@
+using System;
+using Fusion;
+using Fusion.Addons.Physics;
 using UnityEngine;
 
 /// <summary>
@@ -79,6 +82,23 @@ public class CollectionZoneMarker : MonoBehaviour
         return child;
     }
 
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("Grabbable") && other.TryGetComponent<NetworkRigidbody>(out var nrb))
+        {
+            RPC_ApplyDrag(nrb);
+        }
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    private void RPC_ApplyDrag(NetworkRigidbody targetNRB)
+    {
+        if (targetNRB != null && targetNRB.PhysicsBody != null)
+        {
+            targetNRB.PhysicsBody.Drag = 1f;
+        }
+    }
+    
     private void OnDrawGizmos()
     {
         Gizmos.color = Team == Team.Red
