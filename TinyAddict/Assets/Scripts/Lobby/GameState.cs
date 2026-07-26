@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Fusion;
@@ -14,6 +15,18 @@ using UnityEngine;
 /// </summary>
 public class GameState : NetworkBehaviour
 {
+    public struct MyDataTuple : INetworkStruct
+    {
+        public int Count;
+        public int Total;
+
+        // Constructeur pratique pour l'utiliser comme un Tuple
+        public MyDataTuple(int count, int total)
+        {
+            Count = count;
+            Total = total;
+        }
+    }
     public static GameState Instance { get; private set; }
 
     [SerializeField] private int _requiredPlayers = 4;
@@ -46,8 +59,8 @@ public class GameState : NetworkBehaviour
     [Networked] public TickTimer MatchTimer { get; set; }
     [Networked] public float RedCharge { get; set; }
     [Networked] public float BlueCharge { get; set; }
-    [Networked] public int RedCollected { get; set; }
-    [Networked] public int BlueCollected { get; set; }
+    [Networked] public MyDataTuple RedCollected { get; set; }
+    [Networked] public MyDataTuple BlueCollected { get; set; }
 
     public int RequiredPlayers => _requiredPlayers;
     public int MaxPlayersPerTeam => Mathf.Max(1, _requiredPlayers / 2);
@@ -180,8 +193,8 @@ public class GameState : NetworkBehaviour
         // Les jauges chargent en continu : chaque objet présent dans la zone
         // apporte _chargePerObjectPerMinute par minute
         float chargePerObjectPerSecond = _chargePerObjectPerMinute / 60f;
-        RedCharge = Mathf.Clamp01(RedCharge + RedCollected * chargePerObjectPerSecond * Runner.DeltaTime);
-        BlueCharge = Mathf.Clamp01(BlueCharge + BlueCollected * chargePerObjectPerSecond * Runner.DeltaTime);
+        RedCharge = Mathf.Clamp01(RedCharge + RedCollected.Total * chargePerObjectPerSecond * Runner.DeltaTime);
+        BlueCharge = Mathf.Clamp01(BlueCharge + BlueCollected.Total * chargePerObjectPerSecond * Runner.DeltaTime);
 
         // Victoire immédiate à 100 %
         bool redWinsNow = RedCharge >= 1f;
@@ -211,8 +224,8 @@ public class GameState : NetworkBehaviour
         WinnerTeam = 0;
         RedCharge = 0f;
         BlueCharge = 0f;
-        RedCollected = 0;
-        BlueCollected = 0;
+        RedCollected = new MyDataTuple(0, 0);
+        BlueCollected = new MyDataTuple(0, 0);
         MatchTimer = default;
         LaunchTimer = default;
         LobbyReturnTimer = default;
@@ -416,7 +429,7 @@ public class GameState : NetworkBehaviour
     // - seuls les types listés dans le ZoneStepPoint (équipe + étape courante) comptent
     // - chaque type est plafonné à son NbObj (les objets en trop n'apportent rien)
     // - chaque objet compte pour sa Value
-    private int CountCollectiblesInZone(CollectionZoneMarker marker, Vector3 fallbackCenter, Team team, int step)
+    private MyDataTuple CountCollectiblesInZone(CollectionZoneMarker marker, Vector3 fallbackCenter, Team team, int step)
     {
         Vector3 center = marker != null ? marker.Center : fallbackCenter;
         Vector3 halfExtents = marker != null ? marker.HalfExtents : _zoneHalfExtents;
@@ -436,7 +449,7 @@ public class GameState : NetworkBehaviour
         }
 
         if (stepPoint == null)
-            return 0;
+            return new MyDataTuple(0, 0);
 
         var countedObjects = new HashSet<GameObject>();
         var countPerType = new Dictionary<ValueCollectible.TypeObj, int>();
@@ -467,6 +480,6 @@ public class GameState : NetworkBehaviour
             total += Mathf.Max(1, collectible.Value);
         }
 
-        return total;
+        return new MyDataTuple(countedObjects.Count, total);
     }
 }
