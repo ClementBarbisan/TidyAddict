@@ -12,6 +12,7 @@ public class MatchHUD : MonoBehaviour
     private float _nextRefresh;
     private PlayerProfile _localProfile;
     private PlayerProfile[] _profiles = new PlayerProfile[0];
+    private Fusion.NetworkRunner _runner;
 
     private GUIStyle _timerStyle;
     private GUIStyle _capsStyle;
@@ -37,6 +38,21 @@ public class MatchHUD : MonoBehaviour
         _nextRefresh = Time.unscaledTime + RefreshInterval;
 
         _profiles = FindObjectsByType<PlayerProfile>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+
+        if (_runner == null || _runner.IsRunning == false)
+        {
+            _runner = null;
+            var enumerator = Fusion.NetworkRunner.GetInstancesEnumerator();
+            while (enumerator.MoveNext())
+            {
+                var candidate = enumerator.Current;
+                if (candidate != null && candidate.IsRunning)
+                {
+                    _runner = candidate;
+                    break;
+                }
+            }
+        }
 
         if (_localProfile == null)
         {
@@ -67,8 +83,28 @@ public class MatchHUD : MonoBehaviour
         }
 
         DrawTopCenter(gameState);
+        DrawRoomCode();
         DrawTeamRosters();
         DrawSpectatorHint();
+    }
+
+    // Code de la salle en haut à gauche (au-dessus des badges d'effets)
+    private void DrawRoomCode()
+    {
+        if (_runner == null || _runner.SessionInfo.IsValid == false)
+            return;
+
+        string roomName = _runner.SessionInfo.Name;
+        if (string.IsNullOrEmpty(roomName))
+            return;
+
+        var content = new GUIContent($"SALLE  <color=#{ColorUtility.ToHtmlStringRGB(UITheme.Gold)}><b>{roomName}</b></color>");
+        float width = _capsStyle.CalcSize(content).x + 28f;
+        var pill = new Rect(32f, 28f, width, 32f);
+
+        UITheme.DrawPanel(pill, 16f);
+        _capsStyle.normal.textColor = UITheme.TextDim;
+        GUI.Label(new Rect(pill.x + 14f, pill.y, width - 28f, pill.height), content, _capsStyle);
     }
 
     // HAUT-CENTRE : chrono → jauges → ligne zones (marge haute 28 px)
