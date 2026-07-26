@@ -746,6 +746,10 @@ PrefabInstance:
       propertyPath: m_IsKinematic
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 8811983018006289823, guid: bebc380d595234047a851e4b53101eaf, type: 3}
+      propertyPath: m_Name
+      value: SpellSound
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects:
     - {fileID: 6729366823290502798, guid: bebc380d595234047a851e4b53101eaf, type: 3}

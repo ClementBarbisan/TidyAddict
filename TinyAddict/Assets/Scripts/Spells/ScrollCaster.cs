@@ -439,6 +439,8 @@ public class ScrollCaster : NetworkBehaviour
                 break;
             }
         }
+
+        source.Play();
     }
 
     // Cible du sort fortuna : l'objet Grabbable visé (spherecast depuis la caméra)
