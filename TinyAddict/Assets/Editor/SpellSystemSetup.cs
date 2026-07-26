@@ -24,6 +24,8 @@ public static class SpellSystemSetup
     private const string GameStatePrefabPath = "Assets/Prefabs/GameState.prefab";
     private const string WallPrefabPath = "Assets/Prefabs/SpellWall.prefab";
     private const string WallMaterialPath = "Assets/Materials/SpellWallStone.mat";
+    private const string BlackHolePrefabPath = "Assets/Prefabs/BlackHole.prefab";
+    private const string BlackHoleMaterialPath = "Assets/Materials/SpellBlackHole.mat";
 
     private const string VoskModelFolder = "VoskModel/vosk-model-small-fr-0.22";
 
@@ -40,9 +42,10 @@ public static class SpellSystemSetup
         var ballPrefab = CreateSpellBallPrefab();
         var iceZonePrefab = CreateIceZonePrefab();
         var wallPrefab = CreateSpellWallPrefab();
+        var blackHolePrefab = CreateBlackHolePrefab();
         var gameStatePrefab = CreateGameStatePrefab();
         var scrollPrefab = CreateScrollPrefab();
-        SetupPlayerPrefab(ballPrefab, iceZonePrefab, wallPrefab);
+        SetupPlayerPrefab(ballPrefab, iceZonePrefab, wallPrefab, blackHolePrefab);
         SetupScene(scrollPrefab, gameStatePrefab);
         AssetDatabase.SaveAssets();
         Debug.Log("[SpellSystemSetup] Terminé : prefabs créés, joueur câblé, scène configurée.");
@@ -126,7 +129,23 @@ public static class SpellSystemSetup
     {
         var existing = AssetDatabase.LoadAssetAtPath<NetworkObject>(IceZonePrefabPath);
         if (existing != null)
+        {
+            // Migration : zone de gel agrandie (rayon 4 → 7)
+            var iceZone = existing.GetComponent<IceZone>();
+            if (iceZone != null)
+            {
+                var iceSo = new SerializedObject(iceZone);
+                var radiusProperty = iceSo.FindProperty("_radius");
+                if (radiusProperty != null && radiusProperty.floatValue < 7f)
+                {
+                    radiusProperty.floatValue = 7f;
+                    iceSo.ApplyModifiedPropertiesWithoutUndo();
+                    EditorUtility.SetDirty(existing);
+                    Debug.Log("[SpellSystemSetup] IceZone : rayon agrandi à 7 m.");
+                }
+            }
             return existing;
+        }
 
         EnsureFolder("Assets/Prefabs");
 
@@ -159,6 +178,48 @@ public static class SpellSystemSetup
 
     private const string WallModelPath = "Assets/Environnement/Mur_Axel.fbx";
     private const float WallHeight = 3f;
+
+    private static NetworkObject CreateBlackHolePrefab()
+    {
+        var existing = AssetDatabase.LoadAssetAtPath<NetworkObject>(BlackHolePrefabPath);
+        if (existing != null)
+            return existing;
+
+        EnsureFolder("Assets/Prefabs");
+
+        var root = new GameObject("BlackHole");
+        try
+        {
+            root.AddComponent<NetworkObject>();
+            root.AddComponent<NetworkTransform>();
+            root.AddComponent<BlackHoleZone>();
+
+            // Sphère sombre émissive qui tourne sur elle-même
+            var sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            sphere.name = "Visual";
+            sphere.transform.SetParent(root.transform, false);
+            sphere.transform.localScale = Vector3.one * 1.8f;
+            Object.DestroyImmediate(sphere.GetComponent<Collider>());
+            sphere.GetComponent<MeshRenderer>().sharedMaterial = GetOrCreateMaterial(
+                BlackHoleMaterialPath, new Color(0.42f, 0.35f, 0.88f), emissive: true);
+
+            var light = new GameObject("Light").AddComponent<Light>();
+            light.transform.SetParent(root.transform, false);
+            light.type = LightType.Point;
+            light.color = new Color(0.42f, 0.35f, 0.88f);
+            light.range = 10f;
+            light.intensity = 3f;
+
+            PrefabUtility.SaveAsPrefabAsset(root, BlackHolePrefabPath);
+        }
+        finally
+        {
+            Object.DestroyImmediate(root);
+        }
+
+        Debug.Log($"[SpellSystemSetup] Prefab créé : {BlackHolePrefabPath}");
+        return AssetDatabase.LoadAssetAtPath<NetworkObject>(BlackHolePrefabPath);
+    }
 
     private static NetworkObject CreateSpellWallPrefab()
     {
@@ -396,7 +457,7 @@ public static class SpellSystemSetup
 
     // JOUEUR
 
-    private static void SetupPlayerPrefab(NetworkObject ballPrefab, NetworkObject iceZonePrefab, NetworkObject wallPrefab)
+    private static void SetupPlayerPrefab(NetworkObject ballPrefab, NetworkObject iceZonePrefab, NetworkObject wallPrefab, NetworkObject blackHolePrefab)
     {
         var root = PrefabUtility.LoadPrefabContents(PlayerPrefabPath);
         try
@@ -433,6 +494,7 @@ public static class SpellSystemSetup
             so.FindProperty("_spellBallPrefab").objectReferenceValue = ballPrefab;
             so.FindProperty("_iceZonePrefab").objectReferenceValue = iceZonePrefab;
             so.FindProperty("_wallPrefab").objectReferenceValue = wallPrefab;
+            so.FindProperty("_blackHolePrefab").objectReferenceValue = blackHolePrefab;
             so.ApplyModifiedPropertiesWithoutUndo();
 
             PrefabUtility.SaveAsPrefabAsset(root, PlayerPrefabPath);

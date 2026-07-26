@@ -332,6 +332,16 @@ public class GameState : NetworkBehaviour
         return true;
     }
 
+    /// <summary>Centre actuel de la zone de collecte d'une équipe (sort fortuna).</summary>
+    public Vector3 GetZoneCenter(Team team)
+    {
+        RefreshZoneMarkers();
+        var marker = team == Team.Red ? _redZoneMarker : _blueZoneMarker;
+        if (marker != null)
+            return marker.transform.position;
+        return team == Team.Red ? _redZoneCenter : _blueZoneCenter;
+    }
+
     private void RefreshZoneMarkers()
     {
         if (_redZoneMarker != null && _blueZoneMarker != null)

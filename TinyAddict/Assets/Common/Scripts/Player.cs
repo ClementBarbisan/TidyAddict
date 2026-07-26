@@ -182,6 +182,13 @@ namespace Projectiles
             {
                 moveVelocity *= _spellEffects.SpeedMultiplier;
 
+                // Sur la glace : inertie — on continue de glisser dans la direction
+                // du mouvement, l'input ne corrige la trajectoire que lentement
+                if (_spellEffects.IsOnIce)
+                    moveVelocity = _spellEffects.UpdateIceSlide(moveVelocity, Runner.DeltaTime);
+                else
+                    _spellEffects.SyncIceSlide(moveVelocity);
+
                 Vector3 knockback = _spellEffects.CurrentKnockback;
                 moveVelocity += new Vector3(knockback.x, 0f, knockback.z);
 
