@@ -447,11 +447,34 @@ namespace Projectiles
             return AssetDatabase.LoadAssetAtPath<NetworkObject>(GameStatePrefabPath);
         }
 
+        private const string ParchmentModelPath = "Assets/Prefabs/Parchemin/Parchment.fbx";
+        private const string ParchmentOpenMaterialPath = "Assets/Materials/SpellParchmentOpen.mat";
+
+        // Textures du parchemin ouvert, ordonnées par sort (0 = polaris … 11 = taurus)
+        private static readonly string[] ParchmentTexturePaths =
+        {
+            "Assets/Prefabs/Parchemin/POLARIS.png",
+            "Assets/Prefabs/Parchemin/INFERNO.png",
+            "Assets/Prefabs/Parchemin/AURORA.png",
+            "Assets/Prefabs/Parchemin/MAXIMUS.png",
+            "Assets/Prefabs/Parchemin/ANIMA.png",
+            "Assets/Prefabs/Parchemin/VERTIGO.png",
+            "Assets/Prefabs/Parchemin/MINIMA.png",
+            "Assets/Prefabs/Parchemin/ELECTRA.png",
+            "Assets/Prefabs/Parchemin/PETRA.png",
+            "Assets/Prefabs/Parchemin/PLUTO.png",
+            "Assets/Prefabs/Parchemin/FORTUNA.png",
+            "Assets/Prefabs/Parchemin/TAURUS.png",
+        };
+
         private static GameObject CreateScrollPrefab()
         {
             var existing = AssetDatabase.LoadAssetAtPath<GameObject>(ScrollPrefabPath);
             if (existing != null)
-                return existing;
+            {
+                UpgradeScrollPrefabVisuals();
+                return AssetDatabase.LoadAssetAtPath<GameObject>(ScrollPrefabPath);
+            }
 
             EnsureFolder("Assets/Prefabs");
 
@@ -502,7 +525,141 @@ namespace Projectiles
             }
 
             Debug.Log($"[SpellSystemSetup] Prefab créé : {ScrollPrefabPath}");
+            UpgradeScrollPrefabVisuals();
             return AssetDatabase.LoadAssetAtPath<GameObject>(ScrollPrefabPath);
+        }
+
+        // Ajoute le parchemin OUVERT (modèle Parchment.fbx + image du sort) au
+        // prefab du parchemin : montré en main, le rouleau plié restant au sol.
+        // Câble aussi les 12 textures. Idempotent.
+        private static void UpgradeScrollPrefabVisuals()
+        {
+            var contents = PrefabUtility.LoadPrefabContents(ScrollPrefabPath);
+            try
+            {
+                bool dirty = false;
+                var scroll = contents.GetComponent<SpellScroll>();
+                if (scroll == null)
+                    return;
+
+                var openRoot = contents.transform.Find("OpenParchment");
+                if (openRoot == null)
+                {
+                    var model = AssetDatabase.LoadAssetAtPath<GameObject>(ParchmentModelPath);
+                    if (model == null)
+                    {
+                        Debug.LogWarning($"[SpellSystemSetup] Modèle introuvable : {ParchmentModelPath}");
+                        return;
+                    }
+
+                    // Conteneur pivot : modèle centré une fois, échelle sur le conteneur
+                    var container = new GameObject("OpenParchment");
+                    container.transform.SetParent(contents.transform, false);
+
+                    var visual = (GameObject)PrefabUtility.InstantiatePrefab(model);
+                    visual.name = "Parchment";
+                    visual.transform.SetParent(container.transform, false);
+
+                    var bounds = ComputeRendererBounds(visual);
+                    visual.transform.localPosition = -bounds.center;
+
+                    float maxSize = Mathf.Max(bounds.size.x, bounds.size.y, bounds.size.z);
+                    float scale = maxSize > 0.001f ? 0.55f / maxSize : 1f;
+                    container.transform.localScale = Vector3.one * scale;
+                    container.transform.localPosition = new Vector3(0f, 0.25f, 0f);
+
+                    // Invisible par défaut : SpellScroll l'active quand le parchemin est tenu
+                    container.SetActive(false);
+
+                    openRoot = container.transform;
+                    dirty = true;
+                    Debug.Log("[SpellSystemSetup] Parchemin ouvert ajouté au prefab SpellScroll.");
+                }
+
+                // Matériau commun double face : la texture du sort est injectée en
+                // runtime via MaterialPropertyBlock, pas besoin de 12 matériaux
+                var openMaterial = GetOrCreateParchmentOpenMaterial();
+                foreach (var renderer in openRoot.GetComponentsInChildren<Renderer>(true))
+                {
+                    if (renderer.sharedMaterial == openMaterial)
+                        continue;
+                    var materials = renderer.sharedMaterials;
+                    for (int i = 0; i < materials.Length; i++)
+                        materials[i] = openMaterial;
+                    renderer.sharedMaterials = materials;
+                    dirty = true;
+                }
+
+                var scrollSo = new SerializedObject(scroll);
+
+                var rollProperty = scrollSo.FindProperty("_rollVisual");
+                var rollChild = contents.transform.Find("Roll");
+                if (rollProperty.objectReferenceValue == null && rollChild != null)
+                {
+                    rollProperty.objectReferenceValue = rollChild.gameObject;
+                    dirty = true;
+                }
+
+                var openProperty = scrollSo.FindProperty("_openVisual");
+                if (openProperty.objectReferenceValue == null)
+                {
+                    openProperty.objectReferenceValue = openRoot.gameObject;
+                    dirty = true;
+                }
+
+                var rendererProperty = scrollSo.FindProperty("_openRenderer");
+                if (rendererProperty.objectReferenceValue == null)
+                {
+                    rendererProperty.objectReferenceValue = openRoot.GetComponentInChildren<Renderer>(true);
+                    dirty = true;
+                }
+
+                var texturesProperty = scrollSo.FindProperty("_spellTextures");
+                if (texturesProperty.arraySize != ParchmentTexturePaths.Length)
+                {
+                    texturesProperty.arraySize = ParchmentTexturePaths.Length;
+                    for (int i = 0; i < ParchmentTexturePaths.Length; i++)
+                    {
+                        var texture = AssetDatabase.LoadAssetAtPath<Texture2D>(ParchmentTexturePaths[i]);
+                        if (texture == null)
+                            Debug.LogWarning($"[SpellSystemSetup] Texture introuvable : {ParchmentTexturePaths[i]}");
+                        texturesProperty.GetArrayElementAtIndex(i).objectReferenceValue = texture;
+                    }
+                    dirty = true;
+                }
+
+                if (dirty)
+                {
+                    scrollSo.ApplyModifiedPropertiesWithoutUndo();
+                    PrefabUtility.SaveAsPrefabAsset(contents, ScrollPrefabPath);
+                    Debug.Log("[SpellSystemSetup] SpellScroll : visuels ouverts + textures des 12 sorts câblés.");
+                }
+            }
+            finally
+            {
+                PrefabUtility.UnloadPrefabContents(contents);
+            }
+        }
+
+        // Matériau du parchemin ouvert : URP Lit blanc, double face (le mesh est
+        // une feuille fine visible des deux côtés). La texture du sort est posée
+        // en runtime par MaterialPropertyBlock, celle par défaut sert d'aperçu.
+        private static Material GetOrCreateParchmentOpenMaterial()
+        {
+            var material = AssetDatabase.LoadAssetAtPath<Material>(ParchmentOpenMaterialPath);
+            if (material != null)
+                return material;
+
+            EnsureFolder("Assets/Materials");
+
+            material = new Material(Shader.Find("Universal Render Pipeline/Lit")) { color = Color.white };
+            material.SetFloat("_Cull", (float)UnityEngine.Rendering.CullMode.Off);
+            material.doubleSidedGI = true;
+            material.SetTexture("_BaseMap",
+                AssetDatabase.LoadAssetAtPath<Texture2D>(ParchmentTexturePaths[0]));
+
+            AssetDatabase.CreateAsset(material, ParchmentOpenMaterialPath);
+            return material;
         }
 
         // JOUEUR

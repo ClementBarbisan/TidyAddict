@@ -15,6 +15,16 @@ namespace Projectiles
         [SerializeField] private TextMesh _wordText;
         [SerializeField] private Collider _pickupCollider;
 
+        // Au sol : rouleau plié. En main : parchemin ouvert avec l'image du sort
+        [SerializeField] private GameObject _rollVisual;
+        [SerializeField] private GameObject _openVisual;
+        [SerializeField] private Renderer _openRenderer;
+        [Tooltip("Textures du parchemin ouvert, indexées par sort (0 = polaris … 11 = taurus)")]
+        [SerializeField] private Texture2D[] _spellTextures;
+
+        private MaterialPropertyBlock _textureBlock;
+        private int _appliedTextureIndex = -1;
+
         [Networked] public int WordIndex { get; set; }
         [Networked] public ScrollCaster Holder { get; set; }
         [Networked] private TickTimer PickupCooldown { get; set; }
@@ -89,6 +99,8 @@ namespace Projectiles
                 _wordText.color = SpellWords.ColorOf(WordIndex);
             }
 
+            UpdateVisuals();
+
             // Le mot flottant fait toujours face à la caméra
             if (_wordText != null && Camera.main != null)
                 _wordText.transform.rotation =
@@ -101,6 +113,32 @@ namespace Projectiles
                 return;
 
             transform.SetPositionAndRotation(Holder.HandAnchor.position, Holder.HandAnchor.rotation);
+        }
+
+        // Bascule rouleau plié (au sol) / parchemin ouvert avec l'image du sort (en main)
+        private void UpdateVisuals()
+        {
+            bool held = IsHeld;
+
+            if (_rollVisual != null && _rollVisual.activeSelf != !held)
+                _rollVisual.SetActive(!held);
+
+            if (_openVisual != null && _openVisual.activeSelf != held)
+                _openVisual.SetActive(held);
+
+            // Texture du sort appliquée une seule fois par index
+            if (_openRenderer != null && _spellTextures != null && _spellTextures.Length > 0 &&
+                _appliedTextureIndex != WordIndex)
+            {
+                _appliedTextureIndex = WordIndex;
+                var texture = _spellTextures[Mathf.Abs(WordIndex) % _spellTextures.Length];
+                if (texture != null)
+                {
+                    _textureBlock ??= new MaterialPropertyBlock();
+                    _textureBlock.SetTexture("_BaseMap", texture);
+                    _openRenderer.SetPropertyBlock(_textureBlock);
+                }
+            }
         }
     }
 }
