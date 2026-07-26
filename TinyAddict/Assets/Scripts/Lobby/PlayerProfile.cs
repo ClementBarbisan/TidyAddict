@@ -57,6 +57,33 @@ public class PlayerProfile : NetworkBehaviour
         }
     }
 
+    /// <summary>Téléporte le joueur (serveur) et réaligne sa caméra (client propriétaire).</summary>
+    public void TeleportTo(Vector3 position, float yaw)
+    {
+        var kcc = GetComponent<Fusion.Addons.SimpleKCC.SimpleKCC>();
+        if (kcc != null)
+        {
+            kcc.SetPosition(position);
+            kcc.SetLookRotation(0f, yaw);
+        }
+        else
+        {
+            transform.position = position;
+        }
+
+        RPC_ResetLook(yaw);
+    }
+
+    // La rotation de regard est accumulée côté client (absolue) : sans ce reset,
+    // le client écraserait l'orientation de spawn au premier mouvement de souris
+    [Rpc(RpcSources.StateAuthority, RpcTargets.InputAuthority)]
+    private void RPC_ResetLook(float yaw)
+    {
+        var playerInput = GetComponent<Projectiles.PlayerInput>();
+        if (playerInput != null)
+            playerInput.SetLookRotation(new Vector2(0f, yaw));
+    }
+
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
     public void RPC_BecomeSpectator()
     {

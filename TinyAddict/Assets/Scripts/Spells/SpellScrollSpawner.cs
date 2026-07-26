@@ -24,9 +24,13 @@ public class SpellScrollSpawner : SimulationBehaviour
         if (Runner.IsServer == false || _scrollPrefab == null)
             return;
 
-        // Pas de parchemins avant le lancement depuis le lobby, ni après la fin du match
+        // Pas de parchemins avant le lancement depuis le lobby, ni après la fin
+        // du match : on purge ceux qui restent (retour au lobby = table rase)
         if (GameState.Instance == null || GameState.Instance.IsStarted == false || GameState.Instance.IsEnded)
+        {
+            CleanupScrolls();
             return;
+        }
 
         if (_points == null || _points.Length == 0)
         {
@@ -77,5 +81,20 @@ public class SpellScrollSpawner : SimulationBehaviour
     {
         var position = point.transform.position + Vector3.up * 0.05f;
         _scrollByPoint[point] = Runner.Spawn(_scrollPrefab, position, Quaternion.identity);
+    }
+
+    private void CleanupScrolls()
+    {
+        if (_scrollByPoint.Count == 0 && _respawnByPoint.Count == 0)
+            return;
+
+        foreach (var scroll in _scrollByPoint.Values)
+        {
+            if (scroll != null)
+                Runner.Despawn(scroll);
+        }
+
+        _scrollByPoint.Clear();
+        _respawnByPoint.Clear();
     }
 }

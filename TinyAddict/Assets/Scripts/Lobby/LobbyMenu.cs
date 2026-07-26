@@ -14,8 +14,9 @@ public class LobbyMenu : MonoBehaviour
 
     private enum Step
     {
-        Nickname,
+        Room,
         Connecting,
+        Nickname,
         Team,
         Waiting,
         Done,
@@ -23,9 +24,9 @@ public class LobbyMenu : MonoBehaviour
 
     private const float RefreshInterval = 0.5f;
 
-    private Step _step = Step.Nickname;
+    private Step _step = Step.Room;
     private string _nickname = "";
-    private string _room = "Test";
+    private string _room = "";
     private int _team;
     private bool _profileSent;
     private bool _wantSpectator;
@@ -56,6 +57,13 @@ public class LobbyMenu : MonoBehaviour
         go.AddComponent<LobbyMenu>();
     }
 
+    private void Awake()
+    {
+        // Code de salle aléatoire à 4 chiffres : l'hôte le partage, les autres
+        // le tapent pour le rejoindre (le champ reste éditable)
+        _room = Random.Range(0, 10000).ToString("0000");
+    }
+
     private void Update()
     {
         if (Time.unscaledTime >= _nextRefresh)
@@ -81,16 +89,25 @@ public class LobbyMenu : MonoBehaviour
             _step = Step.Done;
         }
 
-        // Connexion établie et notre joueur spawné : on passe au choix du clan
+        // Connexion établie et notre joueur spawné : on passe au choix du pseudo
         if (_step == Step.Connecting && _runner != null && _runner.IsRunning && _localProfile != null)
         {
-            _step = Step.Team;
+            _step = Step.Nickname;
         }
 
         // La partie a été lancée (par l'hôte) : on ferme le menu
         if (_step == Step.Waiting && GameState.Instance != null && GameState.Instance.IsStarted)
         {
             _step = Step.Done;
+        }
+
+        // Fin de partie + délai écoulé : le serveur a tout remis à zéro,
+        // on rouvre la salle d'attente (équipe et pseudo conservés)
+        if (_step == Step.Done && _spectatorStarted == false && _profileSent &&
+            GameState.Instance != null && GameState.Instance.Object != null && GameState.Instance.Object.IsValid &&
+            GameState.Instance.IsStarted == false && GameState.Instance.IsEnded == false)
+        {
+            _step = Step.Waiting;
         }
 
         IsOpen = _step != Step.Done;
@@ -151,18 +168,21 @@ public class LobbyMenu : MonoBehaviour
         UITheme.Begin();
         EnsureStyles();
 
-        // Voile sombre sur le jeu (spec : #080502 @ 60 %)
-        GUI.color = UITheme.WithAlpha(UITheme.LobbyDim, 0.6f);
+        // Voile sombre sur le jeu (spec V2 : #0E0724 @ 52 %)
+        GUI.color = UITheme.WithAlpha(UITheme.LobbyDim, 0.52f);
         GUI.DrawTexture(new Rect(0f, 0f, UITheme.VirtualWidth, UITheme.VirtualHeight), Texture2D.whiteTexture);
         GUI.color = Color.white;
 
         switch (_step)
         {
-            case Step.Nickname:
-                DrawNicknameStep();
+            case Step.Room:
+                DrawRoomStep();
                 break;
             case Step.Connecting:
                 DrawConnectingStep();
+                break;
+            case Step.Nickname:
+                DrawNicknameStep();
                 break;
             case Step.Team:
                 DrawTeamStep();
@@ -175,34 +195,29 @@ public class LobbyMenu : MonoBehaviour
 
     // ÉCRAN 1 — PSEUDO
 
-    private void DrawNicknameStep()
+    // ÉTAPE 1 — SALLE (rejoindre, ou créer si on est le premier)
+
+    private void DrawRoomStep()
     {
         float centerX = UITheme.VirtualWidth * 0.5f;
-        var panel = new Rect(centerX - 330f, 210f, 660f, 640f);
+        var panel = new Rect(centerX - 330f, 240f, 660f, 560f);
         DrawLobbyPanel(panel);
 
         GUI.Label(new Rect(panel.x, panel.y + 46f, panel.width, 100f), "TidyAddict", _logoStyle);
         GUI.Label(new Rect(panel.x, panel.y + 152f, panel.width, 28f),
             "Gobelins, grimoires et grand bazar.", _subtitleStyle);
 
-        GUI.Label(new Rect(panel.x + 70f, panel.y + 216f, panel.width - 140f, 24f), "TON NOM DE GOBELIN", _labelCapsStyle);
+        GUI.Label(new Rect(panel.x + 70f, panel.y + 226f, panel.width - 140f, 24f), "CODE DE LA SALLE", _labelCapsStyle);
 
-        var fieldRect = new Rect(panel.x + 70f, panel.y + 244f, panel.width - 140f, 62f);
-        UITheme.DrawRounded(fieldRect, UITheme.WithAlpha(Color.black, 0.4f), 10f);
-        UITheme.DrawBorder(fieldRect, UITheme.WithAlpha(UITheme.Brass, 0.55f), 1.5f, 10f);
-        GUI.SetNextControlName("NicknameField");
-        _nickname = GUI.TextField(new Rect(fieldRect.x + 20f, fieldRect.y, fieldRect.width - 40f, fieldRect.height), _nickname, 12, _fieldStyle);
-
-        GUI.Label(new Rect(panel.x + 70f, panel.y + 326f, panel.width - 140f, 24f), "NOM DE LA SALLE", _labelCapsStyle);
-
-        var roomRect = new Rect(panel.x + 70f, panel.y + 354f, panel.width - 140f, 62f);
+        var roomRect = new Rect(panel.x + 70f, panel.y + 254f, panel.width - 140f, 62f);
         UITheme.DrawRounded(roomRect, UITheme.WithAlpha(Color.black, 0.4f), 10f);
         UITheme.DrawBorder(roomRect, UITheme.WithAlpha(UITheme.Brass, 0.55f), 1.5f, 10f);
+        GUI.SetNextControlName("RoomField");
         _room = GUI.TextField(new Rect(roomRect.x + 20f, roomRect.y, roomRect.width - 40f, roomRect.height), _room, 24, _fieldStyle);
+        GUI.FocusControl("RoomField");
 
-        bool valid = string.IsNullOrWhiteSpace(_nickname) == false && _nickname.Trim().Length >= 3 &&
-                     string.IsNullOrWhiteSpace(_room) == false;
-        bool submit = PrimaryButton(new Rect(panel.x + 70f, panel.y + 452f, panel.width - 140f, 64f), "REJOINDRE LA SALLE", valid);
+        bool valid = string.IsNullOrWhiteSpace(_room) == false;
+        bool submit = PrimaryButton(new Rect(panel.x + 70f, panel.y + 352f, panel.width - 140f, 64f), "REJOINDRE LA SALLE", valid);
 
         if (valid && Event.current.type == EventType.KeyDown &&
             (Event.current.keyCode == KeyCode.Return || Event.current.keyCode == KeyCode.KeypadEnter))
@@ -210,14 +225,53 @@ public class LobbyMenu : MonoBehaviour
             submit = true;
         }
 
-        GUI.Label(new Rect(panel.x, panel.y + 536f, panel.width, 24f),
-            "Pseudo : 3 à 12 caractères  •  Même salle = même partie  •  Entrée pour valider", _subtitleStyle);
+        GUI.Label(new Rect(panel.x, panel.y + 440f, panel.width, 48f),
+            "Le premier arrivé crée la salle, les autres la rejoignent avec le même code.\nPartagez ce code à vos amis  •  Entrée pour valider", _subtitleStyle);
+
+        if (submit)
+        {
+            _room = _room.Trim();
+            StartConnection();
+        }
+    }
+
+    // ÉTAPE 2 — PSEUDO (une fois connecté à la salle)
+
+    private void DrawNicknameStep()
+    {
+        float centerX = UITheme.VirtualWidth * 0.5f;
+        var panel = new Rect(centerX - 330f, 280f, 660f, 480f);
+        DrawLobbyPanel(panel);
+
+        GUI.Label(new Rect(panel.x, panel.y + 42f, panel.width, 80f), "Bienvenue, gobelin", _titleStyle);
+        GUI.Label(new Rect(panel.x, panel.y + 126f, panel.width, 28f),
+            $"Salle <color=#{ColorUtility.ToHtmlStringRGB(UITheme.Gold)}><b>{_room}</b></color>", _subtitleStyle);
+
+        GUI.Label(new Rect(panel.x + 70f, panel.y + 186f, panel.width - 140f, 24f), "TON NOM DE GOBELIN", _labelCapsStyle);
+
+        var fieldRect = new Rect(panel.x + 70f, panel.y + 214f, panel.width - 140f, 62f);
+        UITheme.DrawRounded(fieldRect, UITheme.WithAlpha(Color.black, 0.4f), 10f);
+        UITheme.DrawBorder(fieldRect, UITheme.WithAlpha(UITheme.Brass, 0.55f), 1.5f, 10f);
+        GUI.SetNextControlName("NicknameField");
+        _nickname = GUI.TextField(new Rect(fieldRect.x + 20f, fieldRect.y, fieldRect.width - 40f, fieldRect.height), _nickname, 12, _fieldStyle);
+        GUI.FocusControl("NicknameField");
+
+        bool valid = string.IsNullOrWhiteSpace(_nickname) == false && _nickname.Trim().Length >= 3;
+        bool submit = PrimaryButton(new Rect(panel.x + 70f, panel.y + 312f, panel.width - 140f, 64f), "VALIDER", valid);
+
+        if (valid && Event.current.type == EventType.KeyDown &&
+            (Event.current.keyCode == KeyCode.Return || Event.current.keyCode == KeyCode.KeypadEnter))
+        {
+            submit = true;
+        }
+
+        GUI.Label(new Rect(panel.x, panel.y + 400f, panel.width, 24f),
+            "3 à 12 caractères  •  Entrée pour valider", _subtitleStyle);
 
         if (submit)
         {
             _nickname = _nickname.Trim();
-            _room = _room.Trim();
-            StartConnection();
+            _step = Step.Team;
         }
     }
 
@@ -228,7 +282,7 @@ public class LobbyMenu : MonoBehaviour
         // Déjà connecté (scène pas encore migrée en StartMode Manual) : on continue
         if (_runner != null && _runner.IsRunning)
         {
-            _step = Step.Team;
+            _step = Step.Nickname;
             return;
         }
 
@@ -292,13 +346,12 @@ public class LobbyMenu : MonoBehaviour
     private void DrawTeamCard(Rect rect, Team team, string label, int count, int max, bool full)
     {
         Color teamColor = PlayerProfile.ColorOfTeam(team);
-        Color darkText = team == Team.Red ? UITheme.TeamRedDarkText : UITheme.TeamBlueDarkText;
 
         if (full)
         {
-            // Spec : pleine → fond 14 %, bord 30 %, désaturé
-            UITheme.DrawRounded(rect, UITheme.WithAlpha(teamColor, 0.14f), 20f);
-            UITheme.DrawBorder(rect, UITheme.WithAlpha(teamColor, 0.3f), 1.5f, 20f);
+            // Spec V2 : pleine → fond 16 %, bord 35 %, désaturé
+            UITheme.DrawRounded(rect, UITheme.WithAlpha(teamColor, 0.16f), 24f);
+            UITheme.DrawBorder(rect, UITheme.WithAlpha(teamColor, 0.35f), 1.5f, 24f);
 
             _cardTitleStyle.normal.textColor = UITheme.WithAlpha(teamColor, 0.45f);
             GUI.Label(new Rect(rect.x, rect.y + 90f, rect.width, 80f), label, _cardTitleStyle);
@@ -310,13 +363,14 @@ public class LobbyMenu : MonoBehaviour
         }
 
         bool hover = rect.Contains(Event.current.mousePosition);
-        UITheme.DrawRounded(hover ? new Rect(rect.x, rect.y - 2f, rect.width, rect.height) : rect, teamColor, 20f);
+        UITheme.DrawRounded(hover ? new Rect(rect.x, rect.y - 2f, rect.width, rect.height) : rect, teamColor, 24f);
 
-        _cardTitleStyle.normal.textColor = darkText;
+        // Spec V2 : texte blanc sur les cartes d'équipe
+        _cardTitleStyle.normal.textColor = Color.white;
         GUI.Label(new Rect(rect.x, rect.y + 90f, rect.width, 80f), label, _cardTitleStyle);
-        _cardCountStyle.normal.textColor = darkText;
+        _cardCountStyle.normal.textColor = Color.white;
         GUI.Label(new Rect(rect.x, rect.y + 180f, rect.width, 40f), $"{count} / {max}", _cardCountStyle);
-        _cardHintStyle.normal.textColor = UITheme.WithAlpha(darkText, 0.7f);
+        _cardHintStyle.normal.textColor = UITheme.WithAlpha(Color.white, 0.8f);
         GUI.Label(new Rect(rect.x, rect.y + 244f, rect.width, 26f), "CLIQUE POUR REJOINDRE", _cardHintStyle);
 
         if (GUI.Button(rect, GUIContent.none, GUIStyle.none))
@@ -332,6 +386,26 @@ public class LobbyMenu : MonoBehaviour
     {
         float centerX = UITheme.VirtualWidth * 0.5f;
         var gameState = GameState.Instance;
+
+        // Compte à rebours de lancement : plein écran, chez tout le monde
+        if (gameState != null && gameState.IsLaunching)
+        {
+            int seconds = Mathf.CeilToInt(gameState.LaunchRemaining);
+            var countPanel = new Rect(centerX - 330f, 360f, 660f, 320f);
+            DrawLobbyPanel(countPanel);
+
+            GUI.Label(new Rect(countPanel.x, countPanel.y + 36f, countPanel.width, 60f),
+                "La partie commence dans", _titleStyle);
+
+            var numberStyle = new GUIStyle(_logoStyle) { fontSize = 128 };
+            numberStyle.normal.textColor = seconds <= 2 ? UITheme.Danger : UITheme.Gold;
+            GUI.Label(new Rect(countPanel.x, countPanel.y + 110f, countPanel.width, 150f),
+                seconds.ToString(), numberStyle);
+
+            GUI.Label(new Rect(countPanel.x, countPanel.yMax - 50f, countPanel.width, 26f),
+                "Préparez vos grimoires !", _subtitleStyle);
+            return;
+        }
         int connected = gameState != null ? gameState.ConnectedPlayers : 0;
         int required = gameState != null ? gameState.RequiredPlayers : 4;
         bool isHost = _runner != null && _runner.IsServer;
@@ -340,8 +414,8 @@ public class LobbyMenu : MonoBehaviour
         DrawLobbyPanel(panel);
 
         GUI.Label(new Rect(panel.x, panel.y + 42f, panel.width, 80f), "Salle d'attente", _titleStyle);
-        GUI.Label(new Rect(panel.x, panel.y + 130f, panel.width, 28f),
-            $"Joueurs connectés : <b>{connected}/{required}</b>", _subtitleStyle);
+        GUI.Label(new Rect(panel.x, panel.y + 124f, panel.width, 28f),
+            $"Salle <color=#{ColorUtility.ToHtmlStringRGB(UITheme.Gold)}><b>{_room}</b></color>  •  Joueurs connectés : <b>{connected}/{required}</b>", _subtitleStyle);
 
         // Lignes joueurs (pseudos teintés) + emplacements vides
         float rowY = panel.y + 190f;
@@ -401,8 +475,8 @@ public class LobbyMenu : MonoBehaviour
 
     private void DrawLobbyPanel(Rect rect)
     {
-        UITheme.DrawRounded(rect, UITheme.WithAlpha(UITheme.Panel, 0.92f), 18f);
-        UITheme.DrawBorder(rect, UITheme.WithAlpha(UITheme.Brass, 0.45f), 1.5f, 18f);
+        UITheme.DrawRounded(rect, UITheme.WithAlpha(UITheme.Panel, 0.92f), 20f);
+        UITheme.DrawBorder(rect, UITheme.WithAlpha(UITheme.Brass, 0.4f), 1.5f, 20f);
     }
 
     private bool PrimaryButton(Rect rect, string label, bool enabled)
@@ -412,12 +486,12 @@ public class LobbyMenu : MonoBehaviour
 
         if (enabled)
         {
-            UITheme.DrawRounded(drawRect, UITheme.Parchment, 12f);
-            _buttonTextStyle.normal.textColor = UITheme.Hex("#221708");
+            UITheme.DrawRounded(drawRect, Color.white, 14f);
+            _buttonTextStyle.normal.textColor = UITheme.Hex("#22114D");
         }
         else
         {
-            UITheme.DrawRounded(drawRect, UITheme.WithAlpha(UITheme.Parchment, 0.08f), 12f);
+            UITheme.DrawRounded(drawRect, UITheme.WithAlpha(Color.white, 0.08f), 14f);
             _buttonTextStyle.normal.textColor = UITheme.WithAlpha(UITheme.Parchment, 0.35f);
         }
 
@@ -430,8 +504,8 @@ public class LobbyMenu : MonoBehaviour
         bool hover = rect.Contains(Event.current.mousePosition);
         var drawRect = hover ? new Rect(rect.x, rect.y - 2f, rect.width, rect.height) : rect;
 
-        UITheme.DrawRounded(drawRect, UITheme.WithAlpha(UITheme.Hex("#EAF4FF"), 0.08f), 12f);
-        UITheme.DrawBorder(drawRect, UITheme.WithAlpha(UITheme.Hex("#EAF4FF"), 0.8f), 1.5f, 12f);
+        UITheme.DrawRounded(drawRect, UITheme.WithAlpha(UITheme.Hex("#EAF4FF"), 0.09f), 14f);
+        UITheme.DrawBorder(drawRect, UITheme.WithAlpha(UITheme.Hex("#EAF4FF"), 0.8f), 1.5f, 14f);
         _buttonTextStyle.normal.textColor = UITheme.Hex("#EAF4FF");
         GUI.Label(drawRect, label, _buttonTextStyle);
         return GUI.Button(rect, GUIContent.none, GUIStyle.none);
@@ -469,8 +543,8 @@ public class LobbyMenu : MonoBehaviour
         if (_titleStyle != null)
             return;
 
-        _logoStyle = UITheme.Label(UITheme.Display, 84, UITheme.Parchment, TextAnchor.MiddleCenter);
-        _titleStyle = UITheme.Label(UITheme.Display, 64, UITheme.Parchment, TextAnchor.MiddleCenter);
+        _logoStyle = UITheme.Label(UITheme.Display, 88, UITheme.Parchment, TextAnchor.MiddleCenter);
+        _titleStyle = UITheme.Label(UITheme.Display, 56, UITheme.Parchment, TextAnchor.MiddleCenter);
         _subtitleStyle = UITheme.Label(UITheme.Body, 20, UITheme.TextDim, TextAnchor.MiddleCenter);
         _labelCapsStyle = UITheme.Label(UITheme.BodyExtraBold, 15, UITheme.TextDim, TextAnchor.MiddleLeft);
         _bodyStyle = UITheme.Label(UITheme.BodyBold, 20, UITheme.Parchment, TextAnchor.MiddleLeft);

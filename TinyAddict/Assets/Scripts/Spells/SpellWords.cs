@@ -11,6 +11,10 @@ public enum SpellType
     Confusion,
     Shrink,
     Stun,
+    Wall,
+    BlackHole,
+    Loot,
+    Charge,
 }
 
 /// <summary>
@@ -31,6 +35,10 @@ public static class SpellWords
         "vertigo",  // 5 - confusion : touches inversées de la cible 30 s
         "minima",   // 6 - réduction : la cible rapetisse et perd sa force 30 s
         "electra",  // 7 - électrification : la cible est paralysée 10 s
+        "petra",    // 8 - mur de pierre devant soi pendant 30 s
+        "pluto",    // 9 - trou noir : aspire joueurs et objets 4 s
+        "fortuna",  // 10 - l'objet visé se téléporte dans notre zone de collecte
+        "taurus",   // 11 - charge en avant qui percute tout
     };
 
     public static readonly SpellType[] Types =
@@ -43,6 +51,10 @@ public static class SpellWords
         SpellType.Confusion,
         SpellType.Shrink,
         SpellType.Stun,
+        SpellType.Wall,
+        SpellType.BlackHole,
+        SpellType.Loot,
+        SpellType.Charge,
     };
 
     // Couleurs officielles du design system (bord + lueur + ◆, jamais fond plein)
@@ -56,6 +68,10 @@ public static class SpellWords
         new Color32(0xFF, 0x6B, 0xD6, 0xFF), // vertigo - #FF6BD6
         new Color32(0x6B, 0xFF, 0xB8, 0xFF), // minima  - #6BFFB8
         new Color32(0xFF, 0xEE, 0x4D, 0xFF), // electra - #FFEE4D
+        new Color32(0xAD, 0xB9, 0xC6, 0xFF), // petra   - #ADB9C6 gris pierre
+        new Color32(0x6B, 0x5A, 0xE0, 0xFF), // pluto   - #6B5AE0 indigo profond
+        new Color32(0x57, 0xD9, 0x41, 0xFF), // fortuna - #57D941 vert trèfle
+        new Color32(0xC9, 0x79, 0x3B, 0xFF), // taurus  - #C9793B brun taureau
     };
 
     // Affiché sur le parchemin pour savoir ce que fait le sort avant de le lancer
@@ -69,6 +85,10 @@ public static class SpellWords
         "Inverse les touches du joueur visé pendant 30 s",
         "Rétrécit le joueur visé : force réduite pendant 30 s",
         "Électrifie le joueur visé : paralysé pendant 10 s",
+        "Fait surgir un mur de pierre devant vous pendant 30 s",
+        "Trou noir : aspire joueurs et objets vers son centre pendant 4 s",
+        "Visez un objet : il se téléporte dans votre zone de collecte",
+        "Charge en avant : percute et éjecte tout sur votre passage",
     };
 
     public static SpellType TypeOf(int wordIndex)

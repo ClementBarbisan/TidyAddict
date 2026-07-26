@@ -18,6 +18,10 @@ public class PlayerSpellEffects : NetworkBehaviour
     [SerializeField] private float _shrinkVoicePitch = 1.6f;
     [SerializeField] private float _growScale = 1.5f;
     [SerializeField] private float _growVoicePitch = 0.7f;
+    [SerializeField] private float _chargeBumpImpulse = 12f;
+    [SerializeField] private float _chargeBumpUpImpulse = 5f;
+    [SerializeField] private float _squashSeconds = 2f;
+    [SerializeField] private float _iceControlAccel = 8f;
 
     [Networked] private TickTimer SlowTimer { get; set; }
     [Networked] private TickTimer SpeedBuffTimer { get; set; }
@@ -29,6 +33,11 @@ public class PlayerSpellEffects : NetworkBehaviour
     [Networked] private TickTimer ConfusionTimer { get; set; }
     [Networked] private TickTimer ShrinkTimer { get; set; }
     [Networked] private TickTimer StunTimer { get; set; }
+    [Networked] private TickTimer ChargeTimer { get; set; }
+    [Networked] private TickTimer SquashTimer { get; set; }
+    [Networked] private TickTimer SquashCooldownTimer { get; set; }
+    [Networked] private TickTimer OnIceTimer { get; set; }
+    [Networked] private Vector3 IceSlideVelocity { get; set; }
 
     private Renderer[] _renderers;
     private AudioSource _voiceSource;
@@ -42,7 +51,17 @@ public class PlayerSpellEffects : NetworkBehaviour
     public bool IsInvisible => Object != null && Object.IsValid && InvisibilityTimer.ExpiredOrNotRunning(Runner) == false;
     public bool IsConfused => Object != null && Object.IsValid && ConfusionTimer.ExpiredOrNotRunning(Runner) == false;
     public bool IsShrunk => Object != null && Object.IsValid && ShrinkTimer.ExpiredOrNotRunning(Runner) == false;
-    public bool IsStunned => Object != null && Object.IsValid && StunTimer.ExpiredOrNotRunning(Runner) == false;
+    public bool IsCharging => Object != null && Object.IsValid && ChargeTimer.ExpiredOrNotRunning(Runner) == false;
+    public bool IsSquashed => Object != null && Object.IsValid && SquashTimer.ExpiredOrNotRunning(Runner) == false;
+    public bool IsSquashProtected => Object != null && Object.IsValid && SquashCooldownTimer.ExpiredOrNotRunning(Runner) == false;
+    public bool IsOnIce => Object != null && Object.IsValid && OnIceTimer.ExpiredOrNotRunning(Runner) == false;
+
+    // Paralysé par electra OU aplati par un écrasement
+    public bool IsStunned => Object != null && Object.IsValid &&
+        (StunTimer.ExpiredOrNotRunning(Runner) == false || IsSquashed);
+
+    // Géant (2) > normal (1) > rétréci (0) : on n'écrase que plus petit que soi
+    public int SizeRank => IsShrunk ? 0 : HasForceBuff ? 2 : 1;
 
     public float SpeedMultiplier
     {
@@ -118,6 +137,127 @@ public class PlayerSpellEffects : NetworkBehaviour
         ShrinkTimer = TickTimer.CreateFromSeconds(Runner, seconds);
     }
 
+    /// <summary>Purge tous les effets actifs (retour au lobby). Serveur uniquement.</summary>
+    public void ClearAllEffects()
+    {
+        SlowTimer = default;
+        SpeedBuffTimer = default;
+        ForceBuffTimer = default;
+        InvisibilityTimer = default;
+        ConfusionTimer = default;
+        ShrinkTimer = default;
+        StunTimer = default;
+        KnockbackTimer = default;
+        ChargeTimer = default;
+        SquashTimer = default;
+        SquashCooldownTimer = default;
+        OnIceTimer = default;
+        IceSlideVelocity = default;
+    }
+
+    /// <summary>Charge taurus : dash en avant, les percutés sont éjectés (voir FixedUpdateNetwork).</summary>
+    public void ApplyCharge(Vector3 direction, float speed = 24f, float seconds = 0.35f)
+    {
+        ApplyKnockback(direction * speed, seconds);
+        ChargeTimer = TickTimer.CreateFromSeconds(Runner, seconds);
+    }
+
+    /// <summary>Écrasé par un joueur plus grand : aplati + immobile.</summary>
+    public void ApplySquash(float seconds)
+    {
+        SquashTimer = TickTimer.CreateFromSeconds(Runner, seconds);
+        // Grâce après l'écrasement, sinon l'attaquant resté dessus ré-écrase en boucle
+        SquashCooldownTimer = TickTimer.CreateFromSeconds(Runner, seconds + 1.5f);
+    }
+
+    /// <summary>Marque le joueur comme étant sur la glace (rafraîchi par IceZone).</summary>
+    public void ApplyOnIce(float seconds = 0.3f)
+    {
+        OnIceTimer = TickTimer.CreateFromSeconds(Runner, seconds);
+    }
+
+    /// <summary>Glisse : la vélocité dérive lentement vers l'input au lieu de le suivre.</summary>
+    public Vector3 UpdateIceSlide(Vector3 desiredVelocity, float deltaTime)
+    {
+        Vector3 slide = Vector3.MoveTowards(IceSlideVelocity, desiredVelocity, _iceControlAccel * deltaTime);
+        IceSlideVelocity = slide;
+        return slide;
+    }
+
+    /// <summary>Hors glace : mémorise la vélocité courante (élan à l'entrée sur la glace).</summary>
+    public void SyncIceSlide(Vector3 currentVelocity)
+    {
+        IceSlideVelocity = currentVelocity;
+    }
+
+    public override void FixedUpdateNetwork()
+    {
+        if (Object.HasStateAuthority == false)
+            return;
+
+        if (IsCharging)
+            ChargeBump();
+
+        CheckCrush();
+    }
+
+    // Taurus : percute joueurs et objets sur le passage pendant la charge
+    private void ChargeBump()
+    {
+        var hits = Physics.OverlapSphere(transform.position + Vector3.up, 1.4f, ~0, QueryTriggerInteraction.Ignore);
+        foreach (var hit in hits)
+        {
+            var other = hit.GetComponentInParent<PlayerSpellEffects>();
+            if (other != null)
+            {
+                if (other == this || other.Object == null || other.Object.IsValid == false)
+                    continue;
+
+                Vector3 away = other.transform.position - transform.position;
+                away.y = 0f;
+                Vector3 knockback = (away.sqrMagnitude > 0.01f ? away.normalized : transform.forward) * _chargeBumpImpulse;
+                knockback.y = _chargeBumpUpImpulse;
+                other.ApplyKnockback(knockback);
+                continue;
+            }
+
+            var rigidbody = hit.attachedRigidbody;
+            if (rigidbody != null && rigidbody.isKinematic == false)
+            {
+                Vector3 away = (rigidbody.worldCenterOfMass - transform.position).normalized;
+                rigidbody.AddForce(away * _chargeBumpImpulse, ForceMode.Impulse);
+            }
+        }
+    }
+
+    // Écrasement : un joueur plus grand posé sur un plus petit l'aplatit (stun)
+    private void CheckCrush()
+    {
+        if (IsSquashed)
+            return;
+
+        int myRank = SizeRank;
+        if (myRank == 0)
+            return;
+
+        foreach (var other in FindObjectsByType<PlayerSpellEffects>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+        {
+            if (other == this || other.Object == null || other.Object.IsValid == false)
+                continue;
+            if (other.SizeRank >= myRank || other.IsSquashed || other.IsSquashProtected)
+                continue;
+
+            Vector3 delta = transform.position - other.transform.position;
+            float horizontal = new Vector2(delta.x, delta.z).magnitude;
+            float victimHeight = 1.8f * Mathf.Max(0.2f, other.transform.localScale.y);
+            float crushRadius = 0.8f * Mathf.Max(1f, transform.localScale.x);
+
+            // On est au-dessus de la victime, dans son emprise : écrasé
+            if (horizontal < crushRadius && delta.y > victimHeight * 0.3f && delta.y < victimHeight + 1.5f)
+                other.ApplySquash(_squashSeconds);
+        }
+    }
+
     public void ApplyKnockback(Vector3 velocity, float seconds = 0.35f)
     {
         KnockbackVelocity = velocity;
@@ -138,18 +278,24 @@ public class PlayerSpellEffects : NetworkBehaviour
     public override void Render()
     {
         // Taille : minima rétrécit, maximus grandit (cumulables), appliqué chez
-        // tout le monde y compris le joueur touché (sa caméra suit, effet immersif)
-        float targetScale = 1f;
+        // tout le monde y compris le joueur touché (sa caméra suit, effet immersif).
+        // Écrasé : aplati au sol (la caméra descend avec le pivot, puis remonte).
+        float baseScale = 1f;
         if (IsShrunk)
-            targetScale *= _shrinkScale;
+            baseScale *= _shrinkScale;
         if (HasForceBuff)
-            targetScale *= _growScale;
+            baseScale *= _growScale;
 
-        float currentScale = transform.localScale.x;
-        if (Mathf.Abs(currentScale - targetScale) > 0.001f)
-        {
-            transform.localScale = Vector3.one * Mathf.MoveTowards(currentScale, targetScale, Time.deltaTime * 2f);
-        }
+        Vector3 targetScale = IsSquashed
+            ? new Vector3(baseScale * 1.35f, baseScale * 0.12f, baseScale * 1.35f)
+            : Vector3.one * baseScale;
+
+        // L'aplatissement est rapide, le retour à la normale plus doux
+        float speed = IsSquashed ? 12f : 3f;
+        transform.localScale = new Vector3(
+            Mathf.MoveTowards(transform.localScale.x, targetScale.x, Time.deltaTime * speed),
+            Mathf.MoveTowards(transform.localScale.y, targetScale.y, Time.deltaTime * speed * 2f),
+            Mathf.MoveTowards(transform.localScale.z, targetScale.z, Time.deltaTime * speed));
 
         // Voix aiguë tant que le joueur est rétréci : on pitche l'AudioSource du
         // Speaker vocal Photon (chaque client joue les voix distantes localement,
@@ -216,6 +362,7 @@ public class PlayerSpellEffects : NetworkBehaviour
         AppendStatus(ConfusionTimer, "Confusion", SpellWords.ColorOf(5));   // vertigo
         AppendStatus(ShrinkTimer, "Rétréci", SpellWords.ColorOf(6));        // minima
         AppendStatus(StunTimer, "Électrifié", SpellWords.ColorOf(7));       // electra
+        AppendStatus(SquashTimer, "Écrasé", SpellWords.ColorOf(8));        // gris pierre
 
         if (_statusBadges.Count == 0)
             return;

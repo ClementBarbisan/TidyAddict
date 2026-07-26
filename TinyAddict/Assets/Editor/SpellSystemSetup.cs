@@ -22,6 +22,10 @@ public static class SpellSystemSetup
     private const string IceZonePrefabPath = "Assets/Prefabs/IceZone.prefab";
     private const string IceMaterialPath = "Assets/Materials/SpellIceZone.mat";
     private const string GameStatePrefabPath = "Assets/Prefabs/GameState.prefab";
+    private const string WallPrefabPath = "Assets/Prefabs/SpellWall.prefab";
+    private const string WallMaterialPath = "Assets/Materials/SpellWallStone.mat";
+    private const string BlackHolePrefabPath = "Assets/Prefabs/BlackHole.prefab";
+    private const string BlackHoleMaterialPath = "Assets/Materials/SpellBlackHole.mat";
 
     private const string VoskModelFolder = "VoskModel/vosk-model-small-fr-0.22";
 
@@ -37,9 +41,11 @@ public static class SpellSystemSetup
 
         var ballPrefab = CreateSpellBallPrefab();
         var iceZonePrefab = CreateIceZonePrefab();
+        var wallPrefab = CreateSpellWallPrefab();
+        var blackHolePrefab = CreateBlackHolePrefab();
         var gameStatePrefab = CreateGameStatePrefab();
         var scrollPrefab = CreateScrollPrefab();
-        SetupPlayerPrefab(ballPrefab, iceZonePrefab);
+        SetupPlayerPrefab(ballPrefab, iceZonePrefab, wallPrefab, blackHolePrefab);
         SetupScene(scrollPrefab, gameStatePrefab);
         AssetDatabase.SaveAssets();
         Debug.Log("[SpellSystemSetup] Terminé : prefabs créés, joueur câblé, scène configurée.");
@@ -123,7 +129,23 @@ public static class SpellSystemSetup
     {
         var existing = AssetDatabase.LoadAssetAtPath<NetworkObject>(IceZonePrefabPath);
         if (existing != null)
+        {
+            // Migration : zone de gel agrandie (rayon 4 → 7)
+            var iceZone = existing.GetComponent<IceZone>();
+            if (iceZone != null)
+            {
+                var iceSo = new SerializedObject(iceZone);
+                var radiusProperty = iceSo.FindProperty("_radius");
+                if (radiusProperty != null && radiusProperty.floatValue < 7f)
+                {
+                    radiusProperty.floatValue = 7f;
+                    iceSo.ApplyModifiedPropertiesWithoutUndo();
+                    EditorUtility.SetDirty(existing);
+                    Debug.Log("[SpellSystemSetup] IceZone : rayon agrandi à 7 m.");
+                }
+            }
             return existing;
+        }
 
         EnsureFolder("Assets/Prefabs");
 
@@ -152,6 +174,167 @@ public static class SpellSystemSetup
 
         Debug.Log($"[SpellSystemSetup] Prefab créé : {IceZonePrefabPath}");
         return AssetDatabase.LoadAssetAtPath<NetworkObject>(IceZonePrefabPath);
+    }
+
+    private const string WallModelPath = "Assets/Environnement/Mur_Axel.fbx";
+    private const float WallHeight = 3f;
+
+    private static NetworkObject CreateBlackHolePrefab()
+    {
+        var existing = AssetDatabase.LoadAssetAtPath<NetworkObject>(BlackHolePrefabPath);
+        if (existing != null)
+            return existing;
+
+        EnsureFolder("Assets/Prefabs");
+
+        var root = new GameObject("BlackHole");
+        try
+        {
+            root.AddComponent<NetworkObject>();
+            root.AddComponent<NetworkTransform>();
+            root.AddComponent<BlackHoleZone>();
+
+            // Sphère sombre émissive qui tourne sur elle-même
+            var sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            sphere.name = "Visual";
+            sphere.transform.SetParent(root.transform, false);
+            sphere.transform.localScale = Vector3.one * 1.8f;
+            Object.DestroyImmediate(sphere.GetComponent<Collider>());
+            sphere.GetComponent<MeshRenderer>().sharedMaterial = GetOrCreateMaterial(
+                BlackHoleMaterialPath, new Color(0.42f, 0.35f, 0.88f), emissive: true);
+
+            var light = new GameObject("Light").AddComponent<Light>();
+            light.transform.SetParent(root.transform, false);
+            light.type = LightType.Point;
+            light.color = new Color(0.42f, 0.35f, 0.88f);
+            light.range = 10f;
+            light.intensity = 3f;
+
+            PrefabUtility.SaveAsPrefabAsset(root, BlackHolePrefabPath);
+        }
+        finally
+        {
+            Object.DestroyImmediate(root);
+        }
+
+        Debug.Log($"[SpellSystemSetup] Prefab créé : {BlackHolePrefabPath}");
+        return AssetDatabase.LoadAssetAtPath<NetworkObject>(BlackHolePrefabPath);
+    }
+
+    private static NetworkObject CreateSpellWallPrefab()
+    {
+        // Déjà construit avec le modèle Mur_Axel : rien à faire.
+        // (Un ancien prefab au cube est reconstruit — même chemin, même GUID.)
+        var existing = AssetDatabase.LoadAssetAtPath<NetworkObject>(WallPrefabPath);
+        if (existing != null && existing.transform.Find("Mur_Axel") != null)
+            return existing;
+
+        EnsureFolder("Assets/Prefabs");
+
+        var root = new GameObject("SpellWall");
+        try
+        {
+            root.AddComponent<NetworkObject>();
+            root.AddComponent<NetworkTransform>();
+            root.AddComponent<SpellWall>();
+
+            var model = AssetDatabase.LoadAssetAtPath<GameObject>(WallModelPath);
+            if (model != null)
+            {
+                var visual = (GameObject)PrefabUtility.InstantiatePrefab(model);
+                visual.name = "Mur_Axel";
+                visual.transform.SetParent(root.transform, false);
+
+                // Normalisation : hauteur du mur = WallHeight, base posée au sol,
+                // centré sur le root, face large perpendiculaire à l'axe Z (regard)
+                var bounds = ComputeRendererBounds(visual);
+                if (bounds.size.y > 0.001f)
+                {
+                    float scale = WallHeight / bounds.size.y;
+                    visual.transform.localScale = Vector3.one * scale;
+
+                    bounds = ComputeRendererBounds(visual);
+                    visual.transform.localPosition = new Vector3(
+                        -bounds.center.x,
+                        -bounds.min.y,
+                        -bounds.center.z);
+                }
+
+                // Le FBX n'a pas de collider : une box ajustée aux dimensions bloque
+                bounds = ComputeRendererBounds(visual);
+                var collider = root.AddComponent<BoxCollider>();
+                collider.center = new Vector3(0f, bounds.size.y * 0.5f, 0f);
+                collider.size = bounds.size;
+            }
+            else
+            {
+                Debug.LogWarning($"[SpellSystemSetup] Modèle introuvable : {WallModelPath} — cube de secours utilisé.");
+                var wall = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                wall.name = "Visual";
+                wall.transform.SetParent(root.transform, false);
+                wall.transform.localPosition = new Vector3(0f, WallHeight * 0.5f, 0f);
+                wall.transform.localScale = new Vector3(6f, WallHeight, 0.6f);
+                wall.GetComponent<MeshRenderer>().sharedMaterial = GetOrCreateStoneMaterial();
+            }
+
+            PrefabUtility.SaveAsPrefabAsset(root, WallPrefabPath);
+        }
+        finally
+        {
+            Object.DestroyImmediate(root);
+        }
+
+        Debug.Log($"[SpellSystemSetup] Prefab créé/reconstruit avec Mur_Axel : {WallPrefabPath}");
+        return AssetDatabase.LoadAssetAtPath<NetworkObject>(WallPrefabPath);
+    }
+
+    private static Bounds ComputeRendererBounds(GameObject root)
+    {
+        var renderers = root.GetComponentsInChildren<Renderer>();
+        if (renderers.Length == 0)
+            return new Bounds(root.transform.position, Vector3.one);
+
+        var bounds = renderers[0].bounds;
+        for (int i = 1; i < renderers.Length; i++)
+            bounds.Encapsulate(renderers[i].bounds);
+
+        // En espace local du root (le root est à l'origine pendant la construction)
+        bounds.center -= root.transform.parent != null ? root.transform.parent.position : Vector3.zero;
+        return bounds;
+    }
+
+    // Matériau pierre construit sur les textures TileStones déjà présentes dans le projet
+    private static Material GetOrCreateStoneMaterial()
+    {
+        var material = AssetDatabase.LoadAssetAtPath<Material>(WallMaterialPath);
+        if (material != null)
+            return material;
+
+        EnsureFolder("Assets/Materials");
+
+        material = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+
+        var albedo = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Environnement/Enviro.fbm/TCom_TileStones_2K_albedo.tif");
+        var normal = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Environnement/Enviro.fbm/TCom_TileStones_2K_normal.tif");
+
+        if (albedo != null)
+        {
+            material.SetTexture("_BaseMap", albedo);
+            material.SetTextureScale("_BaseMap", new Vector2(2f, 1f));
+        }
+        else
+        {
+            material.color = new Color(0.55f, 0.55f, 0.58f);
+        }
+
+        if (normal != null)
+        {
+            material.SetTexture("_BumpMap", normal);
+            material.EnableKeyword("_NORMALMAP");
+        }
+
+        AssetDatabase.CreateAsset(material, WallMaterialPath);
+        return material;
     }
 
     private static NetworkObject CreateGameStatePrefab()
@@ -274,7 +457,7 @@ public static class SpellSystemSetup
 
     // JOUEUR
 
-    private static void SetupPlayerPrefab(NetworkObject ballPrefab, NetworkObject iceZonePrefab)
+    private static void SetupPlayerPrefab(NetworkObject ballPrefab, NetworkObject iceZonePrefab, NetworkObject wallPrefab, NetworkObject blackHolePrefab)
     {
         var root = PrefabUtility.LoadPrefabContents(PlayerPrefabPath);
         try
@@ -310,6 +493,8 @@ public static class SpellSystemSetup
             so.FindProperty("_castOrigin").objectReferenceValue = cameraPivot;
             so.FindProperty("_spellBallPrefab").objectReferenceValue = ballPrefab;
             so.FindProperty("_iceZonePrefab").objectReferenceValue = iceZonePrefab;
+            so.FindProperty("_wallPrefab").objectReferenceValue = wallPrefab;
+            so.FindProperty("_blackHolePrefab").objectReferenceValue = blackHolePrefab;
             so.ApplyModifiedPropertiesWithoutUndo();
 
             PrefabUtility.SaveAsPrefabAsset(root, PlayerPrefabPath);
@@ -407,6 +592,7 @@ public static class SpellSystemSetup
         CreateCollectionZoneVisuals();
         CreateZoneStepPoints();
         CreateScrollSpawnPoints();
+        CreateTeamSpawnPoints();
 
         // Supprime les parchemins posés en scène (source des ramassages impossibles) :
         // ils sont désormais spawnés à l'exécution par le SpellScrollSpawner
@@ -422,15 +608,21 @@ public static class SpellSystemSetup
         EditorSceneManager.SaveScene(scene);
     }
 
+    private const int TargetScrollSpawnPoints = 12;
+
     // Points de spawn des parchemins : déplaçables librement dans la scène,
-    // le SpellScrollSpawner fait vivre un parchemin par point
+    // le SpellScrollSpawner fait vivre un parchemin par point. Le setup
+    // complète jusqu'à TargetScrollSpawnPoints sans toucher aux points existants.
     private static void CreateScrollSpawnPoints()
     {
-        if (Object.FindFirstObjectByType<ScrollSpawnPoint>(FindObjectsInactive.Include) != null)
+        var existingPoints = Object.FindObjectsByType<ScrollSpawnPoint>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        if (existingPoints.Length >= TargetScrollSpawnPoints)
             return;
 
-        var parent = new GameObject("ScrollSpawnPoints").transform;
-        var positions = new[]
+        var parentObject = GameObject.Find("ScrollSpawnPoints");
+        var parent = parentObject != null ? parentObject.transform : new GameObject("ScrollSpawnPoints").transform;
+
+        var candidates = new[]
         {
             new Vector3(3f, 0.05f, 4f),
             new Vector3(-4f, 0.05f, 3f),
@@ -442,17 +634,71 @@ public static class SpellSystemSetup
             new Vector3(5f, 0.05f, -7f),
             new Vector3(-6f, 0.05f, 7f),
             new Vector3(0f, 0.05f, -2f),
+            new Vector3(10f, 0.05f, 0f),
+            new Vector3(-10f, 0.05f, 2f),
+            new Vector3(2f, 0.05f, 10f),
+            new Vector3(-3f, 0.05f, -9f),
+            new Vector3(9f, 0.05f, -5f),
+            new Vector3(-9f, 0.05f, 6f),
         };
 
-        for (int i = 0; i < positions.Length; i++)
+        int total = existingPoints.Length;
+        int created = 0;
+
+        foreach (var candidate in candidates)
         {
-            var point = new GameObject($"ScrollSpawnPoint ({i + 1})");
+            if (total >= TargetScrollSpawnPoints)
+                break;
+
+            // Évite de doubler un point déjà placé au même endroit
+            bool tooClose = false;
+            foreach (var existingPoint in existingPoints)
+            {
+                if (existingPoint != null && Vector3.Distance(existingPoint.transform.position, candidate) < 2f)
+                {
+                    tooClose = true;
+                    break;
+                }
+            }
+
+            if (tooClose)
+                continue;
+
+            total++;
+            created++;
+            var point = new GameObject($"ScrollSpawnPoint ({total})");
             point.transform.SetParent(parent, false);
-            point.transform.position = positions[i];
+            point.transform.position = candidate;
             point.AddComponent<ScrollSpawnPoint>();
         }
 
-        Debug.Log($"[SpellSystemSetup] {positions.Length} points de spawn de parchemins créés — déplacez-les librement dans la scène.");
+        if (created > 0)
+            Debug.Log($"[SpellSystemSetup] {created} points de spawn de parchemins ajoutés ({total} au total) — déplacez-les librement.");
+    }
+
+    // Points de spawn d'équipe : au lancement, chaque gobelin est téléporté sur
+    // un point de son camp, les deux équipes face à face
+    private static void CreateTeamSpawnPoints()
+    {
+        if (Object.FindFirstObjectByType<TeamSpawnPoint>(FindObjectsInactive.Include) != null)
+            return;
+
+        var parent = new GameObject("TeamSpawnPoints").transform;
+
+        CreateTeamSpawnPoint(parent, Team.Red, 1, new Vector3(-6f, 0f, -1.5f));
+        CreateTeamSpawnPoint(parent, Team.Red, 2, new Vector3(-6f, 0f, 1.5f));
+        CreateTeamSpawnPoint(parent, Team.Blue, 1, new Vector3(6f, 0f, -1.5f));
+        CreateTeamSpawnPoint(parent, Team.Blue, 2, new Vector3(6f, 0f, 1.5f));
+
+        Debug.Log("[SpellSystemSetup] 4 points de spawn d'équipe créés (face à face) — déplacez-les librement.");
+    }
+
+    private static void CreateTeamSpawnPoint(Transform parent, Team team, int index, Vector3 position)
+    {
+        var point = new GameObject($"Spawn{(team == Team.Red ? "Rouge" : "Bleu")} ({index})");
+        point.transform.SetParent(parent, false);
+        point.transform.position = position;
+        point.AddComponent<TeamSpawnPoint>().Team = team;
     }
 
     // Étapes du parcours des zones : 5 points rouges + 5 points bleus, la zone

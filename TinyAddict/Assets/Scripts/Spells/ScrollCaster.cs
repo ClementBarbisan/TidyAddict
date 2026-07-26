@@ -18,6 +18,8 @@ public class ScrollCaster : NetworkBehaviour
     [SerializeField] private Transform _castOrigin;
     [SerializeField] private NetworkObject _spellBallPrefab;
     [SerializeField] private NetworkObject _iceZonePrefab;
+    [SerializeField] private NetworkObject _wallPrefab;
+    [SerializeField] private NetworkObject _blackHolePrefab;
     [SerializeField] private float _buffSeconds = 30f;
     [SerializeField] private float _stunSeconds = 10f;
     [SerializeField] private float _minRecordSeconds = 0.3f;
@@ -91,13 +93,24 @@ public class ScrollCaster : NetworkBehaviour
 
     private void UpdateTargetHighlight()
     {
-        PlayerSpellEffects target = null;
+        Transform target = null;
 
         if (HeldScroll != null)
         {
             var spellType = SpellWords.TypeOf(HeldScroll.WordIndex);
             if (spellType == SpellType.Confusion || spellType == SpellType.Shrink || spellType == SpellType.Stun)
-                target = FindTargetPlayer();
+            {
+                var player = FindTargetPlayer();
+                if (player != null)
+                    target = player.transform;
+            }
+            else if (spellType == SpellType.Loot)
+            {
+                // fortuna : on surligne l'objet qui sera téléporté dans notre zone
+                var item = FindTargetGrabbable();
+                if (item != null)
+                    target = item.transform;
+            }
         }
 
         if (target == null)
@@ -343,7 +356,104 @@ public class ScrollCaster : NetworkBehaviour
                 }
                 break;
             }
+            case SpellType.BlackHole:
+            {
+                if (_blackHolePrefab != null)
+                {
+                    // Le trou noir apparaît là où on regarde (mur/sol), sinon 12 m devant
+                    Vector3 origin = _castOrigin != null ? _castOrigin.position : transform.position + Vector3.up;
+                    Vector3 direction = _castOrigin != null ? _castOrigin.forward : transform.forward;
+
+                    Vector3 point;
+                    if (Physics.Raycast(origin, direction, out RaycastHit blackHoleHit, 25f, ~0, QueryTriggerInteraction.Ignore))
+                        point = blackHoleHit.point;
+                    else
+                        point = origin + direction * 12f;
+                    point.y = Mathf.Max(point.y, 1f);
+
+                    var casterRef = Object.InputAuthority;
+                    Runner.Spawn(_blackHolePrefab, point, Quaternion.identity, casterRef,
+                        (runner, spawnedObject) => spawnedObject.GetComponent<BlackHoleZone>().Caster = casterRef);
+                }
+                break;
+            }
+            case SpellType.Loot:
+            {
+                // L'objet visé se téléporte directement dans NOTRE zone de collecte
+                var item = FindTargetGrabbable();
+                if (item != null && GameState.Instance != null && TeamManager.Instance != null)
+                {
+                    Team myTeam = TeamManager.Instance.GetPlayerTeam(Object.InputAuthority);
+                    if (myTeam != Team.None)
+                    {
+                        Vector3 destination = GameState.Instance.GetZoneCenter(myTeam)
+                            + Vector3.up * 1.5f
+                            + new Vector3(Random.Range(-1.2f, 1.2f), 0f, Random.Range(-1.2f, 1.2f));
+
+                        var networkRigidbody = item.GetComponent<Fusion.Addons.Physics.NetworkRigidbody>();
+                        if (networkRigidbody != null)
+                        {
+                            if (networkRigidbody.PhysicsBody != null)
+                            {
+                                networkRigidbody.PhysicsBody.linearVelocity = Vector3.zero;
+                                networkRigidbody.PhysicsBody.angularVelocity = Vector3.zero;
+                            }
+                            networkRigidbody.Teleport(destination);
+                        }
+                        else
+                        {
+                            item.transform.position = destination;
+                        }
+                    }
+                }
+                break;
+            }
+            case SpellType.Charge:
+            {
+                if (effects != null)
+                {
+                    Vector3 chargeDirection = _castOrigin != null ? _castOrigin.forward : transform.forward;
+                    chargeDirection.y = 0f;
+                    if (chargeDirection.sqrMagnitude > 0.01f)
+                        effects.ApplyCharge(chargeDirection.normalized);
+                }
+                break;
+            }
+            case SpellType.Wall:
+            {
+                if (_wallPrefab != null)
+                {
+                    // Mur perpendiculaire au regard, 3 m devant le lanceur, au sol
+                    Vector3 forward = _castOrigin != null ? _castOrigin.forward : transform.forward;
+                    forward.y = 0f;
+                    forward = forward.sqrMagnitude > 0.01f ? forward.normalized : transform.forward;
+
+                    Vector3 position = new Vector3(
+                        transform.position.x + forward.x * 3f,
+                        0f,
+                        transform.position.z + forward.z * 3f);
+
+                    Runner.Spawn(_wallPrefab, position, Quaternion.LookRotation(forward), Object.InputAuthority);
+                }
+                break;
+            }
         }
+    }
+
+    // Cible du sort fortuna : l'objet Grabbable visé (spherecast depuis la caméra)
+    private GameObject FindTargetGrabbable()
+    {
+        Vector3 origin = _castOrigin != null ? _castOrigin.position : transform.position + Vector3.up;
+        Vector3 direction = _castOrigin != null ? _castOrigin.forward : transform.forward;
+
+        if (Physics.SphereCast(origin, 0.8f, direction, out RaycastHit hit, 30f, ~0, QueryTriggerInteraction.Ignore))
+        {
+            var root = hit.collider.attachedRigidbody != null ? hit.collider.attachedRigidbody.gameObject : hit.collider.gameObject;
+            if (root.CompareTag("Grabbable"))
+                return root;
+        }
+
+        return null;
     }
 
     // Cible des sorts offensifs : le joueur visé (spherecast depuis la caméra),
@@ -429,8 +539,8 @@ public class ScrollCaster : NetworkBehaviour
             string description = SpellWords.DescriptionOf(HeldScroll.WordIndex);
 
             var band = new Rect(centerX - 380f, bandBottom - 108f, 760f, 108f);
-            UITheme.DrawRounded(band, UITheme.WithAlpha(UITheme.PanelHud, 0.88f), 14f);
-            UITheme.DrawBorder(band, UITheme.WithAlpha(spellColor, 0.8f), 1.5f, 14f);
+            UITheme.DrawRounded(band, UITheme.WithAlpha(UITheme.PanelHud, 0.88f), 16f);
+            UITheme.DrawBorder(band, UITheme.WithAlpha(spellColor, 0.8f), 1.5f, 16f);
 
             if (_isRecording)
             {
@@ -476,8 +586,8 @@ public class ScrollCaster : NetworkBehaviour
         if (_wordStyle != null)
             return;
 
-        _wordStyle = UITheme.Label(UITheme.Display, 34, UITheme.Parchment, TextAnchor.MiddleLeft);
-        _wordListenStyle = UITheme.Label(UITheme.Display, 40, UITheme.Parchment, TextAnchor.MiddleLeft);
+        _wordStyle = UITheme.Label(UITheme.Display, 30, UITheme.Parchment, TextAnchor.MiddleLeft);
+        _wordListenStyle = UITheme.Label(UITheme.Display, 38, UITheme.Parchment, TextAnchor.MiddleLeft);
         _descStyle = UITheme.Label(UITheme.Body, 18, UITheme.Parchment, TextAnchor.MiddleLeft);
         _hintStyle = UITheme.Label(UITheme.BodyExtraBold, 13, UITheme.TextDim, TextAnchor.MiddleCenter);
         _toastStyle = UITheme.Label(UITheme.BodyBold, 19, UITheme.Parchment, TextAnchor.MiddleCenter);
