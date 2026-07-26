@@ -7190,7 +7190,7 @@ AudioSource:
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 8300000, guid: 29158167a7e9a4e98929dc0d2244d119, type: 3}
   m_PlayOnAwake: 1
-  m_Volume: 0.5
+  m_Volume: 0.1
   m_Pitch: 1
   Loop: 0
   Mute: 0
@@ -7651,7 +7651,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 2720405226598393691, guid: 529160585921d44aaa6996a7dfd5e463, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2847346588299762559, guid: 529160585921d44aaa6996a7dfd5e463, type: 3}
       propertyPath: m_LocalPosition.x
@@ -7699,7 +7699,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4458283071152671239, guid: 529160585921d44aaa6996a7dfd5e463, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
