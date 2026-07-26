@@ -194,7 +194,7 @@ AudioSource:
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 8300000, guid: f3da00ced859e2c4fb94fd4f4ac05d36, type: 3}
   m_PlayOnAwake: 0
-  m_Volume: 1
+  m_Volume: 0.446
   m_Pitch: 1
   Loop: 1
   Mute: 0
@@ -1583,7 +1583,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fe4e7eb715368f143813d84577968f36, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AudioSteps
-  audio: {fileID: 3603665753136417542}
+  _audioSource: {fileID: 0}
 --- !u!114 &4624148881878037665
 MonoBehaviour:
   m_ObjectHideFlags: 0

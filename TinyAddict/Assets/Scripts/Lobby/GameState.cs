@@ -215,6 +215,7 @@ public class GameState : NetworkBehaviour
             RefreshZoneMarkers();
             RedCollected = CountCollectiblesInZone(_redZoneMarker, _redZoneCenter, Team.Red, CurrentStep);
             BlueCollected = CountCollectiblesInZone(_blueZoneMarker, _blueZoneCenter, Team.Blue, CurrentStep);
+            UpdateZoneDrag();
         }
 
         // Les jauges chargent en continu : chaque objet présent dans la zone
@@ -257,6 +258,14 @@ public class GameState : NetworkBehaviour
         LaunchTimer = default;
         LobbyReturnTimer = default;
         _lastConsumedStep = 0;
+
+        // Restaure le drag des objets encore freinés par les zones
+        foreach (var pair in _draggedObjects)
+        {
+            if (pair.Key != null)
+                pair.Key.linearDamping = pair.Value;
+        }
+        _draggedObjects.Clear();
 
         // Purge des effets de sorts encore actifs sur les joueurs
         foreach (var effects in FindObjectsByType<PlayerSpellEffects>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
@@ -390,6 +399,63 @@ public class GameState : NetworkBehaviour
 
         // Pas de point défini pour cette étape : la zone reste où elle est
         return true;
+    }
+
+    // Les objets qui entrent dans une zone sont freinés (drag augmenté) pour
+    // qu'ils se posent au lieu de glisser dehors ; le drag d'origine est
+    // restauré quand ils en sortent (volés, poussés...). Serveur uniquement.
+    private readonly Dictionary<Rigidbody, float> _draggedObjects = new Dictionary<Rigidbody, float>(32);
+    private static readonly List<Rigidbody> _dragRestoreBuffer = new List<Rigidbody>(16);
+
+    private void UpdateZoneDrag()
+    {
+        var inside = new HashSet<Rigidbody>();
+        CollectZoneRigidbodies(_redZoneMarker, _redZoneCenter, inside);
+        CollectZoneRigidbodies(_blueZoneMarker, _blueZoneCenter, inside);
+
+        // Nouveaux entrants : on mémorise leur drag d'origine puis on freine
+        foreach (var rigidbody in inside)
+        {
+            if (rigidbody != null && _draggedObjects.ContainsKey(rigidbody) == false)
+            {
+                _draggedObjects[rigidbody] = rigidbody.linearDamping;
+                rigidbody.linearDamping = 1f;
+            }
+        }
+
+        // Sortis (ou détruits) : restauration
+        _dragRestoreBuffer.Clear();
+        foreach (var pair in _draggedObjects)
+        {
+            if (pair.Key == null)
+            {
+                _dragRestoreBuffer.Add(pair.Key);
+                continue;
+            }
+
+            if (inside.Contains(pair.Key) == false)
+            {
+                pair.Key.linearDamping = pair.Value;
+                _dragRestoreBuffer.Add(pair.Key);
+            }
+        }
+
+        foreach (var rigidbody in _dragRestoreBuffer)
+            _draggedObjects.Remove(rigidbody);
+    }
+
+    private void CollectZoneRigidbodies(CollectionZoneMarker marker, Vector3 fallbackCenter, HashSet<Rigidbody> result)
+    {
+        Vector3 center = marker != null ? marker.Center : fallbackCenter;
+        Vector3 halfExtents = marker != null ? marker.HalfExtents : _zoneHalfExtents;
+
+        var hits = Physics.OverlapBox(center, halfExtents, Quaternion.identity, ~0, QueryTriggerInteraction.Ignore);
+        foreach (var hit in hits)
+        {
+            var rigidbody = hit.attachedRigidbody;
+            if (rigidbody != null && rigidbody.isKinematic == false && rigidbody.gameObject.CompareTag("Grabbable"))
+                result.Add(rigidbody);
+        }
     }
 
     // Despawne tous les objets Grabbable présents dans la zone d'une équipe à

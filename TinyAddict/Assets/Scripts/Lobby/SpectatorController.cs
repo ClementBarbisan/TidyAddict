@@ -17,6 +17,7 @@ public class SpectatorController : MonoBehaviour
 
     private Transform _camera;
     private Vector2 _look;
+    private float _autoLockUntil;
 
     public static void Activate()
     {
@@ -31,6 +32,11 @@ public class SpectatorController : MonoBehaviour
         TryAttachCamera();
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+
+        // Le despawn de notre personnage (quelques frames plus tard) relâche le
+        // curseur via PlayerInput.Despawned : pendant cette fenêtre, on le reprend
+        // automatiquement à chaque frame
+        _autoLockUntil = Time.time + 3f;
     }
 
     private void OnDestroy()
@@ -70,10 +76,20 @@ public class SpectatorController : MonoBehaviour
             bool locked = Cursor.lockState == CursorLockMode.Locked;
             Cursor.lockState = locked ? CursorLockMode.None : CursorLockMode.Locked;
             Cursor.visible = locked;
+            _autoLockUntil = 0f;   // Échap explicite : on ne force plus le re-lock
         }
 
         if (Cursor.lockState != CursorLockMode.Locked)
+        {
+            // Reprend le verrou : automatiquement juste après l'activation
+            // (le despawn du personnage l'a relâché), ou au clic comme un FPS
+            if (Time.time < _autoLockUntil || mouse.leftButton.wasPressedThisFrame)
+            {
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
+            }
             return;
+        }
 
         // Regard souris
         Vector2 delta = mouse.delta.ReadValue() * LookSensitivity;
