@@ -83,7 +83,7 @@ private void TryApplyForce(bool isPush)
             }
             else
             {
-                direction *= 1.5f;
+                direction *= 2f;
             }
 
             float forceMultiplier = 1f;
