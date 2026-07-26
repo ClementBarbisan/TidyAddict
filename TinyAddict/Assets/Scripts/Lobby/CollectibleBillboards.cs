@@ -1,23 +1,28 @@
 using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
 
 /// <summary>
-/// Affiche un texte flottant au-dessus de chaque objet que VOTRE équipe doit
-/// amener dans sa zone (types requis par le ZoneStepPoint de l'étape courante).
-/// Le texte disparaît quand l'objet est dans votre zone, et réapparaît s'il en
-/// ressort. Purement local (chaque joueur voit les objectifs de SON équipe),
+/// Liste flottante des objets à ramener, affichée AU-DESSUS de chaque zone de
+/// collecte (exigences du ZoneStepPoint de l'équipe à l'étape courante).
+/// Chaque ligne montre la progression (« Potion verte 1/2 ») et DISPARAÎT
+/// quand le quota est atteint — elle réapparaît si un objet ressort de la
+/// zone. Suit la zone quand elle change d'étape. Purement local,
 /// s'auto-instancie, aucun setup nécessaire.
 /// </summary>
 public class CollectibleBillboards : MonoBehaviour
 {
-    private const float RefreshInterval = 1f;
+    private const float RefreshInterval = 0.3f;
 
     private float _nextRefresh;
-    private PlayerProfile _localProfile;
     private ZoneStepPoint[] _stepPoints = new ZoneStepPoint[0];
-    private CollectionZoneMarker[] _markers = new CollectionZoneMarker[0];
-    private readonly Dictionary<ValueCollectible, TextMesh> _billboards =
-        new Dictionary<ValueCollectible, TextMesh>(32);
+    private readonly Dictionary<CollectionZoneMarker, TextMesh> _billboards =
+        new Dictionary<CollectionZoneMarker, TextMesh>(4);
+
+    private readonly StringBuilder _builder = new StringBuilder(256);
+    private readonly Dictionary<ValueCollectible.TypeObj, int> _presentPerType =
+        new Dictionary<ValueCollectible.TypeObj, int>(8);
+    private readonly HashSet<GameObject> _countedObjects = new HashSet<GameObject>();
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void Bootstrap()
@@ -32,149 +37,132 @@ public class CollectibleBillboards : MonoBehaviour
         if (Time.unscaledTime >= _nextRefresh)
         {
             _nextRefresh = Time.unscaledTime + RefreshInterval;
-            RefreshReferences();
+            RefreshBillboards();
         }
 
-        UpdateBillboards();
-    }
-
-    private void RefreshReferences()
-    {
-        _stepPoints = FindObjectsByType<ZoneStepPoint>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
-        _markers = FindObjectsByType<CollectionZoneMarker>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
-
-        if (_localProfile == null)
-        {
-            foreach (var profile in FindObjectsByType<PlayerProfile>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
-            {
-                if (profile.Object != null && profile.Object.IsValid && profile.HasInputAuthority)
-                {
-                    _localProfile = profile;
-                    break;
-                }
-            }
-        }
-
-        // Un billboard par objet collectable
-        foreach (var collectible in FindObjectsByType<ValueCollectible>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
-        {
-            if (_billboards.ContainsKey(collectible))
-                continue;
-
-            _billboards[collectible] = CreateBillboard(collectible);
-        }
-    }
-
-    private void UpdateBillboards()
-    {
-        var gameState = GameState.Instance;
-        Team myTeam = _localProfile != null ? _localProfile.Team : Team.None;
-
-        bool gameRunning = gameState != null && gameState.IsStarted && gameState.IsEnded == false;
-        int currentStep = gameRunning ? gameState.CurrentStep : 0;
-
-        // Les types requis par MON équipe à l'étape courante
-        ZoneStepPoint myStepPoint = null;
-        CollectionZoneMarker myZone = null;
-
-        if (gameRunning && myTeam != Team.None)
-        {
-            foreach (var point in _stepPoints)
-            {
-                if (point != null && point.Team == myTeam && point.Step == currentStep)
-                {
-                    myStepPoint = point;
-                    break;
-                }
-            }
-
-            foreach (var marker in _markers)
-            {
-                if (marker != null && marker.Team == myTeam)
-                {
-                    myZone = marker;
-                    break;
-                }
-            }
-        }
-
+        // Face caméra en continu
         var camera = Camera.main;
-        List<ValueCollectible> toRemove = null;
+        if (camera == null)
+            return;
 
-        foreach (var pair in _billboards)
+        foreach (var billboard in _billboards.Values)
         {
-            var collectible = pair.Key;
-            var billboard = pair.Value;
-
-            // Objet détruit : on nettoie son label
-            if (collectible == null)
-            {
-                if (billboard != null)
-                    Destroy(billboard.gameObject);
-                (toRemove ??= new List<ValueCollectible>()).Add(collectible);
-                continue;
-            }
-
-            if (billboard == null)
-                continue;
-
-            bool required = myStepPoint != null && myStepPoint.SearchTypeObj(collectible.Type) > 0;
-            bool inMyZone = myZone != null && IsInsideZone(collectible.transform.position, myZone);
-
-            // Visible si mon équipe a besoin de cet objet ET qu'il n'est pas
-            // (ou plus) dans notre zone — il réapparaît s'il en ressort
-            bool visible = required && inMyZone == false;
-
-            if (billboard.gameObject.activeSelf != visible)
-                billboard.gameObject.SetActive(visible);
-
-            if (visible == false)
-                continue;
-
-            billboard.color = UITheme.PseudoColor(myTeam);
-
-            // Suit l'objet sans hériter de sa rotation (les cubes roulent)
-            billboard.transform.position = collectible.transform.position + Vector3.up * 1.4f;
-
-            if (camera != null)
+            if (billboard != null && billboard.gameObject.activeSelf)
             {
                 billboard.transform.rotation = Quaternion.LookRotation(
                     billboard.transform.position - camera.transform.position);
             }
         }
+    }
 
-        if (toRemove != null)
+    private void RefreshBillboards()
+    {
+        if (_stepPoints.Length == 0)
+            _stepPoints = FindObjectsByType<ZoneStepPoint>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+
+        int currentStep = GameState.Instance != null && GameState.Instance.IsStarted
+            ? GameState.Instance.CurrentStep
+            : 0;
+
+        foreach (var marker in FindObjectsByType<CollectionZoneMarker>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
         {
-            foreach (var key in toRemove)
-                _billboards.Remove(key);
+            if (_billboards.TryGetValue(marker, out var billboard) == false || billboard == null)
+            {
+                billboard = CreateBillboard(marker);
+                _billboards[marker] = billboard;
+            }
+
+            UpdateZoneBillboard(marker, billboard, currentStep);
         }
     }
 
-    private static bool IsInsideZone(Vector3 position, CollectionZoneMarker zone)
+    private void UpdateZoneBillboard(CollectionZoneMarker marker, TextMesh billboard, int step)
     {
-        Vector3 delta = position - zone.Center;
-        Vector3 halfExtents = zone.HalfExtents;
-        return Mathf.Abs(delta.x) <= halfExtents.x &&
-               Mathf.Abs(delta.y) <= halfExtents.y &&
-               Mathf.Abs(delta.z) <= halfExtents.z;
+        // Les exigences de CETTE équipe à CETTE étape
+        ZoneStepPoint stepPoint = null;
+        foreach (var point in _stepPoints)
+        {
+            if (point != null && point.Team == marker.Team && point.Step == step)
+            {
+                stepPoint = point;
+                break;
+            }
+        }
+
+        if (stepPoint == null || stepPoint.ListObj.Count == 0)
+        {
+            billboard.gameObject.SetActive(false);
+            return;
+        }
+
+        CountPresentTypes(marker);
+
+        // Une ligne par type NON complété ; les quotas atteints disparaissent
+        _builder.Length = 0;
+        foreach (var requirement in stepPoint.ListObj)
+        {
+            if (requirement.NbObj <= 0)
+                continue;
+
+            _presentPerType.TryGetValue(requirement.Type, out int present);
+            if (present >= requirement.NbObj)
+                continue;
+
+            if (_builder.Length > 0)
+                _builder.Append('\n');
+            _builder.Append($"{LabelOf(requirement.Type)}  {present}/{requirement.NbObj}");
+        }
+
+        if (_builder.Length == 0)
+        {
+            // Tout est ramené : plus rien à afficher
+            billboard.gameObject.SetActive(false);
+            return;
+        }
+
+        billboard.gameObject.SetActive(true);
+        billboard.text = "À RAMENER\n" + _builder;
+        billboard.color = UITheme.PseudoColor(marker.Team);
     }
 
-    private TextMesh CreateBillboard(ValueCollectible collectible)
+    // Compte les objets de chaque type actuellement dans la zone
+    private void CountPresentTypes(CollectionZoneMarker marker)
     {
-        // Indépendant de l'objet (pas d'héritage de rotation), suivi dans Update
-        var labelObject = new GameObject("ObjectiveLabel");
-        labelObject.transform.SetParent(transform, false);
-        labelObject.transform.position = collectible.transform.position + Vector3.up * 1.4f;
+        _presentPerType.Clear();
+        _countedObjects.Clear();
+
+        var hits = Physics.OverlapBox(marker.Center, marker.HalfExtents, Quaternion.identity, ~0, QueryTriggerInteraction.Ignore);
+        foreach (var hit in hits)
+        {
+            var root = hit.attachedRigidbody != null ? hit.attachedRigidbody.gameObject : hit.gameObject;
+            if (root.CompareTag("Grabbable") == false || _countedObjects.Add(root) == false)
+                continue;
+
+            var collectible = root.GetComponent<ValueCollectible>();
+            if (collectible == null)
+                continue;
+
+            _presentPerType.TryGetValue(collectible.Type, out int count);
+            _presentPerType[collectible.Type] = count + 1;
+        }
+    }
+
+    private TextMesh CreateBillboard(CollectionZoneMarker marker)
+    {
+        // Enfant de la zone : suit ses sauts d'étape automatiquement
+        var labelObject = new GameObject("ObjectivesList");
+        labelObject.transform.SetParent(marker.transform, false);
+        labelObject.transform.localPosition = new Vector3(0f, marker.HalfExtents.y * 2f + 2.2f, 0f);
 
         var text = labelObject.AddComponent<TextMesh>();
         var font = UITheme.BodyExtraBold;
         text.font = font;
-        text.fontSize = 44;
-        text.characterSize = 0.035f;
-        text.anchor = TextAnchor.MiddleCenter;
+        text.fontSize = 48;
+        text.characterSize = 0.045f;
+        text.anchor = TextAnchor.LowerCenter;
         text.alignment = TextAlignment.Center;
         text.fontStyle = FontStyle.Bold;
-        text.text = LabelOf(collectible.Type);
+        text.lineSpacing = 1.1f;
         labelObject.GetComponent<MeshRenderer>().sharedMaterial = font.material;
 
         labelObject.SetActive(false);
@@ -185,14 +173,14 @@ public class CollectibleBillboards : MonoBehaviour
     {
         switch (type)
         {
-            case ValueCollectible.TypeObj.potion: return "POTION";
-            case ValueCollectible.TypeObj.potionGreen: return "POTION VERTE";
-            case ValueCollectible.TypeObj.potionRed: return "POTION ROUGE";
-            case ValueCollectible.TypeObj.potionBlue: return "POTION BLEUE";
-            case ValueCollectible.TypeObj.cauldron: return "CHAUDRON";
-            case ValueCollectible.TypeObj.cauldronBlack: return "CHAUDRON NOIR";
-            case ValueCollectible.TypeObj.cauldronShiny: return "CHAUDRON BRILLANT";
-            default: return type.ToString().ToUpperInvariant();
+            case ValueCollectible.TypeObj.potion: return "Potion";
+            case ValueCollectible.TypeObj.potionGreen: return "Potion verte";
+            case ValueCollectible.TypeObj.potionRed: return "Potion rouge";
+            case ValueCollectible.TypeObj.potionBlue: return "Potion bleue";
+            case ValueCollectible.TypeObj.cauldron: return "Chaudron";
+            case ValueCollectible.TypeObj.cauldronBlack: return "Chaudron noir";
+            case ValueCollectible.TypeObj.cauldronShiny: return "Chaudron brillant";
+            default: return type.ToString();
         }
     }
 }
