@@ -35,6 +35,7 @@ public class GameState : NetworkBehaviour
     private CollectionZoneMarker _blueZoneMarker;
     private ZoneStepPoint[] _stepPoints;
     private int _appliedStep = -1;
+    private int _lastConsumedStep;   // serveur : dernière étape dont les objets ont été consommés
 
     [Networked] public NetworkBool GameStarted { get; set; }
     [Networked] public NetworkBool GameEnded { get; set; }
@@ -153,9 +154,19 @@ public class GameState : NetworkBehaviour
             {
                 GameStarted = true;
                 MatchTimer = TickTimer.CreateFromSeconds(Runner, _matchSeconds);
+                _lastConsumedStep = 0;
                 TeleportPlayersToTeamSpawns();
             }
             return;
+        }
+
+        // Changement d'étape : les objets restés dans les zones disparaissent
+        // avec elles (livraison consommée), avant que les zones ne sautent
+        if (CurrentStep != _lastConsumedStep)
+        {
+            ConsumeObjectsInZone(Team.Red, _lastConsumedStep);
+            ConsumeObjectsInZone(Team.Blue, _lastConsumedStep);
+            _lastConsumedStep = CurrentStep;
         }
 
         // Comptage des zones ~4 fois par seconde, inutile de le faire à chaque tick
@@ -205,6 +216,7 @@ public class GameState : NetworkBehaviour
         MatchTimer = default;
         LaunchTimer = default;
         LobbyReturnTimer = default;
+        _lastConsumedStep = 0;
 
         // Purge des effets de sorts encore actifs sur les joueurs
         foreach (var effects in FindObjectsByType<PlayerSpellEffects>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
@@ -331,6 +343,49 @@ public class GameState : NetworkBehaviour
 
         // Pas de point défini pour cette étape : la zone reste où elle est
         return true;
+    }
+
+    // Despawne tous les objets Grabbable présents dans la zone d'une équipe à
+    // la position d'une étape donnée (l'ancienne, juste avant le saut de zone)
+    private void ConsumeObjectsInZone(Team team, int step)
+    {
+        RefreshZoneMarkers();
+        var marker = team == Team.Red ? _redZoneMarker : _blueZoneMarker;
+
+        // Position de la zone à l'étape consommée (le marqueur n'a pas encore sauté
+        // côté serveur, mais on la recalcule depuis le point d'étape par sûreté)
+        Vector3 center = marker != null ? marker.Center : (team == Team.Red ? _redZoneCenter : _blueZoneCenter);
+        Vector3 halfExtents = marker != null ? marker.HalfExtents : _zoneHalfExtents;
+
+        if (_stepPoints != null)
+        {
+            foreach (var point in _stepPoints)
+            {
+                if (point != null && point.Team == team && point.Step == step)
+                {
+                    center = point.transform.position + Vector3.up * halfExtents.y;
+                    break;
+                }
+            }
+        }
+
+        var consumed = new HashSet<GameObject>();
+        var hits = Physics.OverlapBox(center, halfExtents, Quaternion.identity, ~0, QueryTriggerInteraction.Ignore);
+        foreach (var hit in hits)
+        {
+            var root = hit.attachedRigidbody != null ? hit.attachedRigidbody.gameObject : hit.gameObject;
+            if (root.CompareTag("Grabbable") == false || consumed.Add(root) == false)
+                continue;
+
+            var networkObject = root.GetComponent<NetworkObject>();
+            if (networkObject != null)
+                Runner.Despawn(networkObject);
+            else
+                Destroy(root);
+        }
+
+        if (consumed.Count > 0)
+            Debug.Log($"[GameState] Zone {team} étape {step + 1} : {consumed.Count} objet(s) consommé(s) avec la zone.");
     }
 
     /// <summary>Centre actuel de la zone de collecte d'une équipe (sort fortuna).</summary>
