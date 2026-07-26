@@ -9,7 +9,9 @@ public class ValueCollectible : MonoBehaviour
       potionRed,
       potionBlue,
       cauldron,
-      cauldronBlack,
+      cauldronRed,
+      cauldronBlue,
+      cauldronGreen,
       cauldronShiny
    }
    public int Value = 1;

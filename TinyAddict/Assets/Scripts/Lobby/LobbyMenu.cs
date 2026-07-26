@@ -200,16 +200,29 @@ public class LobbyMenu : MonoBehaviour
     private void DrawRoomStep()
     {
         float centerX = UITheme.VirtualWidth * 0.5f;
-        var panel = new Rect(centerX - 330f, 240f, 660f, 560f);
+        var panel = new Rect(centerX - 330f, 170f, 660f, 700f);
         DrawLobbyPanel(panel);
 
-        GUI.Label(new Rect(panel.x, panel.y + 46f, panel.width, 100f), "TidyAddict", _logoStyle);
-        GUI.Label(new Rect(panel.x, panel.y + 152f, panel.width, 28f),
+        // Logo « Spick & Spells » (image), fallback texte si introuvable
+        var logo = UITheme.Logo;
+        if (logo != null)
+        {
+            float logoHeight = 280f;
+            float logoWidth = logoHeight * ((float)logo.width / logo.height);
+            GUI.DrawTexture(new Rect(panel.x + (panel.width - logoWidth) * 0.5f, panel.y + 18f, logoWidth, logoHeight),
+                logo, ScaleMode.ScaleToFit, true);
+        }
+        else
+        {
+            GUI.Label(new Rect(panel.x, panel.y + 100f, panel.width, 100f), "Spick & Spells", _logoStyle);
+        }
+
+        GUI.Label(new Rect(panel.x, panel.y + 306f, panel.width, 28f),
             "Gobelins, grimoires et grand bazar.", _subtitleStyle);
 
-        GUI.Label(new Rect(panel.x + 70f, panel.y + 226f, panel.width - 140f, 24f), "CODE DE LA SALLE", _labelCapsStyle);
+        GUI.Label(new Rect(panel.x + 70f, panel.y + 366f, panel.width - 140f, 24f), "CODE DE LA SALLE", _labelCapsStyle);
 
-        var roomRect = new Rect(panel.x + 70f, panel.y + 254f, panel.width - 140f, 62f);
+        var roomRect = new Rect(panel.x + 70f, panel.y + 394f, panel.width - 140f, 62f);
         UITheme.DrawRounded(roomRect, UITheme.WithAlpha(Color.black, 0.4f), 10f);
         UITheme.DrawBorder(roomRect, UITheme.WithAlpha(UITheme.Brass, 0.55f), 1.5f, 10f);
         GUI.SetNextControlName("RoomField");
@@ -217,7 +230,7 @@ public class LobbyMenu : MonoBehaviour
         GUI.FocusControl("RoomField");
 
         bool valid = string.IsNullOrWhiteSpace(_room) == false;
-        bool submit = PrimaryButton(new Rect(panel.x + 70f, panel.y + 352f, panel.width - 140f, 64f), "REJOINDRE LA SALLE", valid);
+        bool submit = PrimaryButton(new Rect(panel.x + 70f, panel.y + 492f, panel.width - 140f, 64f), "REJOINDRE LA SALLE", valid);
 
         if (valid && Event.current.type == EventType.KeyDown &&
             (Event.current.keyCode == KeyCode.Return || Event.current.keyCode == KeyCode.KeypadEnter))
@@ -225,7 +238,7 @@ public class LobbyMenu : MonoBehaviour
             submit = true;
         }
 
-        GUI.Label(new Rect(panel.x, panel.y + 440f, panel.width, 48f),
+        GUI.Label(new Rect(panel.x, panel.y + 588f, panel.width, 48f),
             "Le premier arrivé crée la salle, les autres la rejoignent avec le même code.\nPartagez ce code à vos amis  •  Entrée pour valider", _subtitleStyle);
 
         if (submit)

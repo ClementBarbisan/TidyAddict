@@ -16,7 +16,7 @@ GameObject:
   - component: {fileID: 6178173804416666802}
   - component: {fileID: 3317569987789213741}
   m_Layer: 0
-  m_Name: PlayCubeLarge
+  m_Name: PlayCubeLargeShiny
   m_TagString: Grabbable
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -50,7 +50,7 @@ MonoBehaviour:
   m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  SortKey: 1920227934
+  SortKey: 1825106638
   SendPriority: 1
   EnableInterpolation: 1
   Flags: 526594
@@ -148,8 +148,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e413328486e1b41f98bfed9236a35288, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ValueCollectible
-  Value: 2
-  Type: 4
+  Value: 5
+  Type: 8
 --- !u!1 &5719718779185829327
 GameObject:
   m_ObjectHideFlags: 0
@@ -216,7 +216,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 8ad7f0792f535e54e8f38b8f59c3a954, type: 2}
+  - {fileID: 2100000, guid: a9d65a50acdab4101ade2ebf23e10ad0, type: 2}
   - {fileID: 2100000, guid: fa531bf657e7c5f48ac9f7532eca6ef4, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0

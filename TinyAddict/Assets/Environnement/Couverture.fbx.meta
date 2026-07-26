@@ -1,9 +1,19 @@
 fileFormatVersion: 2
-guid: 80b437928b27f6241ba94b7d53fa9bc2
+guid: 711e08958d6e5464d9f19affe5beb692
 ModelImporter:
   serializedVersion: 24200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Cotton_1
+    second: {fileID: 2100000, guid: 6dc974a7bb66d454d8b31d5370b59710, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Cotton_2
+    second: {fileID: 2100000, guid: c7a1205440a981f418646405a7a91ac2, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0

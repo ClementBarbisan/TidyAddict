@@ -394,6 +394,7 @@ public class ScrollCaster : NetworkBehaviour
                         var networkRigidbody = item.GetComponent<Fusion.Addons.Physics.NetworkRigidbody>();
                         if (networkRigidbody != null)
                         {
+                            // Stoppe l'élan avant la téléportation
                             if (networkRigidbody.PhysicsBody != null)
                             {
                                 networkRigidbody.PhysicsBody.LinearVelocity = Vector3.zero;

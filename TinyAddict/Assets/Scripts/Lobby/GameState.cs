@@ -357,56 +357,61 @@ public class GameState : NetworkBehaviour
         }
     }
 
+    // Compte les objets requis présents dans la zone de l'équipe :
+    // - seuls les types listés dans le ZoneStepPoint (équipe + étape courante) comptent
+    // - chaque type est plafonné à son NbObj (les objets en trop n'apportent rien)
+    // - chaque objet compte pour sa Value
     private int CountCollectiblesInZone(CollectionZoneMarker marker, Vector3 fallbackCenter, Team team, int step)
     {
         Vector3 center = marker != null ? marker.Center : fallbackCenter;
         Vector3 halfExtents = marker != null ? marker.HalfExtents : _zoneHalfExtents;
 
-        var counted = new HashSet<int>();
-        var hits = Physics.OverlapBox(center, halfExtents, Quaternion.identity, ~0, QueryTriggerInteraction.Ignore);
+        // Le point d'étape de CETTE équipe à CETTE étape définit les types requis
+        if (_stepPoints == null || _stepPoints.Length == 0)
+            _stepPoints = FindObjectsByType<ZoneStepPoint>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+
+        ZoneStepPoint stepPoint = null;
         foreach (var point in _stepPoints)
         {
-            if (point == null || point.Team != team || point.Step != step)
-                continue;
-            foreach (var hit in hits)
+            if (point != null && point.Team == team && point.Step == step)
             {
-                var root = hit.attachedRigidbody != null ? hit.attachedRigidbody.gameObject : hit.gameObject;
-                List<TupleTypeObj> objs = new List<TupleTypeObj>();
-                if (root.CompareTag("Grabbable"))
-                {
-                    ValueCollectible val = root.GetComponent<ValueCollectible>();
-                    int maxObj = _stepPoints[step].SearchTypeObj(val.Type);
-                    if (maxObj > 0)
-                    {
-                        int nbObj = SearchTypeObj(val.Type, objs);
-                        if (nbObj > 0 && nbObj < maxObj)
-                        {
-                            if (val)
-                            {
-                                counted.Add(val.Value);
-                            }
-                            else
-                            {
-                                counted.Add(1);
-                            }
-                        }
-                    }
-                }
+                stepPoint = point;
+                break;
             }
         }
 
-        return counted.Sum();
-    }
-    private int SearchTypeObj(ValueCollectible.TypeObj type, List<TupleTypeObj> list)
-    {
-        foreach (var tuple in list)
+        if (stepPoint == null)
+            return 0;
+
+        var countedObjects = new HashSet<GameObject>();
+        var countPerType = new Dictionary<ValueCollectible.TypeObj, int>();
+        int total = 0;
+
+        var hits = Physics.OverlapBox(center, halfExtents, Quaternion.identity, ~0, QueryTriggerInteraction.Ignore);
+        foreach (var hit in hits)
         {
-            if (tuple.Type == type)
-            {
-                return (tuple.NbObj);
-            }
+            var root = hit.attachedRigidbody != null ? hit.attachedRigidbody.gameObject : hit.gameObject;
+
+            // Dédoublonne les objets touchés par plusieurs de leurs colliders
+            if (root.CompareTag("Grabbable") == false || countedObjects.Add(root) == false)
+                continue;
+
+            var collectible = root.GetComponent<ValueCollectible>();
+            if (collectible == null)
+                continue;
+
+            int maxOfType = stepPoint.SearchTypeObj(collectible.Type);
+            if (maxOfType <= 0)
+                continue;
+
+            countPerType.TryGetValue(collectible.Type, out int alreadyCounted);
+            if (alreadyCounted >= maxOfType)
+                continue;
+
+            countPerType[collectible.Type] = alreadyCounted + 1;
+            total += Mathf.Max(1, collectible.Value);
         }
-        return (0);
+
+        return total;
     }
-    
 }

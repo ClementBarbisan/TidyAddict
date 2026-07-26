@@ -1,5 +1,6 @@
 using Fusion;
 using Fusion.Addons.Physics;
+using Projectiles;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.TextCore.Text;
@@ -16,9 +17,11 @@ public class PlayerGrabbing : NetworkBehaviour
     private ScrollCaster _scrollCaster;
     private float _timerCooldown;
     private bool _canApplyForce = true;
+    private Player _player;
 
     private void Start()
     {
+        _player = GetComponent<Player>();
         _scrollCaster = GetComponent<ScrollCaster>();
 
         if (pullAction != null) pullAction.action.Enable();
@@ -93,7 +96,7 @@ public class PlayerGrabbing : NetworkBehaviour
                 // Envoie l'ordre d'appliquer la force sur le Serveur
                 RPC_ApplyForce(nrb, appliedForce, _cam.position + _cam.forward * grabDistance, isPush);
                 effect.ShowBeam(isPush);
-               
+                _player.TriggerThrowAnimation();
             }
         }
     }
@@ -108,6 +111,7 @@ public class PlayerGrabbing : NetworkBehaviour
             // NetworkRigidbody se chargera de synchroniser le mouvement chez TOUS les clients
             targetNRB.PhysicsBody.AddForce(force);
             effect.ShowBeam(isPush);
+            _player.TriggerThrowAnimation();
             _canApplyForce = false;
         }
     }

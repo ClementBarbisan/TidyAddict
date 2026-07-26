@@ -20,6 +20,7 @@ public class PlayerSpellEffects : NetworkBehaviour
     [SerializeField] private float _growVoicePitch = 0.7f;
     [SerializeField] private float _chargeBumpImpulse = 12f;
     [SerializeField] private float _chargeBumpUpImpulse = 5f;
+    [SerializeField] private float _chargeBumpRadius = 2.5f;
     [SerializeField] private float _squashSeconds = 2f;
     [SerializeField] private float _iceControlAccel = 8f;
 
@@ -201,10 +202,11 @@ public class PlayerSpellEffects : NetworkBehaviour
         CheckCrush();
     }
 
-    // Taurus : percute joueurs et objets sur le passage pendant la charge
+    // Taurus : percute joueurs et objets sur le passage pendant la charge.
+    // Les joueurs PROCHES du dash sont aussi bousculés (moins fort avec la distance).
     private void ChargeBump()
     {
-        var hits = Physics.OverlapSphere(transform.position + Vector3.up, 1.4f, ~0, QueryTriggerInteraction.Ignore);
+        var hits = Physics.OverlapSphere(transform.position + Vector3.up, _chargeBumpRadius, ~0, QueryTriggerInteraction.Ignore);
         foreach (var hit in hits)
         {
             var other = hit.GetComponentInParent<PlayerSpellEffects>();
@@ -215,8 +217,13 @@ public class PlayerSpellEffects : NetworkBehaviour
 
                 Vector3 away = other.transform.position - transform.position;
                 away.y = 0f;
-                Vector3 knockback = (away.sqrMagnitude > 0.01f ? away.normalized : transform.forward) * _chargeBumpImpulse;
-                knockback.y = _chargeBumpUpImpulse;
+                float distance = away.magnitude;
+
+                // Pleine puissance au contact, moitié en bord de rayon
+                float falloff = 1f - Mathf.Clamp01(distance / _chargeBumpRadius) * 0.5f;
+
+                Vector3 knockback = (away.sqrMagnitude > 0.01f ? away.normalized : transform.forward) * (_chargeBumpImpulse * falloff);
+                knockback.y = _chargeBumpUpImpulse * falloff;
                 other.ApplyKnockback(knockback);
                 continue;
             }
@@ -367,7 +374,8 @@ public class PlayerSpellEffects : NetworkBehaviour
         if (_statusBadges.Count == 0)
             return;
 
-        float y = 28f;
+        // Sous le pill « SALLE » affiché par le MatchHUD en haut à gauche
+        float y = 72f;
         foreach (var (label, remaining, color) in _statusBadges)
         {
             var content = new GUIContent($"◆  {label}");
