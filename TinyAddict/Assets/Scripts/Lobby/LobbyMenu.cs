@@ -28,6 +28,8 @@ public class LobbyMenu : MonoBehaviour
     private string _nickname = "";
     private string _room = "";
     private int _team;
+    private int _playersPerTeam = 2;   // format choisi à la création : 2v2 / 3v3 / 4v4
+    private bool _formatApplied;
     private bool _profileSent;
     private bool _wantSpectator;
     private bool _spectatorStarted;
@@ -93,6 +95,15 @@ public class LobbyMenu : MonoBehaviour
         if (_step == Step.Connecting && _runner != null && _runner.IsRunning && _localProfile != null)
         {
             _step = Step.Nickname;
+        }
+
+        // Si on a créé la salle (= on est l'hôte), on applique le format choisi ;
+        // en rejoignant une salle existante, le sélecteur est simplement ignoré
+        if (_formatApplied == false && _runner != null && _runner.IsRunning && _runner.IsServer &&
+            GameState.Instance != null && GameState.Instance.Object != null && GameState.Instance.Object.IsValid)
+        {
+            _formatApplied = true;
+            GameState.Instance.SetRequiredPlayers(_playersPerTeam * 2);
         }
 
         // La partie a été lancée (par l'hôte) : on ferme le menu
@@ -200,7 +211,7 @@ public class LobbyMenu : MonoBehaviour
     private void DrawRoomStep()
     {
         float centerX = UITheme.VirtualWidth * 0.5f;
-        var panel = new Rect(centerX - 330f, 170f, 660f, 700f);
+        var panel = new Rect(centerX - 330f, 150f, 660f, 770f);
         DrawLobbyPanel(panel);
 
         // Logo « Spick & Spells » (image), fallback texte si introuvable
@@ -229,8 +240,20 @@ public class LobbyMenu : MonoBehaviour
         _room = GUI.TextField(new Rect(roomRect.x + 20f, roomRect.y, roomRect.width - 40f, roomRect.height), _room, 24, _fieldStyle);
         GUI.FocusControl("RoomField");
 
+        // Format de la partie (appliqué si on crée la salle)
+        GUI.Label(new Rect(panel.x + 70f, panel.y + 478f, panel.width - 140f, 24f), "FORMAT DE LA PARTIE", _labelCapsStyle);
+
+        float toggleWidth = (panel.width - 140f - 24f) / 3f;
+        for (int i = 0; i < 3; i++)
+        {
+            int perTeam = i + 2;
+            var toggleRect = new Rect(panel.x + 70f + i * (toggleWidth + 12f), panel.y + 506f, toggleWidth, 48f);
+            if (FormatToggle(toggleRect, $"{perTeam} vs {perTeam}", _playersPerTeam == perTeam))
+                _playersPerTeam = perTeam;
+        }
+
         bool valid = string.IsNullOrWhiteSpace(_room) == false;
-        bool submit = PrimaryButton(new Rect(panel.x + 70f, panel.y + 492f, panel.width - 140f, 64f), "REJOINDRE LA SALLE", valid);
+        bool submit = PrimaryButton(new Rect(panel.x + 70f, panel.y + 582f, panel.width - 140f, 64f), "REJOINDRE LA SALLE", valid);
 
         if (valid && Event.current.type == EventType.KeyDown &&
             (Event.current.keyCode == KeyCode.Return || Event.current.keyCode == KeyCode.KeypadEnter))
@@ -238,8 +261,8 @@ public class LobbyMenu : MonoBehaviour
             submit = true;
         }
 
-        GUI.Label(new Rect(panel.x, panel.y + 588f, panel.width, 48f),
-            "Le premier arrivé crée la salle, les autres la rejoignent avec le même code.\nPartagez ce code à vos amis  •  Entrée pour valider", _subtitleStyle);
+        GUI.Label(new Rect(panel.x, panel.y + 672f, panel.width, 72f),
+            "Le premier arrivé crée la salle (et fixe le format), les autres la rejoignent\navec le même code.  Partagez ce code à vos amis  •  Entrée pour valider", _subtitleStyle);
 
         if (submit)
         {
@@ -510,6 +533,28 @@ public class LobbyMenu : MonoBehaviour
 
         GUI.Label(drawRect, label, _buttonTextStyle);
         return enabled && GUI.Button(rect, GUIContent.none, GUIStyle.none);
+    }
+
+    // Toggle de format (2v2/3v3/4v4) : sélectionné = plein, sinon fantôme
+    private bool FormatToggle(Rect rect, string label, bool selected)
+    {
+        bool hover = rect.Contains(Event.current.mousePosition);
+        var drawRect = hover && selected == false ? new Rect(rect.x, rect.y - 2f, rect.width, rect.height) : rect;
+
+        if (selected)
+        {
+            UITheme.DrawRounded(drawRect, Color.white, 12f);
+            _buttonTextStyle.normal.textColor = UITheme.Hex("#22114D");
+        }
+        else
+        {
+            UITheme.DrawRounded(drawRect, UITheme.WithAlpha(Color.white, 0.07f), 12f);
+            UITheme.DrawBorder(drawRect, UITheme.WithAlpha(UITheme.Brass, 0.5f), 1.5f, 12f);
+            _buttonTextStyle.normal.textColor = UITheme.TextDim;
+        }
+
+        GUI.Label(drawRect, label, _buttonTextStyle);
+        return GUI.Button(rect, GUIContent.none, GUIStyle.none);
     }
 
     private bool GhostButton(Rect rect, string label)
