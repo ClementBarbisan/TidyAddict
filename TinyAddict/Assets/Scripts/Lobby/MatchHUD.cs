@@ -235,6 +235,15 @@ public class MatchHUD : MonoBehaviour
         // Jauges finales (spec : 820 px int., h 36)
         DrawFinalGauge(new Rect(centerX - 410f, 520f, 820f, 36f), Team.Red, gameState.RedPercent);
         DrawFinalGauge(new Rect(centerX - 410f, 580f, 820f, 36f), Team.Blue, gameState.BluePercent);
+
+        // Retour automatique à la salle d'attente
+        float returnIn = gameState.LobbyReturnRemaining;
+        if (returnIn > 0f)
+        {
+            _endSubtitleStyle.normal.textColor = UITheme.TextDim;
+            GUI.Label(new Rect(0f, 680f, UITheme.VirtualWidth, 32f),
+                $"Retour au lobby dans {returnIn:0} s…", _endSubtitleStyle);
+        }
     }
 
     private void DrawFinalGauge(Rect rect, Team team, float charge)
@@ -254,12 +263,12 @@ public class MatchHUD : MonoBehaviour
         if (_timerStyle != null)
             return;
 
-        _timerStyle = UITheme.Label(UITheme.Display, 46, UITheme.Parchment, TextAnchor.MiddleCenter);
+        _timerStyle = UITheme.Label(UITheme.Display, 44, UITheme.Parchment, TextAnchor.MiddleCenter);
         _capsStyle = UITheme.Label(UITheme.BodyExtraBold, 14, UITheme.TextDim, TextAnchor.MiddleLeft);
         _gaugeLabelStyle = UITheme.Label(UITheme.BodyBold, 19, UITheme.Parchment, TextAnchor.MiddleLeft);
         _zoneLineStyle = UITheme.Label(UITheme.BodyBold, 17, UITheme.TextDim, TextAnchor.MiddleCenter);
         _rosterStyle = UITheme.Label(UITheme.BodyBold, 16, UITheme.Parchment, TextAnchor.MiddleLeft);
-        _endTitleStyle = UITheme.Label(UITheme.Display, 128, UITheme.Parchment, TextAnchor.MiddleCenter);
+        _endTitleStyle = UITheme.Label(UITheme.Display, 110, UITheme.Parchment, TextAnchor.MiddleCenter);
         _endSubtitleStyle = UITheme.Label(UITheme.BodyBold, 24, UITheme.Parchment, TextAnchor.MiddleCenter);
     }
 }

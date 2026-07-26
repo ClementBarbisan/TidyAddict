@@ -18,6 +18,7 @@ public class ScrollCaster : NetworkBehaviour
     [SerializeField] private Transform _castOrigin;
     [SerializeField] private NetworkObject _spellBallPrefab;
     [SerializeField] private NetworkObject _iceZonePrefab;
+    [SerializeField] private NetworkObject _wallPrefab;
     [SerializeField] private float _buffSeconds = 30f;
     [SerializeField] private float _stunSeconds = 10f;
     [SerializeField] private float _minRecordSeconds = 0.3f;
@@ -343,6 +344,24 @@ public class ScrollCaster : NetworkBehaviour
                 }
                 break;
             }
+            case SpellType.Wall:
+            {
+                if (_wallPrefab != null)
+                {
+                    // Mur perpendiculaire au regard, 3 m devant le lanceur, au sol
+                    Vector3 forward = _castOrigin != null ? _castOrigin.forward : transform.forward;
+                    forward.y = 0f;
+                    forward = forward.sqrMagnitude > 0.01f ? forward.normalized : transform.forward;
+
+                    Vector3 position = new Vector3(
+                        transform.position.x + forward.x * 3f,
+                        0f,
+                        transform.position.z + forward.z * 3f);
+
+                    Runner.Spawn(_wallPrefab, position, Quaternion.LookRotation(forward), Object.InputAuthority);
+                }
+                break;
+            }
         }
     }
 
@@ -429,8 +448,8 @@ public class ScrollCaster : NetworkBehaviour
             string description = SpellWords.DescriptionOf(HeldScroll.WordIndex);
 
             var band = new Rect(centerX - 380f, bandBottom - 108f, 760f, 108f);
-            UITheme.DrawRounded(band, UITheme.WithAlpha(UITheme.PanelHud, 0.88f), 14f);
-            UITheme.DrawBorder(band, UITheme.WithAlpha(spellColor, 0.8f), 1.5f, 14f);
+            UITheme.DrawRounded(band, UITheme.WithAlpha(UITheme.PanelHud, 0.88f), 16f);
+            UITheme.DrawBorder(band, UITheme.WithAlpha(spellColor, 0.8f), 1.5f, 16f);
 
             if (_isRecording)
             {
@@ -476,8 +495,8 @@ public class ScrollCaster : NetworkBehaviour
         if (_wordStyle != null)
             return;
 
-        _wordStyle = UITheme.Label(UITheme.Display, 34, UITheme.Parchment, TextAnchor.MiddleLeft);
-        _wordListenStyle = UITheme.Label(UITheme.Display, 40, UITheme.Parchment, TextAnchor.MiddleLeft);
+        _wordStyle = UITheme.Label(UITheme.Display, 30, UITheme.Parchment, TextAnchor.MiddleLeft);
+        _wordListenStyle = UITheme.Label(UITheme.Display, 38, UITheme.Parchment, TextAnchor.MiddleLeft);
         _descStyle = UITheme.Label(UITheme.Body, 18, UITheme.Parchment, TextAnchor.MiddleLeft);
         _hintStyle = UITheme.Label(UITheme.BodyExtraBold, 13, UITheme.TextDim, TextAnchor.MiddleCenter);
         _toastStyle = UITheme.Label(UITheme.BodyBold, 19, UITheme.Parchment, TextAnchor.MiddleCenter);

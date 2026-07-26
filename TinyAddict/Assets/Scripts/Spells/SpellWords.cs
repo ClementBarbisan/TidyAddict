@@ -11,6 +11,7 @@ public enum SpellType
     Confusion,
     Shrink,
     Stun,
+    Wall,
 }
 
 /// <summary>
@@ -31,6 +32,7 @@ public static class SpellWords
         "vertigo",  // 5 - confusion : touches inversées de la cible 30 s
         "minima",   // 6 - réduction : la cible rapetisse et perd sa force 30 s
         "electra",  // 7 - électrification : la cible est paralysée 10 s
+        "petra",    // 8 - mur de pierre devant soi pendant 30 s
     };
 
     public static readonly SpellType[] Types =
@@ -43,6 +45,7 @@ public static class SpellWords
         SpellType.Confusion,
         SpellType.Shrink,
         SpellType.Stun,
+        SpellType.Wall,
     };
 
     // Couleurs officielles du design system (bord + lueur + ◆, jamais fond plein)
@@ -56,6 +59,7 @@ public static class SpellWords
         new Color32(0xFF, 0x6B, 0xD6, 0xFF), // vertigo - #FF6BD6
         new Color32(0x6B, 0xFF, 0xB8, 0xFF), // minima  - #6BFFB8
         new Color32(0xFF, 0xEE, 0x4D, 0xFF), // electra - #FFEE4D
+        new Color32(0xAD, 0xB9, 0xC6, 0xFF), // petra   - #ADB9C6 gris pierre
     };
 
     // Affiché sur le parchemin pour savoir ce que fait le sort avant de le lancer
@@ -69,6 +73,7 @@ public static class SpellWords
         "Inverse les touches du joueur visé pendant 30 s",
         "Rétrécit le joueur visé : force réduite pendant 30 s",
         "Électrifie le joueur visé : paralysé pendant 10 s",
+        "Fait surgir un mur de pierre devant vous pendant 30 s",
     };
 
     public static SpellType TypeOf(int wordIndex)

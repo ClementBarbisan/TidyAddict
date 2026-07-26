@@ -118,6 +118,19 @@ public class PlayerSpellEffects : NetworkBehaviour
         ShrinkTimer = TickTimer.CreateFromSeconds(Runner, seconds);
     }
 
+    /// <summary>Purge tous les effets actifs (retour au lobby). Serveur uniquement.</summary>
+    public void ClearAllEffects()
+    {
+        SlowTimer = default;
+        SpeedBuffTimer = default;
+        ForceBuffTimer = default;
+        InvisibilityTimer = default;
+        ConfusionTimer = default;
+        ShrinkTimer = default;
+        StunTimer = default;
+        KnockbackTimer = default;
+    }
+
     public void ApplyKnockback(Vector3 velocity, float seconds = 0.35f)
     {
         KnockbackVelocity = velocity;

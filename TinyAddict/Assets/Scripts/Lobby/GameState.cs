@@ -17,6 +17,8 @@ public class GameState : NetworkBehaviour
 
     [SerializeField] private int _requiredPlayers = 4;
     [SerializeField] private float _matchSeconds = 300f;
+    [SerializeField] private float _launchCountdownSeconds = 5f;
+    [SerializeField] private float _returnToLobbySeconds = 15f;
     // Position de départ + 2 changements = 3 étapes sur les 5 minutes
     [SerializeField] private int _zoneSteps = 3;
 
@@ -35,6 +37,9 @@ public class GameState : NetworkBehaviour
 
     [Networked] public NetworkBool GameStarted { get; set; }
     [Networked] public NetworkBool GameEnded { get; set; }
+    [Networked] public NetworkBool LaunchCountdownStarted { get; set; }
+    [Networked] public TickTimer LaunchTimer { get; set; }
+    [Networked] public TickTimer LobbyReturnTimer { get; set; }
     [Networked] public int WinnerTeam { get; set; }        // 0 = égalité, 1 = rouge, 2 = bleu
     [Networked] public TickTimer MatchTimer { get; set; }
     [Networked] public float RedCharge { get; set; }
@@ -47,6 +52,29 @@ public class GameState : NetworkBehaviour
 
     public bool IsStarted => Object != null && Object.IsValid && GameStarted;
     public bool IsEnded => Object != null && Object.IsValid && GameEnded;
+
+    /// <summary>Compte à rebours de lancement en cours (entre le clic de l'hôte et le vrai départ).</summary>
+    public bool IsLaunching => Object != null && Object.IsValid && LaunchCountdownStarted && GameStarted == false;
+
+    public float LaunchRemaining
+    {
+        get
+        {
+            if (Object == null || Object.IsValid == false || LaunchTimer.IsRunning == false)
+                return 0f;
+            return LaunchTimer.RemainingTime(Runner) ?? 0f;
+        }
+    }
+
+    public float LobbyReturnRemaining
+    {
+        get
+        {
+            if (Object == null || Object.IsValid == false || LobbyReturnTimer.IsRunning == false)
+                return 0f;
+            return LobbyReturnTimer.RemainingTime(Runner) ?? 0f;
+        }
+    }
     public bool CanStart => ConnectedPlayers >= _requiredPlayers;
 
     // Jauges 0..1 affichées par le HUD
@@ -93,20 +121,41 @@ public class GameState : NetworkBehaviour
             Instance = null;
     }
 
-    /// <summary>Appelé côté hôte uniquement (state authority).</summary>
+    /// <summary>Appelé côté hôte uniquement (state authority) : arme le compte à rebours de lancement.</summary>
     public void StartGame()
     {
-        if (Object.HasStateAuthority == false || GameStarted)
+        if (Object.HasStateAuthority == false || GameStarted || LaunchCountdownStarted)
             return;
 
-        GameStarted = true;
-        MatchTimer = TickTimer.CreateFromSeconds(Runner, _matchSeconds);
+        LaunchCountdownStarted = true;
+        LaunchTimer = TickTimer.CreateFromSeconds(Runner, _launchCountdownSeconds);
     }
 
     public override void FixedUpdateNetwork()
     {
-        if (Object.HasStateAuthority == false || GameStarted == false || GameEnded)
+        if (Object.HasStateAuthority == false)
             return;
+
+        // Écran de victoire : après le délai, tout le monde retourne au lobby
+        if (GameEnded)
+        {
+            if (LobbyReturnTimer.Expired(Runner))
+                ResetToLobby();
+            return;
+        }
+
+        // Compte à rebours de lancement : à expiration, la partie démarre
+        // vraiment et chaque équipe est téléportée sur ses spawns, face à face
+        if (GameStarted == false)
+        {
+            if (LaunchCountdownStarted && LaunchTimer.Expired(Runner))
+            {
+                GameStarted = true;
+                MatchTimer = TickTimer.CreateFromSeconds(Runner, _matchSeconds);
+                TeleportPlayersToTeamSpawns();
+            }
+            return;
+        }
 
         // Comptage des zones ~4 fois par seconde, inutile de le faire à chaque tick
         if (Runner.Tick % 16 == 0)
@@ -129,6 +178,7 @@ public class GameState : NetworkBehaviour
         if (redWinsNow || blueWinsNow || MatchTimer.Expired(Runner))
         {
             GameEnded = true;
+            LobbyReturnTimer = TickTimer.CreateFromSeconds(Runner, _returnToLobbySeconds);
 
             if (RedCharge > BlueCharge)
                 WinnerTeam = (int)Team.Red;
@@ -139,9 +189,106 @@ public class GameState : NetworkBehaviour
         }
     }
 
+    // Remet la partie à zéro : retour à la salle d'attente pour tout le monde,
+    // équipes conservées, l'hôte peut relancer
+    private void ResetToLobby()
+    {
+        GameEnded = false;
+        GameStarted = false;
+        LaunchCountdownStarted = false;
+        WinnerTeam = 0;
+        RedCharge = 0f;
+        BlueCharge = 0f;
+        RedCollected = 0;
+        BlueCollected = 0;
+        MatchTimer = default;
+        LaunchTimer = default;
+        LobbyReturnTimer = default;
+
+        // Purge des effets de sorts encore actifs sur les joueurs
+        foreach (var effects in FindObjectsByType<PlayerSpellEffects>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+        {
+            if (effects.Object != null && effects.Object.IsValid)
+                effects.ClearAllEffects();
+        }
+    }
+
     public override void Render()
     {
         MoveZonesToCurrentStep();
+    }
+
+    // Téléporte chaque joueur sur un point de spawn de son équipe, tourné vers
+    // le camp adverse. Serveur uniquement, au vrai départ de la partie.
+    private void TeleportPlayersToTeamSpawns()
+    {
+        var redPoints = new List<TeamSpawnPoint>();
+        var bluePoints = new List<TeamSpawnPoint>();
+
+        foreach (var point in FindObjectsByType<TeamSpawnPoint>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+        {
+            if (point.Team == Team.Red)
+                redPoints.Add(point);
+            else if (point.Team == Team.Blue)
+                bluePoints.Add(point);
+        }
+
+        // Ordre stable pour une attribution déterministe
+        redPoints.Sort((a, b) => string.CompareOrdinal(a.name, b.name));
+        bluePoints.Sort((a, b) => string.CompareOrdinal(a.name, b.name));
+
+        if (redPoints.Count == 0 || bluePoints.Count == 0)
+        {
+            Debug.LogWarning("[GameState] Pas de TeamSpawnPoint dans la scène — les joueurs restent où ils sont.");
+            return;
+        }
+
+        Vector3 redCenter = AveragePosition(redPoints);
+        Vector3 blueCenter = AveragePosition(bluePoints);
+
+        int redIndex = 0;
+        int blueIndex = 0;
+
+        foreach (var profile in FindObjectsByType<PlayerProfile>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+        {
+            if (profile == null || profile.Object == null || profile.Object.IsValid == false)
+                continue;
+
+            Team team = profile.Team;
+            if (team == Team.None)
+                continue;
+
+            TeamSpawnPoint point;
+            Vector3 faceTarget;
+            if (team == Team.Red)
+            {
+                point = redPoints[redIndex % redPoints.Count];
+                redIndex++;
+                faceTarget = blueCenter;
+            }
+            else
+            {
+                point = bluePoints[blueIndex % bluePoints.Count];
+                blueIndex++;
+                faceTarget = redCenter;
+            }
+
+            Vector3 direction = faceTarget - point.transform.position;
+            direction.y = 0f;
+            float yaw = direction.sqrMagnitude > 0.01f
+                ? Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg
+                : 0f;
+
+            profile.TeleportTo(point.transform.position + Vector3.up * 0.5f, yaw);
+        }
+    }
+
+    private static Vector3 AveragePosition(List<TeamSpawnPoint> points)
+    {
+        var sum = Vector3.zero;
+        foreach (var point in points)
+            sum += point.transform.position;
+        return sum / points.Count;
     }
 
     // Déplace les rectangles de zone sur le point de l'étape courante.

@@ -1,23 +1,23 @@
 using UnityEngine;
 
 /// <summary>
-/// Design system « dark fantasy médiéval » de TidyAddict (spec Claude Design) :
-/// couleurs, polices (Grenze Gotisch display / Alegreya Sans corps) et helpers
-/// de dessin IMGUI (panneaux arrondis à bord laiton, jauges, pills).
+/// Design system « fantasy pop » V2 de TidyAddict (spec Claude Design) :
+/// nuit violette saturée, couleurs, polices (Titan One display / Nunito corps)
+/// et helpers de dessin IMGUI (panneaux arrondis à bord magique, jauges, pills).
 /// Toutes les UI du jeu passent par ici pour rester cohérentes.
 /// L'échelle est calée sur une référence 1080p via GUI.matrix.
 /// </summary>
 public static class UITheme
 {
-    // NEUTRES
-    public static readonly Color Night = Hex("#14100C");
-    public static readonly Color Panel = Hex("#1A130C");
-    public static readonly Color PanelHud = Hex("#140E08");
-    public static readonly Color Brass = Hex("#94743C");
-    public static readonly Color Parchment = Hex("#EFE2C0");
-    public static readonly Color TextDim = Hex("#A6906B");
-    public static readonly Color Gold = Hex("#C9A227");
-    public static readonly Color LobbyDim = Hex("#080502");
+    // NEUTRES (V2 : nuit violette)
+    public static readonly Color Night = Hex("#120B26");
+    public static readonly Color Panel = Hex("#12082C");
+    public static readonly Color PanelHud = Hex("#120A28");
+    public static readonly Color Brass = Hex("#A378FF");      // « bord magique »
+    public static readonly Color Parchment = Hex("#F7F3FF");  // texte principal
+    public static readonly Color TextDim = Hex("#B4A3E8");
+    public static readonly Color Gold = Hex("#B36BFF");       // accent magie
+    public static readonly Color LobbyDim = Hex("#0E0724");
 
     // ÉQUIPES
     public static readonly Color TeamRed = Hex("#FF4D40");
@@ -55,10 +55,10 @@ public static class UITheme
 
     private static (Font _display2, Font _body2, Font _bodyBold2, Font _bodyExtraBold2) LoadFonts()
     {
-        _display = Resources.Load<Font>("Fonts/GrenzeGotisch");
-        _body = Resources.Load<Font>("Fonts/AlegreyaSans");
-        _bodyBold = Resources.Load<Font>("Fonts/AlegreyaSans-Bold");
-        _bodyExtraBold = Resources.Load<Font>("Fonts/AlegreyaSans-ExtraBold");
+        _display = Resources.Load<Font>("Fonts/TitanOne");
+        _body = Resources.Load<Font>("Fonts/Nunito");
+        _bodyBold = Resources.Load<Font>("Fonts/Nunito-Bold");
+        _bodyExtraBold = Resources.Load<Font>("Fonts/Nunito-ExtraBold");
 
         var fallback = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         if (_display == null) _display = fallback;
@@ -82,11 +82,11 @@ public static class UITheme
 
     // DESSIN
 
-    /// <summary>Panneau arrondi avec bord laiton (spec : fond @85–92 %, bord 1.5 px @55 %).</summary>
-    public static void DrawPanel(Rect rect, float radius = 12f, float fillAlpha = 0.88f)
+    /// <summary>Panneau arrondi avec bord magique (spec V2 : fond @85–92 %, bord 1.5 px @40–45 %).</summary>
+    public static void DrawPanel(Rect rect, float radius = 14f, float fillAlpha = 0.88f)
     {
         DrawRounded(rect, WithAlpha(PanelHud, fillAlpha), radius);
-        DrawBorder(rect, WithAlpha(Brass, 0.55f), 1.5f, radius);
+        DrawBorder(rect, WithAlpha(Brass, 0.42f), 1.5f, radius);
     }
 
     public static void DrawRounded(Rect rect, Color color, float radius)
@@ -99,11 +99,11 @@ public static class UITheme
         GUI.DrawTexture(rect, Texture2D.whiteTexture, ScaleMode.StretchToFill, true, 0f, color, width, radius);
     }
 
-    /// <summary>Jauge (spec : piste parchemin 10 %, remplissage couleur d'équipe, r selon hauteur).</summary>
+    /// <summary>Jauge (spec V2 : piste blanc 12 %, remplissage couleur d'équipe, r selon hauteur).</summary>
     public static void DrawGauge(Rect rect, float fill01, Color fillColor)
     {
         float radius = rect.height * 0.5f;
-        DrawRounded(rect, WithAlpha(Parchment, 0.1f), radius);
+        DrawRounded(rect, WithAlpha(Color.white, 0.12f), radius);
 
         float width = Mathf.Max(rect.height, rect.width * Mathf.Clamp01(fill01));
         if (fill01 > 0.001f)
