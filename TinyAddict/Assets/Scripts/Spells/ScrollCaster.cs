@@ -306,7 +306,7 @@ namespace Projectiles
 
         // Exécuté côté serveur : chaque mot déclenche toujours le même sort
         // Son du sort chez TOUS les clients (spatial : l'AudioSource est sur le
-        // joueur). Le tableau clips est indexé par sort (0 = polaris … 11 = taurus),
+        // joueur). Le tableau clips est indexé par sort (0 = polaris … 10 = taurus),
         // câblé automatiquement par le setup.
         [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
         private void RPC_PlaySpellSound(int spellIndex)

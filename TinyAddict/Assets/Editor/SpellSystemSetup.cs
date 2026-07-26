@@ -448,9 +448,16 @@ namespace Projectiles
         }
 
         private const string ParchmentModelPath = "Assets/Prefabs/Parchemin/Parchment.fbx";
+        private const string FoldedScrollModelPath = "Assets/Models/Props/scroll.fbx";
         private const string ParchmentOpenMaterialPath = "Assets/Materials/SpellParchmentOpen.mat";
 
-        // Textures du parchemin ouvert, ordonnées par sort (0 = polaris … 11 = taurus)
+        // Parchemin ouvert en main : 1,5× la taille de base, un peu plus bas et à gauche
+        private const float OpenParchmentSize = 0.55f * 1.5f;
+        private static readonly Vector3 OpenParchmentOffset = new Vector3(-0.15f, 0.10f, 0f);
+        // Placement de la première version, à migrer vers les réglages ci-dessus
+        private static readonly Vector3 OldOpenParchmentPosition = new Vector3(0f, 0.25f, 0f);
+
+        // Textures du parchemin ouvert, ordonnées par sort (0 = polaris … 10 = taurus)
         private static readonly string[] ParchmentTexturePaths =
         {
             "Assets/Prefabs/Parchemin/POLARIS.png",
@@ -461,7 +468,6 @@ namespace Projectiles
             "Assets/Prefabs/Parchemin/VERTIGO.png",
             "Assets/Prefabs/Parchemin/MINIMA.png",
             "Assets/Prefabs/Parchemin/ELECTRA.png",
-            "Assets/Prefabs/Parchemin/PETRA.png",
             "Assets/Prefabs/Parchemin/PLUTO.png",
             "Assets/Prefabs/Parchemin/FORTUNA.png",
             "Assets/Prefabs/Parchemin/TAURUS.png",
@@ -531,7 +537,7 @@ namespace Projectiles
 
         // Ajoute le parchemin OUVERT (modèle Parchment.fbx + image du sort) au
         // prefab du parchemin : montré en main, le rouleau plié restant au sol.
-        // Câble aussi les 12 textures. Idempotent.
+        // Câble aussi les 11 textures. Idempotent.
         private static void UpgradeScrollPrefabVisuals()
         {
             var contents = PrefabUtility.LoadPrefabContents(ScrollPrefabPath);
@@ -543,6 +549,24 @@ namespace Projectiles
                     return;
 
                 var openRoot = contents.transform.Find("OpenParchment");
+
+                // Migration de l'ancien placement : 1,5× plus grand, plus bas et plus à
+                // gauche, image retournée de 180° (les noms étaient à l'envers). Fait en
+                // place pour conserver les réglages posés à la main dans le prefab.
+                if (openRoot != null &&
+                    (openRoot.localPosition - OldOpenParchmentPosition).sqrMagnitude < 1e-6f)
+                {
+                    openRoot.localPosition = OpenParchmentOffset;
+                    openRoot.localScale *= 1.5f;
+
+                    var meshNode = openRoot.GetComponentInChildren<Renderer>(true);
+                    if (meshNode != null)
+                        meshNode.transform.localRotation *= Quaternion.Euler(0f, 0f, 180f);
+
+                    dirty = true;
+                    Debug.Log("[SpellSystemSetup] Parchemin ouvert : nouveau placement + image retournée.");
+                }
+
                 if (openRoot == null)
                 {
                     var model = AssetDatabase.LoadAssetAtPath<GameObject>(ParchmentModelPath);
@@ -560,13 +584,17 @@ namespace Projectiles
                     visual.name = "Parchment";
                     visual.transform.SetParent(container.transform, false);
 
+                    // Les noms sont à l'envers dans le FBX : 180° autour de la normale
+                    // du plan (Z local, mesh Blender) pour retourner l'image
+                    visual.transform.localRotation *= Quaternion.Euler(0f, 0f, 180f);
+
                     var bounds = ComputeRendererBounds(visual);
                     visual.transform.localPosition = -bounds.center;
 
                     float maxSize = Mathf.Max(bounds.size.x, bounds.size.y, bounds.size.z);
-                    float scale = maxSize > 0.001f ? 0.55f / maxSize : 1f;
+                    float scale = maxSize > 0.001f ? OpenParchmentSize / maxSize : 1f;
                     container.transform.localScale = Vector3.one * scale;
-                    container.transform.localPosition = new Vector3(0f, 0.25f, 0f);
+                    container.transform.localPosition = OpenParchmentOffset;
 
                     // Invisible par défaut : SpellScroll l'active quand le parchemin est tenu
                     container.SetActive(false);
@@ -592,9 +620,40 @@ namespace Projectiles
 
                 var scrollSo = new SerializedObject(scroll);
 
+                // Visuel plié au sol : le modèle scroll.fbx (le cylindre "Roll" d'origine
+                // restait câblé alors qu'il est désactivé, donc le rouleau ne se cachait
+                // jamais en main). Ajouté s'il manque, avec le placement réglé à la main.
+                var rollChild = contents.transform.Find("scroll");
+                if (rollChild == null)
+                {
+                    var foldedModel = AssetDatabase.LoadAssetAtPath<GameObject>(FoldedScrollModelPath);
+                    if (foldedModel != null)
+                    {
+                        var folded = (GameObject)PrefabUtility.InstantiatePrefab(foldedModel);
+                        folded.name = "scroll";
+                        folded.transform.SetParent(contents.transform, false);
+                        folded.transform.localPosition = new Vector3(0f, 0.087f, 0f);
+                        folded.transform.localRotation = new Quaternion(0.5f, 0.5f, 0.5f, 0.5f);
+                        folded.transform.localScale = Vector3.one * 6f;
+                        rollChild = folded.transform;
+                        dirty = true;
+                        Debug.Log("[SpellSystemSetup] Rouleau plié scroll.fbx ajouté au prefab SpellScroll.");
+                    }
+                }
+
+                // L'ancien cylindre ne doit plus jamais s'afficher
+                var legacyRoll = contents.transform.Find("Roll");
+                if (legacyRoll != null && rollChild != null && legacyRoll.gameObject.activeSelf)
+                {
+                    legacyRoll.gameObject.SetActive(false);
+                    dirty = true;
+                }
+
+                if (rollChild == null)
+                    rollChild = legacyRoll;
+
                 var rollProperty = scrollSo.FindProperty("_rollVisual");
-                var rollChild = contents.transform.Find("Roll");
-                if (rollProperty.objectReferenceValue == null && rollChild != null)
+                if (rollChild != null && rollProperty.objectReferenceValue != rollChild.gameObject)
                 {
                     rollProperty.objectReferenceValue = rollChild.gameObject;
                     dirty = true;
@@ -632,7 +691,7 @@ namespace Projectiles
                 {
                     scrollSo.ApplyModifiedPropertiesWithoutUndo();
                     PrefabUtility.SaveAsPrefabAsset(contents, ScrollPrefabPath);
-                    Debug.Log("[SpellSystemSetup] SpellScroll : visuels ouverts + textures des 12 sorts câblés.");
+                    Debug.Log("[SpellSystemSetup] SpellScroll : visuels ouverts + textures des 11 sorts câblés.");
                 }
             }
             finally
@@ -648,7 +707,17 @@ namespace Projectiles
         {
             var material = AssetDatabase.LoadAssetAtPath<Material>(ParchmentOpenMaterialPath);
             if (material != null)
+            {
+                // Répare un éventuel retournement de texture d'une version précédente :
+                // c'est le modèle 3D qui est retourné de 180°, pas la texture
+                if (material.GetTextureScale("_BaseMap") != Vector2.one)
+                {
+                    material.SetTextureScale("_BaseMap", Vector2.one);
+                    material.SetTextureOffset("_BaseMap", Vector2.zero);
+                    EditorUtility.SetDirty(material);
+                }
                 return material;
+            }
 
             EnsureFolder("Assets/Materials");
 
@@ -704,7 +773,7 @@ namespace Projectiles
                 so.FindProperty("_wallPrefab").objectReferenceValue = wallPrefab;
                 so.FindProperty("_blackHolePrefab").objectReferenceValue = blackHolePrefab;
 
-                // Sons des sorts : tableau clips indexé par sort (0 = polaris … 11 = taurus)
+                // Sons des sorts : tableau clips indexé par sort (0 = polaris … 10 = taurus)
                 var spellClipPaths = new[]
                 {
                     "Assets/Audio/ice.mp3",                    // 0  polaris
@@ -715,10 +784,9 @@ namespace Projectiles
                     "Assets/Audio/confusionspell.mp3",         // 5  vertigo
                     "Assets/Audio/minima.mp3",                 // 6  minima
                     "Assets/Audio/Spell/electricSpell.mp3",    // 7  electra
-                    "Assets/Audio/wall.mp3",                   // 8  petra
-                    "Assets/Audio/voidspell.mp3",              // 9  pluto
-                    "Assets/Audio/teleportation.mp3",          // 10 fortuna
-                    "Assets/Audio/taurus.mp3",                 // 11 taurus
+                    "Assets/Audio/voidspell.mp3",              // 8  pluto
+                    "Assets/Audio/teleportation.mp3",          // 9  fortuna
+                    "Assets/Audio/taurus.mp3",                 // 10 taurus
                 };
 
                 var clipsProperty = so.FindProperty("clips");

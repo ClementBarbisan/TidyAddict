@@ -21,7 +21,10 @@ namespace Projectiles
                 if (entry.Type == type)
                 {
                     if (entry.Particle != null)
+                    {
                         entry.Particle.Play();
+                    }
+                        
                     return;
                 }
             }
