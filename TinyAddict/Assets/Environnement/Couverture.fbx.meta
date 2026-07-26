@@ -1,79 +1,9 @@
 fileFormatVersion: 2
-guid: 7894ac8abd9c8ce499286313231681f9
+guid: 80b437928b27f6241ba94b7d53fa9bc2
 ModelImporter:
   serializedVersion: 24200
   internalIDToNameTable: []
-  externalObjects:
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Madera_MAT
-    second: {fileID: 2100000, guid: ad18f4e38c1c8e34d93ffad6eb6e96c3, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Madera_techo_MAT
-    second: {fileID: 2100000, guid: a0537295948019343b547d57b1beb135, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Material
-    second: {fileID: 2100000, guid: 2c1f3030169799a44a53d1b88d9f8fc1, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Piedras_MAT
-    second: {fileID: 2100000, guid: 011c42a65b1e806468f5f9ce7421106f, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Techo_MAT
-    second: {fileID: 2100000, guid: ac2234b0595d4fc4f93381327db3d8d5, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Wood
-    second: {fileID: 2100000, guid: c6c44731980bf904f8f2310b049e4737, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: boards
-    second: {fileID: 2100000, guid: a120146956164ce47aa2650b232d5531, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: door_wood
-    second: {fileID: 2100000, guid: 72c9adb282d49184a9b9834c47d3da4e, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: frame_mt
-    second: {fileID: 2100000, guid: ee5d4dfc84eb87e449133cd6a2344562, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: glass01_mt
-    second: {fileID: 2100000, guid: e6449eff67953284bbca8a950c5159e7, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: glass02_mt
-    second: {fileID: 2100000, guid: 92b577bfc5879cf44b01fdd9b7d93bb0, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: lambert6
-    second: {fileID: 2100000, guid: 74c4277a56d02304ba9af44e89c57216, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: pillars.1
-    second: {fileID: 2100000, guid: 1c2ea179045e7cd4885ad5cb3060b967, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: pillars.2
-    second: {fileID: 2100000, guid: e1af24ab7146db34aa415c2e8c9d5073, type: 2}
+  externalObjects: {}
   materials:
     materialImportMode: 2
     materialName: 0
