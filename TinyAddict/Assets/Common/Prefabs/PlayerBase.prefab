@@ -993,6 +993,7 @@ MonoBehaviour:
   - {fileID: 8300000, guid: a8e53b805496d442b9bc2ab2fc82b3fa, type: 3}
   - {fileID: 8300000, guid: c960f8d57d45a4d0f990961603615f91, type: 3}
   - {fileID: 8300000, guid: 17db3751f181448c88e301f5841f472f, type: 3}
+  _spellVolume: 0.45
   _errorThreshold: 0.35
   _HeldScroll: {fileID: 0}
 --- !u!114 &5947192473664987860
