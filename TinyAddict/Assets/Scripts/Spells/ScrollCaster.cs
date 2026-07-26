@@ -178,7 +178,7 @@ namespace Projectiles
             var tap = IncantationRecorder.Instance;
             if (tap == null)
             {
-                ShowFeedback("Micro indisponible");
+                ShowFeedback("Microphone unavailable");
                 return;
             }
 
@@ -211,7 +211,7 @@ namespace Projectiles
 
             if (duration < _minRecordSeconds)
             {
-                ShowFeedback("Trop court : maintenez le clic et dites le mot");
+                ShowFeedback("Too short: hold click and say the word");
                 return;
             }
 
@@ -255,15 +255,15 @@ namespace Projectiles
 
                 if (bestError <= _errorThreshold)
                 {
-                    ShowFeedback($"◆  <b>{expectedWord.ToUpperInvariant()}</b> — sort lancé !", 2.5f, isError: false,
+                    ShowFeedback($"◆  <b>{expectedWord.ToUpperInvariant()}</b> cast!", 2.5f, isError: false,
                         SpellWords.ColorOf(HeldScroll.WordIndex));
                     RPC_CastSpell();
                 }
                 else
                 {
                     ShowFeedback(bestHeard == null
-                        ? "✗  Mot non reconnu — réessayez en articulant"
-                        : $"✗  Raté… j'ai entendu <i>« {bestHeard} »</i>", 2.5f, isError: true, default);
+                        ? "✗  Word not recognized, try again"
+                        : $"✗  Missed... heard <i>\"{bestHeard}\"</i>", 2.5f, isError: true, default);
                 }
             }
             finally
@@ -603,21 +603,21 @@ namespace Projectiles
                         UITheme.WithAlpha(UITheme.Danger, pulse), 8f);
 
                     _wordListenStyle.normal.textColor = spellColor;
-                    GUI.Label(new Rect(band.x + 66f, band.y + 12f, band.width - 100f, 56f), $"Dites :  {word}",
+                    GUI.Label(new Rect(band.x + 66f, band.y + 12f, band.width - 100f, 56f), $"Say:  {word}",
                         _wordListenStyle);
                     _hintStyle.normal.textColor = UITheme.TextDim;
-                    GUI.Label(new Rect(band.x, band.y + 70f, band.width, 24f), "RELÂCHEZ POUR VALIDER", _hintStyle);
+                    GUI.Label(new Rect(band.x, band.y + 70f, band.width, 24f), "RELEASE TO CAST", _hintStyle);
                 }
                 else
                 {
                     _wordStyle.normal.textColor = spellColor;
                     GUI.Label(new Rect(band.x + 32f, band.y + 12f, band.width - 64f, 42f),
-                        $"◆  Parchemin :  {word}", _wordStyle);
+                        $"◆  Scroll:  {word}", _wordStyle);
                     _descStyle.normal.textColor = UITheme.Parchment;
                     GUI.Label(new Rect(band.x + 32f, band.y + 52f, band.width - 64f, 24f), description, _descStyle);
                     _hintStyle.normal.textColor = UITheme.TextDim;
                     GUI.Label(new Rect(band.x + 32f, band.y + 78f, band.width - 64f, 22f),
-                        "MAINTENEZ CLIC GAUCHE ET DITES LE MOT  •  G POUR REPOSER", _hintStyle);
+                        "HOLD LEFT CLICK AND SAY THE WORD  •  G TO DROP", _hintStyle);
                 }
             }
 

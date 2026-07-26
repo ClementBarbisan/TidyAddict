@@ -98,7 +98,7 @@ public class MatchHUD : MonoBehaviour
         if (string.IsNullOrEmpty(roomName))
             return;
 
-        var content = new GUIContent($"SALLE  <color=#{ColorUtility.ToHtmlStringRGB(UITheme.Gold)}><b>{roomName}</b></color>");
+        var content = new GUIContent($"ROOM  <color=#{ColorUtility.ToHtmlStringRGB(UITheme.Gold)}><b>{roomName}</b></color>");
         float width = _capsStyle.CalcSize(content).x + 28f;
         var pill = new Rect(32f, 28f, width, 32f);
 
@@ -134,7 +134,7 @@ public class MatchHUD : MonoBehaviour
         var rightPanel = new Rect(centerX + 20f, 96f, 450f, 64f);
 
         DrawGaugePanel(leftPanel, localIsBlue ? Team.Blue : Team.Red, gameState,
-            localTeam == Team.None ? null : "VOTRE ÉQUIPE");
+            localTeam == Team.None ? null : "YOUR TEAM");
         DrawGaugePanel(rightPanel, localIsBlue ? Team.Red : Team.Blue, gameState, null);
 
         // Ligne zones (urgence orange sous 10 s)
@@ -147,12 +147,12 @@ public class MatchHUD : MonoBehaviour
             if (nextMoveIn <= 10f)
             {
                 _zoneLineStyle.normal.textColor = UITheme.WithAlpha(UITheme.Urgency, 0.65f + Mathf.PingPong(Time.time, 0.35f));
-                GUI.Label(zoneRect, $"⚠ Les zones bougent dans {nextMoveIn:0} s !", _zoneLineStyle);
+                GUI.Label(zoneRect, $"⚠ Zones move in {nextMoveIn:0}s!", _zoneLineStyle);
             }
             else
             {
                 _zoneLineStyle.normal.textColor = UITheme.TextDim;
-                GUI.Label(zoneRect, $"Zones : étape {gameState.CurrentStep + 1}/{gameState.ZoneStepsCount} — déplacement dans {nextMoveIn:0} s", _zoneLineStyle);
+                GUI.Label(zoneRect, $"Zones: step {gameState.CurrentStep + 1}/{gameState.ZoneStepsCount}, moving in {nextMoveIn:0}s", _zoneLineStyle);
             }
         }
     }
@@ -164,11 +164,11 @@ public class MatchHUD : MonoBehaviour
         Color teamColor = PlayerProfile.ColorOfTeam(team);
         float charge = team == Team.Red ? gameState.RedPercent : gameState.BluePercent;
         int objects = team == Team.Red ? gameState.RedCollected.Count : gameState.BlueCollected.Count;
-        string name = team == Team.Red ? "Rouge" : "Bleu";
+        string name = team == Team.Red ? "Red" : "Blue";
 
         _gaugeLabelStyle.normal.textColor = UITheme.PseudoColor(team);
         GUI.Label(new Rect(rect.x + 18f, rect.y + 6f, rect.width - 140f, 24f),
-            $"{name}  <b>{charge * 100f:0} %</b>  <size=15>({objects} obj)</size>", _gaugeLabelStyle);
+            $"{name}  <b>{charge * 100f:0} %</b>  <size=15>({objects} items)</size>", _gaugeLabelStyle);
 
         if (string.IsNullOrEmpty(tag) == false)
         {
@@ -186,8 +186,8 @@ public class MatchHUD : MonoBehaviour
     {
         var lines = new System.Collections.Generic.List<(string text, Color color)>();
 
-        AppendTeam(lines, Team.Red, "CLAN ROUGE");
-        AppendTeam(lines, Team.Blue, "CLAN BLEU");
+        AppendTeam(lines, Team.Red, "RED CLAN");
+        AppendTeam(lines, Team.Blue, "BLUE CLAN");
 
         const float rowHeight = 26f;
         float panelWidth = 200f;
@@ -214,13 +214,13 @@ public class MatchHUD : MonoBehaviour
             if (profile == null || profile.Object == null || profile.Object.IsValid == false || profile.Team != team)
                 continue;
 
-            string marker = profile == _localProfile ? "  <size=13>vous</size>" : "";
+            string marker = profile == _localProfile ? "  <size=13>you</size>" : "";
             lines.Add(($"■ {profile.Nickname}{marker}", UITheme.PseudoColor(team)));
             any = true;
         }
 
         if (any == false)
-            lines.Add(("■ personne", UITheme.WithAlpha(UITheme.TextDim, 0.5f)));
+            lines.Add(("■ nobody", UITheme.WithAlpha(UITheme.TextDim, 0.5f)));
     }
 
     // SPECTATEUR
@@ -234,7 +234,7 @@ public class MatchHUD : MonoBehaviour
         UITheme.DrawPanel(rect);
         _capsStyle.normal.textColor = UITheme.TextDim;
         var centered = new GUIStyle(_capsStyle) { alignment = TextAnchor.MiddleCenter };
-        GUI.Label(rect, "SPECTATEUR — ZQSD · ESPACE ↑ · CTRL ↓ · SHIFT VITE", centered);
+        GUI.Label(rect, "SPECTATOR  •  WASD MOVE  •  SPACE UP  •  CTRL DOWN  •  SHIFT FAST", centered);
     }
 
     // FIN DE PARTIE
@@ -251,17 +251,17 @@ public class MatchHUD : MonoBehaviour
         Color titleColor;
         if (gameState.WinnerTeam == (int)Team.Red)
         {
-            title = "LE CLAN ROUGE GAGNE !";
+            title = "RED CLAN WINS!";
             titleColor = UITheme.TeamRed;
         }
         else if (gameState.WinnerTeam == (int)Team.Blue)
         {
-            title = "LE CLAN BLEU GAGNE !";
+            title = "BLUE CLAN WINS!";
             titleColor = UITheme.TeamBlue;
         }
         else
         {
-            title = "ÉGALITÉ !";
+            title = "DRAW!";
             titleColor = UITheme.Parchment;
         }
 
@@ -278,7 +278,7 @@ public class MatchHUD : MonoBehaviour
         {
             _endSubtitleStyle.normal.textColor = UITheme.TextDim;
             GUI.Label(new Rect(0f, 680f, UITheme.VirtualWidth, 32f),
-                $"Retour au lobby dans {returnIn:0} s…", _endSubtitleStyle);
+                $"Back to lobby in {returnIn:0}s...", _endSubtitleStyle);
         }
     }
 
@@ -289,7 +289,7 @@ public class MatchHUD : MonoBehaviour
 
         _endSubtitleStyle.normal.textColor = UITheme.PseudoColor(team);
         var left = new GUIStyle(_endSubtitleStyle) { alignment = TextAnchor.MiddleLeft };
-        GUI.Label(new Rect(rect.x - 130f, rect.y, 120f, rect.height), team == Team.Red ? "Rouge" : "Bleu",
+        GUI.Label(new Rect(rect.x - 130f, rect.y, 120f, rect.height), team == Team.Red ? "Red" : "Blue",
             new GUIStyle(left) { alignment = TextAnchor.MiddleRight });
         GUI.Label(new Rect(rect.xMax + 14f, rect.y, 140f, rect.height), $"{charge * 100f:0} %", left);
     }

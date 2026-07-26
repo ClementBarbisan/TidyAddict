@@ -246,10 +246,11 @@ namespace Projectiles
 
         private static NetworkObject CreateSpellWallPrefab()
         {
-            // Déjà construit avec le modèle Mur_Axel : rien à faire.
-            // (Un ancien prefab au cube est reconstruit — même chemin, même GUID.)
+            // Déjà construit au nouveau format (conteneur VisualRoot) : rien à faire.
+            // Les anciens formats (cube ou modèle mal centré) sont reconstruits,
+            // même chemin donc même GUID : le câblage sur le joueur est conservé.
             var existing = AssetDatabase.LoadAssetAtPath<NetworkObject>(WallPrefabPath);
-            if (existing != null && existing.transform.Find("Mur_Axel") != null)
+            if (existing != null && existing.transform.Find("VisualRoot") != null)
                 return existing;
 
             EnsureFolder("Assets/Prefabs");
@@ -264,30 +265,39 @@ namespace Projectiles
                 var model = AssetDatabase.LoadAssetAtPath<GameObject>(WallModelPath);
                 if (model != null)
                 {
+                    // Conteneur pivot : le modèle est centré dedans une seule fois
+                    // (bounds lus AVANT toute transformation, pas de re-lecture fragile),
+                    // puis échelle/rotation s'appliquent au conteneur
+                    var container = new GameObject("VisualRoot");
+                    container.transform.SetParent(root.transform, false);
+
                     var visual = (GameObject)PrefabUtility.InstantiatePrefab(model);
                     visual.name = "Mur_Axel";
-                    visual.transform.SetParent(root.transform, false);
+                    visual.transform.SetParent(container.transform, false);
 
-                    // Normalisation : hauteur du mur = WallHeight, base posée au sol,
-                    // centré sur le root, face large perpendiculaire à l'axe Z (regard)
                     var bounds = ComputeRendererBounds(visual);
-                    if (bounds.size.y > 0.001f)
-                    {
-                        float scale = WallHeight / bounds.size.y;
-                        visual.transform.localScale = Vector3.one * scale;
+                    Vector3 size = bounds.size;
 
-                        bounds = ComputeRendererBounds(visual);
-                        visual.transform.localPosition = new Vector3(
-                            -bounds.center.x,
-                            -bounds.min.y,
-                            -bounds.center.z);
-                    }
+                    // Recentre le mesh sur le pivot du conteneur (le pivot du FBX est très excentré)
+                    visual.transform.localPosition = -bounds.center;
 
-                    // Le FBX n'a pas de collider : une box ajustée aux dimensions bloque
-                    bounds = ComputeRendererBounds(visual);
+                    float scale = size.y > 0.001f ? WallHeight / size.y : 1f;
+                    container.transform.localScale = Vector3.one * scale;
+
+                    // Face large vers le joueur : si le côté long est sur Z, on tourne de 90°
+                    bool rotated = size.z > size.x;
+                    if (rotated)
+                        container.transform.localRotation = Quaternion.Euler(0f, 90f, 0f);
+
+                    // Base posée au sol : le mesh est centré, il s'étend de ±hauteur/2
+                    container.transform.localPosition = new Vector3(0f, WallHeight * 0.5f, 0f);
+
+                    // Le FBX n'a pas de collider : box aux dimensions finales
+                    float width = (rotated ? size.z : size.x) * scale;
+                    float depth = (rotated ? size.x : size.z) * scale;
                     var collider = root.AddComponent<BoxCollider>();
-                    collider.center = new Vector3(0f, bounds.size.y * 0.5f, 0f);
-                    collider.size = bounds.size;
+                    collider.center = new Vector3(0f, WallHeight * 0.5f, 0f);
+                    collider.size = new Vector3(width, WallHeight, depth);
                 }
                 else
                 {
@@ -867,6 +877,15 @@ namespace Projectiles
                 var visual = existingZone.transform.Find("Visual");
                 if (visual != null)
                     visual.GetComponent<MeshRenderer>().sharedMaterial = material;
+
+                // Migration : libellé de zone en anglais
+                var existingLabel = existingZone.transform.Find("Label");
+                if (existingLabel != null)
+                {
+                    var labelText = existingLabel.GetComponent<TextMesh>();
+                    if (labelText != null)
+                        labelText.text = name == "ZoneCollecteRouge" ? "RED ZONE" : "BLUE ZONE";
+                }
                 return;
             }
 
@@ -892,7 +911,7 @@ namespace Projectiles
             label.alignment = TextAlignment.Center;
             label.fontStyle = FontStyle.Bold;
             label.color = new Color(color.r, color.g, color.b, 1f);
-            label.text = name == "ZoneCollecteRouge" ? "ZONE ROUGE" : "ZONE BLEUE";
+            label.text = name == "ZoneCollecteRouge" ? "RED ZONE" : "BLUE ZONE";
             labelObject.GetComponent<MeshRenderer>().sharedMaterial = font.material;
 
             Debug.Log($"[SpellSystemSetup] Zone de collecte créée : {name} à {position}");

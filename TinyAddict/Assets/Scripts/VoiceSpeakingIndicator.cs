@@ -48,7 +48,7 @@ public class VoiceSpeakingIndicator : MonoBehaviour
             if (voiceObject.IsLocal)
             {
                 if (voiceObject.IsRecording)
-                    _speaking.Add("Moi");
+                    _speaking.Add("Me");
                 continue;
             }
 
@@ -79,7 +79,7 @@ public class VoiceSpeakingIndicator : MonoBehaviour
             }
 
             if (camera == null || Vector3.Distance(listenerPosition, voiceObject.transform.position) <= audibleDistance)
-                _speaking.Add($"Joueur {voiceObject.Object.InputAuthority.PlayerId}");
+                _speaking.Add($"Player {voiceObject.Object.InputAuthority.PlayerId}");
         }
     }
 
