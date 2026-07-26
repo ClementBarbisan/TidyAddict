@@ -1404,7 +1404,7 @@ TextMesh:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 400722350}
-  m_Text: ZONE BLEUE
+  m_Text: BLUE ZONE
   m_OffsetZ: 0
   m_CharacterSize: 0.12
   m_LineSpacing: 1
@@ -2233,6 +2233,7 @@ GameObject:
   m_Component:
   - component: {fileID: 632723223}
   - component: {fileID: 632723222}
+  - component: {fileID: 632723224}
   m_Layer: 0
   m_Name: ZoneCollecteRouge
   m_TagString: Untagged
@@ -2275,6 +2276,27 @@ Transform:
   - {fileID: 162736458}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &632723224
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 632723221}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 4.5, y: 4.5, z: 4.5}
+  m_Center: {x: 0, y: 2.5, z: 0}
 --- !u!1001 &685490213
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -5400,7 +5422,7 @@ TextMesh:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1474721398}
-  m_Text: ZONE ROUGE
+  m_Text: RED ZONE
   m_OffsetZ: 0
   m_CharacterSize: 0.12
   m_LineSpacing: 1
@@ -6075,6 +6097,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1622019350}
   - component: {fileID: 1622019349}
+  - component: {fileID: 1622019351}
   m_Layer: 0
   m_Name: ZoneCollecteBleue
   m_TagString: Untagged
@@ -6117,6 +6140,27 @@ Transform:
   - {fileID: 245237257}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &1622019351
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1622019348}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 4.5, y: 4.5, z: 4.5}
+  m_Center: {x: 0, y: 2.5, z: 0}
 --- !u!1001 &1655287753
 PrefabInstance:
   m_ObjectHideFlags: 0

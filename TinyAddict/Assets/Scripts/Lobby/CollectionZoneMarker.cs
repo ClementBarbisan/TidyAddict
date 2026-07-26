@@ -79,6 +79,10 @@ public class CollectionZoneMarker : MonoBehaviour
         return child;
     }
 
+    // NOTE : le freinage des objets en zone (drag) est géré côté serveur par
+    // GameState.UpdateZoneDrag — un MonoBehaviour ne peut pas porter de [Rpc],
+    // et les visuels de zone n'ont pas de collider pour déclencher OnTriggerEnter.
+
     private void OnDrawGizmos()
     {
         Gizmos.color = Team == Team.Red

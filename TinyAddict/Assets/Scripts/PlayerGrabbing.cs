@@ -81,6 +81,10 @@ private void TryApplyForce(bool isPush)
             {
                 direction = -direction;
             }
+            else
+            {
+                direction *= 1.5f;
+            }
 
             float forceMultiplier = 1f;
             var spellEffects = GetComponent<PlayerSpellEffects>();
@@ -110,7 +114,6 @@ private void RPC_ApplyForce(NetworkRigidbody targetNRB, Vector3 force, bool isPu
     if (targetNRB != null && targetNRB.PhysicsBody != null)
     {
         targetNRB.PhysicsBody.AddForce(force);
-
         _canApplyForce = false;
         _timerCooldown = 0f;
 
