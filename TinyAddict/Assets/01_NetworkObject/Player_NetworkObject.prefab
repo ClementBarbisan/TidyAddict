@@ -287,7 +287,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6743956897804212766}
-  - component: {fileID: 5199959984158946105}
   m_Layer: 0
   m_Name: EffectSpell
   m_TagString: Untagged
@@ -322,41 +321,6 @@ Transform:
   - {fileID: 8001534055788743655}
   m_Father: {fileID: 4010951292466586168}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &5199959984158946105
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5120293796866718661}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a8434862eebda7542b0c189f36c42b7b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Projectiles.PlayerSpellVFX
-  _entries:
-  - Type: 0
-    Particle: {fileID: 3363815086230975704}
-  - Type: 1
-    Particle: {fileID: 7308937937541266870}
-  - Type: 2
-    Particle: {fileID: 3852148327871596708}
-  - Type: 3
-    Particle: {fileID: 4440663583602561913}
-  - Type: 4
-    Particle: {fileID: 2707001076532498167}
-  - Type: 5
-    Particle: {fileID: 2607331536995111505}
-  - Type: 6
-    Particle: {fileID: 2666961299871665774}
-  - Type: 7
-    Particle: {fileID: 8001534055788743654}
-  - Type: 8
-    Particle: {fileID: 5706407423095140498}
-  - Type: 9
-    Particle: {fileID: 4853599779304383974}
-  - Type: 11
-    Particle: {fileID: 5722758018817117806}
 --- !u!1 &7374163809943466013
 GameObject:
   m_ObjectHideFlags: 0
@@ -1457,6 +1421,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 7257134546093304133, guid: bebc380d595234047a851e4b53101eaf, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2451985089587934349}
+    - targetCorrespondingSourceObject: {fileID: 7257134546093304133, guid: bebc380d595234047a851e4b53101eaf, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8657370920932608358}
   m_SourcePrefab: {fileID: 100100000, guid: bebc380d595234047a851e4b53101eaf, type: 3}
 --- !u!4 &3710417707384006004 stripped
 Transform:
@@ -1583,7 +1550,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fe4e7eb715368f143813d84577968f36, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AudioSteps
-  _audioSource: {fileID: 0}
+  _audioSource: {fileID: 3603665753136417542}
 --- !u!114 &4624148881878037665
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1641,6 +1608,41 @@ MonoBehaviour:
   _renderers:
   - {fileID: 8151269083588270087}
   - {fileID: 6961256025463793796}
+--- !u!114 &8657370920932608358
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8233805172249388685}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a8434862eebda7542b0c189f36c42b7b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Projectiles.PlayerSpellVFX
+  _entries:
+  - Type: 0
+    Particle: {fileID: 3363815086230975704}
+  - Type: 1
+    Particle: {fileID: 7308937937541266870}
+  - Type: 2
+    Particle: {fileID: 3852148327871596708}
+  - Type: 3
+    Particle: {fileID: 4440663583602561913}
+  - Type: 4
+    Particle: {fileID: 2707001076532498167}
+  - Type: 5
+    Particle: {fileID: 2607331536995111505}
+  - Type: 6
+    Particle: {fileID: 2666961299871665774}
+  - Type: 7
+    Particle: {fileID: 8001534055788743654}
+  - Type: 8
+    Particle: {fileID: 5706407423095140498}
+  - Type: 9
+    Particle: {fileID: 4853599779304383974}
+  - Type: 11
+    Particle: {fileID: 5722758018817117806}
 --- !u!1001 &2164731159406804299
 PrefabInstance:
   m_ObjectHideFlags: 0
