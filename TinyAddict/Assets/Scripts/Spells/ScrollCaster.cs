@@ -38,6 +38,7 @@ namespace Projectiles
         private float _errorThreshold = 0.35f;
 
         private Player _player;
+        private PlayerSpellVFX _spellVFX;
         [Networked] public SpellScroll HeldScroll { get; set; }
 
         public bool IsHoldingScroll => Object != null && Object.IsValid && HeldScroll != null;
@@ -55,6 +56,7 @@ namespace Projectiles
         private void Awake()
         {
             _player = GetComponent<Player>();
+            _spellVFX = GetComponent<PlayerSpellVFX>();
         }
 
         public override void Spawned()
@@ -289,9 +291,14 @@ namespace Projectiles
         }
 
         [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-        private void RPC_TriggerThrowEffect()
+        private void RPC_TriggerThrowEffect(int spellIndex)
         {
             _player.TriggerThrowAnimation();
+            if (_spellVFX != null)
+            {
+                SpellType type = SpellWords.TypeOf(spellIndex);
+                _spellVFX.Play(type);
+            }
         }
 
         // Exécuté côté serveur : chaque mot déclenche toujours le même sort
@@ -299,7 +306,7 @@ namespace Projectiles
         {
             var effects = GetComponent<PlayerSpellEffects>();
 
-            RPC_TriggerThrowEffect();
+            RPC_TriggerThrowEffect(spellIndex);
 
             switch (SpellWords.TypeOf(spellIndex))
             {
