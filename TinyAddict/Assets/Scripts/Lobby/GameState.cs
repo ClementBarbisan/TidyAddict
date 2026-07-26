@@ -211,7 +211,18 @@ public class GameState : NetworkBehaviour
         {
             var root = hit.attachedRigidbody != null ? hit.attachedRigidbody.gameObject : hit.gameObject;
             if (root.CompareTag("Grabbable"))
-                counted.Add(root);
+            {
+                ValueCollectible val = root.GetComponent<ValueCollectible>();
+                if (val)
+                {
+                    for (int i = 0; i < val.Value; i++)
+                        counted.Add(root);
+                }
+                else
+                {
+                    counted.Add(root);
+                }
+            }
         }
 
         return counted.Count;
